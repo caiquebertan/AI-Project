@@ -60,3 +60,24 @@ Rule ids written: CORE 114 (protocol 86, server 28), PLAT 50 (hooks 9, Android 2
 - **Server restart.** A new epoch clears sent/received history on clients but keeps pending messages (CORE-EPOCH-004). The PM should state what the user sees.
 - **Still the PM's to define:** conversation list contents and order (suggest: one item per peer with any stored message, ordered by its latest message by CORE-SEQ-002, newest first); how a conversation is started (`new-conversation-*` hooks); whether the offline toggle persists across restarts (suggest: not persisted, default off, which keeps tests deterministic); display of `created_at` (informational only).
 - **Unknown types** (future extensions) are invisible in core clients (CORE-EXT-002); scenarios for extensions come with P6.
+
+## (e) Changes after PM review
+
+Input: `docs/planning/g0-review-pm.md` §(d) and §(e), `spec/core/client-behavior.md`, `spec/scenarios/*`. Ids are stable; nothing was renumbered. Spec stays `0.1.0-draft`.
+
+| PM item | Change | Where |
+|---|---|---|
+| d.1a/b: hooks for `Back` and the invalid-recipient message | Added `conversation-back` and `new-conversation-error`. Without them SC-2 navigation and SX-4 step 3 cannot be driven. | `test-hooks.md` PLAT-HOOK-001 table |
+| d.1c: conversation order readable | PLAT-HOOK-002 now also covers `conversation-item-<peer>` inside `conversation-list`, in rendered order (CORE-VISIBLE-003). | `test-hooks.md` |
+| d.1d: author readable | Included, because the snapshot already has `from`. Web exposes `data-from`; Android `stateDescription` is now `"<state>;<seq>;<from>"`, e.g. `sent;3;alice`. The snapshot schema is unchanged. | PLAT-HOOK-004, PLAT-WEB-012, PLAT-ANDROID-016 |
+| d.2: header on both screens | New PLAT-HOOK-010: `current-user`, `connection-status` and `offline-toggle` live in the header on every screen after login and never on the login screen. | `test-hooks.md` |
+| d.3: relaunch with storage kept | New PLAT-HOOK-011 (semantics: in-memory state dropped, storage kept, switch back off, network override dropped). Web: page reload or `window.__AWARE__.relaunch()` (PLAT-WEB-018). Android: `am force-stop` + `am start` (PLAT-ANDROID-025). In-project tests: a new engine over the same store. | platform files |
+| d.4: count requests per client | **Not done the way the coordinator recommended.** I chose a per-client counting proxy owned by `tests/`; the server gets no test endpoint and CORE-SRV-007 stays `SHOULD`. Reason: the server cannot attribute `/info`, `/users` or requests rejected before parsing to a client, and those are exactly the requests a buggy offline client might make. The new rule PLAT-HOOK-012 (every request goes to the one configured base URL) is what makes the proxy dependable. | decision 0010, PLAT-HOOK-012, note under CORE-SRV-007 |
+| d.5: spec index | `client-behavior.md` and both scenario files are listed as draft, with rule and AC counts produced by a script; the id table names AC and scenario ids as PM-owned. | `spec/README.md` |
+| d.6: Android interop driver | Unchanged: still G0 Q5, rule to be added at P3 if approved. | — |
+| d.8: label texts in platform tests | Confirmed: component tests assert texts exactly as in `client-behavior.md` §8.1; platform files define no texts. | PLAT-ANDROID-022, PLAT-WEB-015 |
+| e: enqueue order of failed messages | New CORE-OUTBOX-006: the enqueue number is assigned once, persisted with the message, kept when the message becomes `failed`, and never reused. | `protocol.md` §10 |
+| e: failed messages and epoch reset | New CORE-EPOCH-006: an epoch reset keeps `failed` messages and their order; they are not re-sent. This matches CORE-VISIBLE-008. | `protocol.md` §4 |
+| d.7 / e: text refused for forbidden characters (CORE-TEXT-003) | Stated in a non-normative note that the visible text is client behavior owned by the PM spec, that none is defined yet, and that no AC covers it until the operator decides. **New operator question Q8:** adopt the PM's proposed text (`Message contains characters that cannot be sent.`) or leave it undefined. Recommendation: adopt it; it costs one row in §8.1 and one AC. | `protocol.md` §6 |
+
+Not changed: "`online` precedes flush" and the unobservable transient in step 7. Both are as designed (CORE-CONN-006); the PM documented them correctly.

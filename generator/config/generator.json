@@ -13,5 +13,27 @@
       "regen_check": 2,
       "env_retry": 1
     }
+  },
+  "count_lines": {
+    "$comment": "Excluded from changed_lines (WORKFLOW §6.2). Binary files (numstat '-') are always excluded.",
+    "exclude_names": [
+      "package-lock.json",
+      "yarn.lock",
+      "pnpm-lock.yaml",
+      "npm-shrinkwrap.json",
+      "gradle.lockfile",
+      "poetry.lock",
+      "Pipfile.lock",
+      "uv.lock",
+      "Cargo.lock",
+      "gradlew",
+      "gradlew.bat",
+      ".generated"
+    ],
+    "exclude_globs": [
+      "gradle/wrapper/*",
+      "*/gradle/wrapper/*",
+      "*.lockfile"
+    ]
   }
 }

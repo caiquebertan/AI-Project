@@ -42,21 +42,22 @@ class Handler(BaseHTTPRequestHandler):
     # ----------------------------------------------------------- dispatch
     def _serve(self, method: str) -> None:
         start = time.monotonic()
-        status, body = 500, None
         try:
-            try:
-                status, body = self._route(method)
-            except ApiError as exc:
-                status, body = exc.status, error_body(exc.code, exc.message)
-                self.close_connection = self.close_connection or exc.close
-            except Exception:  # a server bug must still answer with the error body (CORE-ERR-001)
-                traceback.print_exc(file=sys.stderr)
-                status, body = 500, error_body("internal_error", "internal server error")
-            self._send(status, body, method)
-        finally:
-            path = self.path.partition("?")[0]
-            sys.stderr.write("%s %s %d %dms\n" % (method, path, status, (time.monotonic() - start) * 1000))
-            sys.stderr.flush()
+            status, body = self._route(method)
+        except ApiError as exc:
+            status, body = exc.status, error_body(exc.code, exc.message)
+            self.close_connection = self.close_connection or exc.close
+        except Exception:  # a server bug must still answer with the error body (CORE-ERR-001)
+            traceback.print_exc(file=sys.stderr)
+            status, body = 500, error_body("internal_error", "internal server error")
+        self._log(method, status, start)
+        self._send(status, body, method)
+
+    def _log(self, method: str, status: int, start: float) -> None:
+        """CORE-SRV-007, written before the answer goes out so a client that has its answer can rely on the line."""
+        path = getattr(self, "path", "-").partition("?")[0]
+        sys.stderr.write("%s %s %d %dms\n" % (method, path, status, (time.monotonic() - start) * 1000))
+        sys.stderr.flush()
 
     def _route(self, method: str):
         path = self.path.partition("?")[0]
@@ -101,6 +102,15 @@ class Handler(BaseHTTPRequestHandler):
     # ----------------------------------------------------------- response
     def _send(self, status: int, body: str | None, method: str) -> None:
         data = b"" if body is None else body.encode("utf-8")
+        try:
+            self._write(status, data, method)
+        except OSError:  # the client went away before reading the answer
+            self.close_connection = True
+            return
+        if self.close_connection:
+            self._drain()
+
+    def _write(self, status: int, data: bytes, method: str) -> None:
         self.send_response(status)
         self.send_header("Access-Control-Allow-Origin", "*")  # CORE-SRV-005
         if status == 204:
@@ -116,8 +126,6 @@ class Handler(BaseHTTPRequestHandler):
         if method != "HEAD":
             self.wfile.write(data)
         self.wfile.flush()
-        if self.close_connection:
-            self._drain()
 
     def _drain(self) -> None:
         """After an early error the request body is unread; discard a bounded amount so the
@@ -144,6 +152,7 @@ class Handler(BaseHTTPRequestHandler):
         else:
             status, err = 400, "malformed_request"
         self.close_connection = True
+        self._log(self.command or "-", status, time.monotonic())
         self._send(status, error_body(err, message or "bad request"), self.command or "GET")
 
     def log_message(self, format, *args):  # replaced by the line of _serve (CORE-SRV-007)

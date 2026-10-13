@@ -27,7 +27,7 @@ pairs also exit 1 (the former behavior, for anyone who wants every MUST tested).
 Examples:
   check_trace.py --junit android=clients/android/app/build/test-results --junit server=server/report.xml \\
       --playwright web=tests/web-e2e/report.json
-  check_trace.py --feature F1 --write --acceptance docs/runs/F1/acceptance.md
+  check_trace.py --feature F1,F2,F3 --write --acceptance docs/runs/D1/acceptance.md   # delivery D1
 """
 from __future__ import annotations
 
@@ -236,7 +236,8 @@ def main(argv=None) -> int:
     p.add_argument("--root", help="data root (default: harness checkout)")
     p.add_argument("--trace", help="traceability file (default from config)")
     p.add_argument("--spec-dir", help="spec directory (default from config)")
-    p.add_argument("--feature", help="only rows under this `## <feature>` heading")
+    p.add_argument("--feature", help="only rows under this `## <feature>` heading; comma list for a delivery "
+                   "spanning several sections (D1: F1,F2,F3)")
     p.add_argument("--junit", action="append", default=[],
                    help="JUnit XML file or directory, optionally APP=path with APP android|web|server (repeatable)")
     p.add_argument("--playwright", action="append", default=[], help="Playwright JSON report, optionally APP=path (repeatable)")
@@ -253,7 +254,8 @@ def main(argv=None) -> int:
 
     tests = load_tests(args.junit, args.playwright, cfg["coverage_apps"])
     all_rows = parse_trace(text)
-    rows = [r for r in all_rows if args.feature is None or r["feature"] == args.feature]
+    wanted = [f for f in (args.feature or "").split(",") if f]
+    rows = [r for r in all_rows if not wanted or r["feature"] in wanted]
     evaluate_rows(rows, tests, cfg["scope_regex"])
     cov = spec_coverage(spec_rules(Path(args.spec_dir) if args.spec_dir else root / cfg["spec_dir"], cfg), tests)
 
@@ -261,7 +263,7 @@ def main(argv=None) -> int:
         trace_path.write_text(write_status(text, rows), encoding="utf-8")
     if args.acceptance:
         Path(args.acceptance).parent.mkdir(parents=True, exist_ok=True)
-        Path(args.acceptance).write_text(acceptance_md(args.feature, rows, cov), encoding="utf-8")
+        Path(args.acceptance).write_text(acceptance_md(args.feature and args.feature.replace(",", ", "), rows, cov), encoding="utf-8")
     unmet = [r for r in rows if r["status"] != "met"]
     if args.json:
         print(json.dumps({"rows": [{k: r[k] for k in ("ac", "spec", "scope", "test", "status", "reason")}

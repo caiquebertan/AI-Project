@@ -21,7 +21,7 @@ claude -p "$(cat .work/generate/web/prompt.md)" --model <generate_model from con
 ```
 `render_prompt.py` exits non-zero with `generator not yet configured for <app>` until `generator/conventions/<app>.md` exists (P3). Headless runs need edit and shell permissions inside the repo; the exact flags are pinned with the model at P3.
 
-Clean regeneration check (S6b, E-PIPE-1), from a fresh worktree or clone:
+Clean regeneration check (E-PIPE-1), once at P7 by default (S6b only when `regen.per_feature` is true in the config), from a fresh worktree or clone; `--app all` runs android, then web, each in its own checkout, and prints a combined result:
 ```bash
 python3 generator/scripts/regen_check.py --app all --dry-run   # show the steps
 python3 generator/scripts/regen_check.py --app all [--clone]   # run them (needs P3 config)
@@ -53,8 +53,8 @@ $S/render_prompt.py --template generator/prompts/reviewer.md --stage S4 \
 $S/run_log.py append --feature F1 --app web --stage S4 --event launch --agent REV --model sonnet
 $S/state.py transition --app web --event blockers --expect-stage S4
 $S/state.py transition --event approve --decided-by operator    # at a gate
-$S/check_trace.py --feature F1 --junit <dir> --playwright <json> --write --acceptance docs/runs/F1/acceptance.md
-$S/render_retro.py --feature F1 --update-index
+$S/check_trace.py --feature F1,F2,F3 --junit <dir> --playwright <json> --write --acceptance docs/runs/D1/acceptance.md   # D1 = F1+F2+F3
+$S/render_retro.py --feature D1 --update-index   # retros are per milestone: D1, F4, F5, phases
 $S/lint_commits.py --range main..HEAD
 $S/lint_prompts.py
 ```

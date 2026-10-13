@@ -112,6 +112,13 @@ class CheckTrace(unittest.TestCase):
         res = self.run_trace()
         self.assertEqual(res.returncode, lib.EXIT_FAIL)
 
+    def test_feature_filter_accepts_a_list_for_a_delivery(self):
+        res = self.run_trace("--feature", "F1,F2")
+        rows = json.loads(res.stdout)["rows"]
+        self.assertEqual(len(rows), 6)
+        only = json.loads(self.run_trace("--feature", "F2").stdout)["rows"]
+        self.assertEqual({r["ac"] for r in only}, {"AC-F2-1", "AC-F2-2", "AC-F2-3"})
+
     def test_empty_input(self):
         with tempfile.TemporaryDirectory() as tmp:
             res = run_script("check_trace.py", "--root", tmp)

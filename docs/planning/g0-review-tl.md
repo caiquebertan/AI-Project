@@ -81,3 +81,24 @@ Input: `docs/planning/g0-review-pm.md` §(d) and §(e), `spec/core/client-behavi
 | d.7 / e: text refused for forbidden characters (CORE-TEXT-003) | Stated in a non-normative note that the visible text is client behavior owned by the PM spec, that none is defined yet, and that no AC covers it until the operator decides. **New operator question Q8:** adopt the PM's proposed text (`Message contains characters that cannot be sent.`) or leave it undefined. Recommendation: adopt it; it costs one row in §8.1 and one AC. | `protocol.md` §6 |
 
 Not changed: "`online` precedes flush" and the unobservable transient in step 7. Both are as designed (CORE-CONN-006); the PM documented them correctly.
+
+## (f) Changes after the operator decision on times (OM-0010)
+
+Branch `spec/tl-time`. The PM writes the visible behavior (format `HH:mm` / `YYYY-MM-DD HH:mm`, nothing shown while pending) in parallel; this delta holds only the technical part. Decision record: 0012.
+
+| Change | Where |
+|---|---|
+| New CORE-TIME-001: every instant is UTC `…Z` (wire, store, snapshot, fixtures); clients store `accepted_at`; conversion to local time only for display text | `protocol.md` §5.1 |
+| New CORE-TIME-002: zone from the `TimeZone` provider and "now" from the `Clock`, read at each display; offset taken at the instant; seconds truncated; "today" = local date of "now" | `protocol.md` §5.1 |
+| CORE-ENV-006/007 wording: clocks are explicitly UTC (no change in meaning, ids unchanged) | `protocol.md` §5 |
+| Appendix A: fixed `accepted_at` for A1, B1, A2, B2 and a "Displayed times" table for Alice at UTC−03:00 (`America/Sao_Paulo`) and Bob at UTC+09:00 (`Asia/Tokyo`), at N1 = `2026-10-13T15:00:10.000Z` and N2 = one day later. The PM's SX-6 can cite it. | `protocol.md` Appendix A |
+| `TimeZone` port added to the injected dependencies | PLAT-HOOK-009 |
+| Hook `message-time-<id>` (absent without `seq`); snapshot messages gain `accepted_at` and `time_text` | PLAT-HOOK-001 table, PLAT-HOOK-013, `client-snapshot.schema.json` |
+| Android: `java.time` default provider; text built by hand, no locale formatters; emulator `-timezone`; generated tests | PLAT-ANDROID-026..028 |
+| Web: `Date#getTimezoneOffset` default provider; text built by hand with `getUTC*`, no `toLocale*`/`Intl` formatting; Playwright `timezoneId` + `page.clock` for external tests; generated tests | PLAT-WEB-019..021 |
+
+Notes for the operator and PM:
+- The displayed time is the server's acceptance time, not the time the message was typed. It is the only choice consistent with display order (decision 0012).
+- The two users can see different dates for the same message. In Appendix A, Bob's `00:00` falls on the next day.
+- Whether the list re-renders on its own at local midnight or when the zone changes is a PM behavior choice. The protocol only guarantees that the next display uses the current zone and "now".
+- Schema examples are unchanged: no wire format changed.

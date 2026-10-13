@@ -25,6 +25,7 @@
 | `conversation-peer` | the open conversation's peer name | text |
 | `message-list` | container of the open conversation's messages, in CORE-SEQ-002 order | — |
 | `message-<id>` | one message, `<id>` = its message id | state: `pending` \| `sent` \| `received` \| `failed`; seq; author (`from`) |
+| `message-time-<id>` | the displayed time of message `<id>` (CORE-TIME-002); present only while the message has a `seq` | text (equals snapshot `time_text`) |
 | `composer-input` | text field for a new message | — |
 | `composer-send` | send button | — |
 | `composer-error` | validation message for an invalid text | — |
@@ -43,13 +44,15 @@
 - **PLAT-HOOK-006** — Each client MUST provide a test-only way to (a) read a snapshot of its client state as JSON matching [`client-snapshot.schema.json`](client-snapshot.schema.json), (b) set `offline_toggle`, and (c) set the value its connectivity monitor reports as `network_available`, without UI interaction. Platform files define the mechanism.
 - **PLAT-HOOK-007** — The snapshot MUST reflect persisted state: after a step completes, the values in the snapshot are the ones a restart would reload (identity, epoch, cursor, outbox, messages).
 - **PLAT-HOOK-008** — The snapshot's `messages` MUST list every stored `text` message of all conversations in CORE-SEQ-002 order; its `outbox` MUST list the ids of `pending` messages in outbox order.
+- **PLAT-HOOK-013** — Each snapshot message MUST carry `accepted_at` (the stored UTC instant, CORE-TIME-001; `null` without `seq`) and `time_text` (exactly the text shown by `message-time-<id>` when the snapshot is taken, produced by the same code with the same `Clock` and `TimeZone`; `null` when no time is shown); `message-time-<id>` MUST be absent while the message has no `seq`.
 
 Snapshot shape (abridged; the schema is normative):
 
 ```json
 {"user":"bob","connection":"online","offline_toggle":false,"network_available":true,
  "epoch":"3f9a1c7e5b2d4086","cursor":3,"outbox":[],
- "messages":[{"id":"00000000-0000-4000-8000-0000000000a1","seq":1,"from":"alice","to":"bob","text":"Hi Bob, I have something important to tell you","state":"received","created_at":"2026-10-13T15:00:01.000Z"}]}
+ "messages":[{"id":"00000000-0000-4000-8000-0000000000a1","seq":1,"from":"alice","to":"bob","text":"Hi Bob, I have something important to tell you","state":"received","created_at":"2026-10-13T15:00:01.000Z",
+   "accepted_at":"2026-10-13T15:00:01.010Z","time_text":"00:00"}]}
 ```
 
 - **PLAT-HOOK-011** — Each client MUST support a test-only **relaunch** control (mechanism per platform file) equivalent to the user closing and launching the app again: all in-memory state is discarded, persisted storage (identity, epoch, cursor, messages with their enqueue order, outbox) is kept untouched, and the client starts as on a normal launch (`offline_toggle` back to `false` per CORE-OFFLINE-001; any `setNetworkAvailable` override is dropped and the real monitor is read again).
@@ -57,4 +60,4 @@ Snapshot shape (abridged; the schema is normative):
 
 ## 4. Injected ports (for in-project tests)
 
-- **PLAT-HOOK-009** — The client's protocol engine MUST receive these dependencies through constructor injection, never by global lookup, so generated unit tests can replace them with fakes: `Transport` (the five endpoints), `LocalStore` (identity, epoch, cursor, messages, outbox), `ConnectivityMonitor` (`network_available` as an observable value), `Clock` (UTC now), `Scheduler` (delays for backoff), `IdGenerator` (UUID v4).
+- **PLAT-HOOK-009** — The client's protocol engine MUST receive these dependencies through constructor injection, never by global lookup, so generated unit tests can replace them with fakes: `Transport` (the five endpoints), `LocalStore` (identity, epoch, cursor, messages, outbox), `ConnectivityMonitor` (`network_available` as an observable value), `Clock` (UTC now), `TimeZone` (the device's current zone: `zoneId()` returning an IANA id or a fixed offset `±HH:MM`, and `offsetMinutesAt(utcInstant)` returning the zone's UTC offset in minutes at that instant), `Scheduler` (delays for backoff), `IdGenerator` (UUID v4).

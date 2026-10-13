@@ -2,7 +2,7 @@
 
 - **Status:** draft for G0 (spec 0.1.0-draft). Owner: TL. Stack source: decision 0001 (React + TypeScript + Vite; Vitest, Playwright).
 - **Scope:** how the web client is built, structured, configured and tested. **No behavior here.** What the app does is in `spec/core/` (protocol obligations: [`protocol.md`](../core/protocol.md); visible behavior: [`client-behavior.md`](../core/client-behavior.md)). If a rule below seems to decide behavior, the core rule it cites wins.
-- **Ids:** `PLAT-WEB-NNN`. Shared hook names: [`test-hooks.md`](test-hooks.md).
+- **Ids:** `PLAT-WEB-NNN`; a withdrawn rule stays as a one-line tombstone without a keyword (decision 0014). Shared hook names: [`test-hooks.md`](test-hooks.md).
 
 ## 1. Stack
 
@@ -19,7 +19,7 @@
 | `src/features/login/` | login screen | `src/data/`, other features |
 | `src/features/chat/` | conversation list, conversation view, composer, connection status, offline toggle | `src/data/`, other features |
 | `src/testing/` | `window.__AWARE__` hook (PLAT-WEB-012) | features |
-| `src/data/` | `fetch` `Transport`, `localStorage` `LocalStore`, browser `ConnectivityMonitor` | React, features |
+| `src/data/` | `fetch` `Transport`, `localStorage` `LocalStore`, browser `ConnectivityMonitor`, console `DiagnosticLog` (PLAT-WEB-025) | React, features |
 | `src/core/` | wire types, validation (CORE-NAME, CORE-TEXT), constants, ordering (CORE-SEQ), the protocol engine (connection cycle, outbox, cursor, epoch, dedupe), port interfaces (PLAT-HOOK-009), snapshot | React, DOM, `fetch`, `localStorage`, anything outside `src/core/` |
 
 - **PLAT-WEB-004** — All protocol logic (every client-side `CORE-*` rule except rendering) MUST live in `src/core/`, so it runs in Vitest without a DOM; it mirrors Android `:core:protocol` responsibility for responsibility.
@@ -27,7 +27,7 @@
 
 ## 3. Adapters
 
-- **PLAT-WEB-006** — The `Transport` MUST use `fetch` with an `AbortController` per request, enforce CORE-CONN-009 timeouts by aborting, and abort every in-flight request when the engine goes `offline` (CORE-CONN-004); JSON parsing MUST ignore unknown response fields (CORE-HTTP-005).
+- **PLAT-WEB-006** — The `Transport` MUST use `fetch` with an `AbortController` per request, used only to enforce the CORE-CONN-009 timeout; it MUST NOT abort a request because the engine went `offline`: the engine starts no new request and applies the result of the one in flight (CORE-CONN-004). JSON parsing MUST ignore unknown response fields (CORE-HTTP-005).
 - **PLAT-WEB-007** — `IdGenerator` MUST use `crypto.randomUUID()`; UTF-8 byte length (CORE-TEXT-003) MUST be computed with `TextEncoder`, and unpaired surrogates MUST be detected by an explicit check (not by relying on `TextEncoder`, which replaces them).
 - **PLAT-WEB-008** — `ConnectivityMonitor` MUST report `network_available` from `navigator.onLine` and update it on the window `online` / `offline` events.
 
@@ -58,3 +58,7 @@
 - **PLAT-WEB-021** — Vitest tests in `src/core/` MUST check the time text with fake `Clock` and `TimeZone` for the same cases as PLAT-ANDROID-028 (Appendix A table, local-midnight boundary, truncation, later-date prefix, offset differing between message and "now" via fixed fake offsets, zone change between renders, no time without `seq`), plus one test that the default provider equals `-new Date(t).getTimezoneOffset()`; a component test MUST check that `message-time-<id>` exists for `sent`/`received` and not for `pending`.
 - **PLAT-WEB-016** — Every test title MUST start with the spec id it covers (e.g. `it('CORE-OUTBOX-003 sends entries one at a time in order', …)`); `npm test` MUST run `vitest run` with both the default reporter and the `junit` reporter writing `test-results/junit.xml`.
 - **PLAT-WEB-017** — The gate MUST be `npm ci && npm run build && npm test`, where `build` runs `tsc --noEmit` then `vite build`. Browser end-to-end tests (Playwright) live outside the client in `tests/web-e2e/` (QA) and MUST NOT be generated into `clients/web/`.
+- **PLAT-WEB-022** — Vitest tests in `src/core/` MUST implement every case of PLAT-HOOK-014 against the protocol engine with fake ports; each test title starts with the `CORE-CONN-*` ids it proves (PLAT-WEB-016).
+- **PLAT-WEB-023** — A Vitest test titled for `CORE-TIME-003` MUST implement PLAT-HOOK-015 over these paths under `clients/web/`: every file under `src/` except test files (`*.test.ts`, `*.test.tsx` and anything under `src/test/`), plus `index.html`, `vite.config.ts`, `package.json`, every `tsconfig*.json` and every `.env*` file. It adds these patterns: `timeZone\s*:` (an `Intl` zone option) and `process\.env\.TZ`. Allowed and not matched: `Intl.DateTimeFormat().resolvedOptions().timeZone`, `getTimezoneOffset()`, `getUTC*`.
+- **PLAT-WEB-024** — Every HTTP request of the client MUST be a `fetch` from the page to its configured base URL (PLAT-WEB-011): no service worker, web worker, `sendBeacon` or `XMLHttpRequest`. External browser tests (`tests/web-e2e/`, QA) can then count all of the client's requests with the browser test framework's own request events (Playwright `page.on('request')` filtered on the base URL), with no proxy (decision 0014; used for CORE-CONN-004).
+- **PLAT-WEB-025** — The default `DiagnosticLog` (PLAT-HOOK-009) MUST write each line with `console.warn` and live in `src/data/`.

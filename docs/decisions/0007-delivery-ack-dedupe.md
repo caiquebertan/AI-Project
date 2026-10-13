@@ -1,4 +1,5 @@
 # 0007 — Delivery, acknowledgement and dedupe
+> **Amended by 0014:** the `failed` state is withdrawn. A permanent rejection removes the message from the outbox and from local storage and writes one diagnostic log line. Going offline no longer aborts in-flight requests.
 - Status: proposed (awaiting G0)
 - Date: 2026-10-13
 - Author: TL (agent, claude-opus-5-5); dedupe principle decided by operator (Phase 1 launch brief)

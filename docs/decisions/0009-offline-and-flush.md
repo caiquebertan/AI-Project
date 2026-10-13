@@ -1,4 +1,5 @@
 # 0009 — Offline definition, connection cycle and flush order
+> **Amended by 0014:** the connection cycle is session (when needed) → polls until `has_more` is false → flush → end. Cycles repeat every `CYCLE_INTERVAL_MS` (1000 ms), with no live long-poll step and no backoff: any failure ends the cycle and the next one starts after the same interval. Going offline starts no new request, and an in-flight request completes and is applied instead of being aborted. `online` now requires a session and a poll. Decision points 2 and 4, the jitter alternative and the abort consequence below are history.
 - Status: proposed (awaiting G0)
 - Date: 2026-10-13
 - Author: TL (agent, claude-opus-5-5); app-controlled offline decided by operator (gap-analysis Q19, decision 0002)

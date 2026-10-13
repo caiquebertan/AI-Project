@@ -1,4 +1,5 @@
 # 0004 — Transport: HTTP + long-poll, per-recipient cursor, server epoch
+> **Amended by 0014:** long-poll is replaced by plain polling. `GET /v1/mailboxes/{name}/messages` answers at once and has no `wait` parameter; `POLL_WAIT_S` and `POLL_WAIT_MAX_S` are gone, and the client polls once per cycle every `CYCLE_INTERVAL_MS` (1000 ms). Going offline no longer aborts the in-flight request. Decision point 3 and the long-poll consequences below are history.
 - Status: proposed (awaiting G0)
 - Date: 2026-10-13
 - Author: TL (agent, claude-opus-5-5); decided-in-principle by operator (gap-analysis Q20, decision 0002)

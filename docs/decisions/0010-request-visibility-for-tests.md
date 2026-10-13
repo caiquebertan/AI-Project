@@ -1,5 +1,6 @@
 # 0010 — Request visibility for tests: per-client counting proxy
-- Status: proposed (awaiting G0)
+> **Superseded by 0014:** no counting proxy. In-project tests use a recording fake `Transport` (PLAT-HOOK-014), external web tests count with Playwright request events, and Android is driven by the JVM driver `:tools:driver`. PLAT-HOOK-012 is withdrawn.
+- Status: superseded by 0014
 - Date: 2026-10-13
 - Author: TL (agent, claude-opus-5-5), on PM request (d.4) in `docs/planning/g0-review-pm.md`
 - Spec ids driven: `PLAT-HOOK-012`, `CORE-SRV-007` (unchanged, stays `SHOULD`); checks `CORE-CONN-004`, `CORE-OFFLINE-002` (AC-F4-3)

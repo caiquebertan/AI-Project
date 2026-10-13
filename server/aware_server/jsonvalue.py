@@ -7,17 +7,27 @@ meaning (CORE-SRV-040).
 from __future__ import annotations
 
 import json
-from decimal import Decimal
+import re
+
+
+_NUM_RE = re.compile(r"(-?)([0-9]+)(?:\.([0-9]+))?(?:[eE]([+-]?[0-9]+))?")
 
 
 class Num:
-    """A JSON number: source text plus exact value."""
+    """A JSON number: source text plus exact value as (negative, digits, exponent) with the digits
+    stripped of leading and trailing zeros, so equal values compare equal whatever their spelling and
+    any exponent is representable (CORE-SRV-040: payloads are not interpreted)."""
 
     __slots__ = ("raw", "value")
 
     def __init__(self, raw: str):
         self.raw = raw
-        self.value = Decimal(raw)  # ValueError-like errors are mapped by parse()
+        sign, whole, frac, exp = _NUM_RE.fullmatch(raw).groups()  # json.loads only hands over valid numbers
+        digits = (whole + (frac or "")).lstrip("0")
+        exponent = int(exp or 0) - len(frac or "")
+        stripped = digits.rstrip("0")
+        exponent += len(digits) - len(stripped)
+        self.value = (False, "", 0) if not stripped else (bool(sign), stripped, exponent)
 
 
 def _reject_constant(name: str):
@@ -30,8 +40,6 @@ def parse(text: str):
         return json.loads(text, parse_int=Num, parse_float=Num, parse_constant=_reject_constant)
     except RecursionError as exc:
         raise ValueError("nesting too deep") from exc
-    except ArithmeticError as exc:  # Decimal could not represent a number
-        raise ValueError("number out of range") from exc
 
 
 def quote(value) -> str:

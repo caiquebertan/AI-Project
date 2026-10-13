@@ -1,4 +1,5 @@
 """Error bodies, codes, statuses and precedence: CORE-ERR-001, CORE-ERR-002, section 1 routing (404, 405)."""
+import json
 import unittest
 from unittest import mock
 
@@ -39,13 +40,48 @@ class RoutingErrors(ServerTestCase, unittest.TestCase):
         self.assertEqual(status, 404)
         self.assertIn(b"not_found", body)
 
-    def test_CORE_ERR_001_garbage_request_lines_still_get_a_json_error_body(self):
-        for raw in (b"GARBAGE\r\n\r\n", b"GET /v1/info HTTP/9.9\r\nHost: t\r\n\r\n", b"GET /" + b"a" * 70000 + b" HTTP/1.1\r\n\r\n"):
-            status, headers, body = raw_exchange(self.srv.port, raw)
-            self.assertGreaterEqual(status, 400, raw[:40])
-            self.assertLess(status, 500, raw[:40])
-            self.assertEqual(headers.get("content-type"), "application/json; charset=utf-8")
-            self.assertIn(b'"error"', body)
+    S9_CASES = {
+        "garbage line": b"GARBAGE\r\n\r\n",
+        "two-word line": b"GET /v1/info\r\n\r\n",
+        "two-word line, no blank line": b"GET /v1/users\r\n",
+        "empty request line": b"\r\n\r\n",
+        "leading blank line": b"\r\nGET /v1/info HTTP/1.1\r\nHost: t\r\n\r\n",
+        "HTTP/0.9": b"GET /v1/info HTTP/0.9\r\nHost: t\r\n\r\n",
+        "HTTP/1.0": b"GET /v1/info HTTP/1.0\r\nHost: t\r\n\r\n",
+        "HTTP/2.0": b"GET /v1/info HTTP/2.0\r\nHost: t\r\n\r\n",
+        "HTTP/9.9": b"GET /v1/info HTTP/9.9\r\nHost: t\r\n\r\n",
+        "lowercase version": b"GET /v1/info http/1.1\r\nHost: t\r\n\r\n",
+        "two spaces in the line": b"GET  /v1/info HTTP/1.1\r\nHost: t\r\n\r\n",
+        "bare LF request line": b"GET /v1/info HTTP/1.1\nHost: t\n\n",
+        "bad method token": b"G(T /v1/info HTTP/1.1\r\nHost: t\r\n\r\n",
+        "header without colon": b"GET /v1/info HTTP/1.1\r\nHost: t\r\nBad Header\r\n\r\n",
+        "non-ASCII header name": b"GET /v1/info HTTP/1.1\r\nHost: t\r\n\xff: y\r\n\r\n",
+        "space in header name": b"GET /v1/info HTTP/1.1\r\nHost: t\r\nX Y: 1\r\n\r\n",
+        "obs-fold": b"GET /v1/info HTTP/1.1\r\nHost: t\r\nX: a\r\n b\r\n\r\n",
+        "NUL in a header value": b"GET /v1/info HTTP/1.1\r\nHost: t\r\nX: a\x00b\r\n\r\n",
+        "bare LF header line": b"GET /v1/info HTTP/1.1\r\nHost: t\nX: 1\r\n\r\n",
+        "space before the colon, body unread": b"GET /v1/info HTTP/1.1\r\nHost: t\r\nContent-Length : 5\r\n\r\nhello",
+        "no Host": b"GET /v1/info HTTP/1.1\r\n\r\n",
+        "two Host headers": b"GET /v1/info HTTP/1.1\r\nHost: a\r\nHost: b\r\n\r\n",
+        "request line over the limit": b"GET /" + b"a" * 70000 + b" HTTP/1.1\r\nHost: t\r\n\r\n",
+        "header line over the limit": b"GET /v1/info HTTP/1.1\r\nHost: t\r\nX: " + b"a" * 70000 + b"\r\n\r\n",
+        "too many headers": b"GET /v1/info HTTP/1.1\r\nHost: t\r\n" + b"".join(b"X%d: 1\r\n" % i for i in range(150)) + b"\r\n",
+    }
+
+    def test_CORE_ERR_001_every_request_that_is_not_valid_http_1_1_is_400_malformed_request_and_closes(self):
+        """Decision 0018, S-9. Each case is followed by a valid request pipelined on the same connection:
+        the server must close, not answer it (and above all not misread the unread bytes)."""
+        follow_up = b"GET /v1/users HTTP/1.1\r\nHost: t\r\n\r\n"
+        for name, raw in self.S9_CASES.items():
+            responses = harness.exchange_all(self.srv.port, raw + follow_up)
+            self.assertEqual(len(responses), 1, (name, [r[0] for r in responses]))
+            status, headers, body = responses[0]
+            self.assertEqual(status, 400, name)
+            self.assertEqual(json.loads(body)["error"]["code"], "malformed_request", name)
+            self.assertEqual(headers.get("content-type"), "application/json; charset=utf-8", name)
+            self.assertEqual(headers.get("connection"), "close", name)
+            self.assertEqual(harness.error_problems(status, headers, body), [], name)
+            self.assertEqual(self.c.info().status, 200, name)  # the server is unharmed, on a new connection
 
     def test_CORE_ERR_001_a_server_bug_is_500_internal_error_with_the_error_body(self):
         with mock.patch("aware_server.api.info", side_effect=RuntimeError("boom")):

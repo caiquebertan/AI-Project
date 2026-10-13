@@ -29,7 +29,7 @@ Hard rule: **no agent ever hand-edits `clients/*`.** A defect in generated code 
 | ORC | Orchestrator / manager (main session) | session model | Plan, `STATE.json`, run log, rendering prompts from templates, triage, diff snapshots, gates, parallelism, retros, operator log | Writes production code |
 | PM | Product manager | Sonnet | WHAT: backlog (epics → features → stories); drafts `spec/core/client-behavior.md` + `spec/scenarios/`; `docs/product/TRACEABILITY.md` (ACs as references to spec IDs); handles acceptance exceptions | Technical design |
 | TL | Tech lead | **Opus always** | HOW: drafts `spec/core/protocol.md`, `server-behavior.md`, `schema/`, `spec/platform/*`; designs generator (`generator/conventions`, `templates`, `prompts`); server plan | Code |
-| DEV | Developer | **Opus** for first generation of a module/app and when interpretation or trying options is needed; **Sonnet** when the change maps objectively to an approved plan | Edits generator inputs and runs `/generate` (clients); writes `server/` + its simple unit tests | Hand-edits `clients/*`; writes robust/UI suites |
+| DEV | Developer | **Opus** for first generation of a module/app and when interpretation or trying options is needed; **Sonnet** when the change maps objectively to an approved plan | Edits generator inputs and runs `/generate` (clients); writes `server/` + its simple unit tests and, in the light server chain (§5.5), the server's protocol tests | Hand-edits `clients/*`; writes robust/UI suites |
 | REV | Reviewer | Sonnet; **Opus if changed lines > 400**, first generation of a module, or concurrency/threading paths | Review report: `blocker` / `nit` / `design-concern`, from magic strings/numbers to race conditions and wrong-thread calls | Fixes code |
 | QA | QA engineer | Opus to design a suite (once per app/suite); Sonnet to extend one | External AC checks in `tests/` (protocol, interop, e2e); test requirements for in-project unit/UI tests, delivered as generator conventions (Q8) | Changes production code |
 | OP | Operator (human) | — | G0, G1, G2; backlog approval once | — |
@@ -65,13 +65,19 @@ Every launch is logged with `model`, `model_id`, `reason` (§8).
 |---|---|---|---|
 | **P0 Harness** | Agent role files `.claude/agents/{pm,tech-lead,developer,reviewer,qa}.md`; prompt templates `generator/prompts/`; scripts `generator/scripts/` (`snapshot-diff`, `count-lines`, `run-log`, `check-headers`, `check-trace`, `regen-check`, `lint-commits`, `preflight`); `/pipeline` + `/generate` commands, `generator/RUN.md` fallback; `STATE.json` + run-log schemas; README/AGENTS updates | OP reviews harness | Dry run of `/pipeline` on a stub feature passes E-WF-1 |
 | **P1 Backlog + core spec** | PM backlog (F1 identity, F2 send/receive, F3 offline queue/flush, F4 interop, F5 reactions extension) + TRACEABILITY skeleton; decision records (transport = HTTP + polling/long-poll with per-recipient cursor; message identity; ordering; delivery/dedupe; generic-relay `type`+payload; app-controlled offline); `spec/core/*` with `CORE-xxx` ids, `schema/`, Alice/Bob expected states, test hooks (test tags / `data-testid`, JVM-testable Android core module) | OP approves backlog once; **G0** spec v0.1.0 | `check-trace`: every BR/SC has a spec id |
-| **P2 Server** (light chain) | TL-lite plan → DEV server + `tests/protocol` → REV | G1-light | E-PROTO-1 green |
+| **P2 Server** (light server chain, §5.5) | DEV (Sonnet; Opus if it needs interpretation) writes `server/` and its protocol tests in `tests/protocol` → ONE Sonnet REV round. No TL plan, no QA agent, no PM acceptance | none: no G1 (G0 already covers the spec) | E-PROTO-1 green |
 | **P3 Generator v1** | TL generator design (templates for build infra and module skeletons, conventions per platform, generation order, self-repair bound, manifest) → DEV implements → `preflight --strict` passes on the operator's machine → first `/generate android` + `/generate web` (parallel worktrees, run by the operator locally, §5.4) | **G1** | Both clients build + in-project tests pass (run on the operator's machine, §5.4) |
 | **P4 Feature loops** | F1 → F3 via §5 | per §5 | per §5 |
-| **P5 Interop** | QA `tests/interop/` runs Alice/Bob both pairings (android↔web) against the real server | — | E-INTEROP-1 green ×3 |
-| **P6 Evolution demo** | F5 reactions as `spec/extensions/reactions.md` → `/generate` with no prompt changes | G0 | E-EVOL-1 |
+| **P5 Interop** | QA `tests/interop/` runs Alice/Bob against the real server. Required pairings: web↔web (through the UI) and Android driver (Alice) ↔ web UI (Bob), the Android side being the generated Android JVM driver (`spec/platform/android.md`). Other pairings are optional | — | E-INTEROP-1 green ×3 |
+| **P6 Evolution demo** | **First thing cut if time is short; only after P5 passes** (§4.1). F5 reactions as `spec/extensions/reactions.md` → `/generate` with no prompt changes | G0 | E-EVOL-1 |
 | **P7 Regen verification** | `regen-check` from a fresh clone ×2; operator repeats once following only README | OP | E-PIPE-1 |
 | **P8 Packaging** | Final README / DESIGN / AGENTS / FUTURE (from retros); lint scripts; archive; unzip + regen in clean sandbox | OP final review | Submitted |
+
+### 4.1 Cut order
+The phase order stays P5 → P6 → P7 → P8. If time runs short, cut in this order and record each cut in the retro and the README:
+1. **P6 evolution demo (F5 reactions)** goes first, and only after P5 passes; it is never started while interop is red.
+2. **Message-time display** (it is outside the brief) goes second.
+Nothing else is cut: core messaging (D1), interop (F4), the regeneration check (P7) and packaging (P8) are the brief.
 
 ## 5. Per-feature state machine
 
@@ -121,6 +127,9 @@ Caps, the §2 reviewer threshold (400 changed lines) and the §6 split threshold
 ### 5.4 Environment (decision 0011, `docs/ENVIRONMENT.md`)
 Agents in the cloud workspace cannot build or test clients (no Android SDK; npm, Maven, Google Maven and Gradle registries unreachable). Steps that need a client build (`/generate` with build and test, in-project tests, Playwright, Android core driver, S6b regen-check, interop) run on the **operator's machine** with Claude Code locally. ORC then stops, gives the operator the exact command and what to send back or commit, and logs it as an operator step (`decided_by: operator`). An agent never reports a client build or test as passing without a log from that machine. Python-only work (harness, server, protocol tests) runs in the sandbox.
 
+### 5.5 Server chain (P2, light)
+The server is built in the **light server chain**: DEV (Sonnet, or Opus if the work needs interpretation) writes `server/` and its protocol tests; REV (Sonnet) runs **one** review round; then ORC treats QA and acceptance as satisfied by green protocol tests (E-PROTO-1). There is **no TL plan, no QA agent and no PM acceptance**, and no G1 (G0 already covers the spec). The review cap stays 3 (§5.2) but one round is expected; a second blocker round is a retro item. In the state machine the server is a one-app feature (`--apps server --chain light`) and ORC sends S5 `green` and S6 `met` itself once the protocol tests pass.
+
 ## 6. Diff snapshot rule
 1. Before every handoff ORC commits (WIP commits allowed) so the diff is commit-addressed, then runs `snapshot-diff` → `diff.patch` + `diff.meta.json` `{base_sha, head_sha, worktree, porcelain_clean, patch_sha256, numstat, changed_lines, created_at, stage}`.
 2. `changed_lines` = insertions + deletions from `git diff --numstat base...head`, excluding lockfiles, wrapper/binaries and `.generated` manifests (`count-lines`). This value drives the REV model rule.
@@ -164,7 +173,7 @@ Rendered at S7 from `run.jsonl` (stage table, counters, models, durations, backw
 | E-QA-1 | Every `CORE-xxx` MUST has ≥1 test carrying its id | `check-trace` over JUnit XML / Playwright JSON |
 | E-PM-3 | Every AC → passing test id | `check-trace` |
 | E-PROTO-1 | Server conforms to schema + server-behavior | `tests/protocol` (pytest) |
-| E-INTEROP-1 | Alice/Bob step states match spec, android↔web both pairings | `tests/interop/run.sh` |
+| E-INTEROP-1 | Alice/Bob step states match spec for the required pairings: web↔web (through the UI) and Android driver (Alice) ↔ web UI (Bob); other pairings optional | `tests/interop/run.sh` |
 | E-BOUND-1 | `/generate` writes only inside `clients/<app>` | `git status --porcelain` after regen |
 | E-LOCAL-1 | No external hosts | grep for non-localhost / 10.0.2.2 URLs |
 | E-DET-1 | Two regens: same file set per module, same test results | `regen-check` ×2 |

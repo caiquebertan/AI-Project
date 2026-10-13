@@ -60,11 +60,11 @@ On G0 approve, tag the spec: `git tag spec-v<X.Y.Z>`. Never decide a gate yourse
 - At the end, summarise blocked features and flagged approvals for the operator. A blocked feature resumes with `transition --event unblock --decided-by operator`.
 
 ## 5. Commits (WORKFLOW §8)
-One commit per stage output on `feat/<id>`; WIP commits are allowed before a snapshot. Author is the agent that produced the output, committer stays the operator (git config):
+One commit per stage output on `feat/<id>`; WIP commits are allowed before a snapshot. Author and committer are both the operator (decision 0015): commit with the configured git identity, never `--author` or `GIT_AUTHOR_*` overrides. The agent that produced the output is recorded only in the trailers, and the `Agent` trailer is what marks a commit as an agent commit:
 ```
-git commit --author="Aware Agent (<ROLE>/<model_id>) <agent@aware.local>" -F <msgfile>
+git commit -F <msgfile>
 ```
-Subject `<area>: <what>`; trailers in one block: `Area`, `Boundary: generated|maintained`, `Authored-By-Role: agent`, `Agent: <ROLE>`, `Model: <model_id>`, `Stage: <stage>`, `Feature: <id>`, `Approved-By: operator` (gate commits only), `Refs: OM-nnnn`.
+Subject `<area>: <what>`; trailers in one block: `Area`, `Boundary: generated|maintained`, `Authored-By-Role: agent`, `Agent: <ROLE>` (PM, TL, DEV, REV, QA or ORC), `Model: <model_id>`, `Stage: <stage>`, `Feature: <id>`, `Approved-By: operator` (gate commits only), `Refs: OM-nnnn`.
 Generated output gets its own commit: `regen(<app>): spec X.Y.Z @ gen <sha>` with `Boundary: generated`. Never stage `spec/` and `clients/` in one commit. Never commit `.work/`. Before merging run `$S/lint_commits.py --range main..HEAD`.
 
 ## 6. S7 Retro and merge

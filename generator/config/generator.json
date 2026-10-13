@@ -121,8 +121,14 @@
   },
   "commits": {
     "$comment": "lint_commits.py (E-PIPE-3), trailers per WORKFLOW §8. Feature is required at feature stages (feature_stage_regex) and optional at gates; when present it is a feature id (F1.., or the core delivery D1) or a phase id (P0..P8).",
-    "agent_author_regex": "^Aware Agent \\((?P<role>[A-Z]+)/(?P<model>[^)]+)\\)$",
-    "agent_author_prefix": "Aware Agent",
+    "agent_roles": [
+      "ORC",
+      "PM",
+      "TL",
+      "DEV",
+      "REV",
+      "QA"
+    ],
     "required_trailers": [
       "Area",
       "Boundary",

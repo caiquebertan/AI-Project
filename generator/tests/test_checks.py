@@ -216,7 +216,8 @@ class RegenCheck(unittest.TestCase):
             self.assertFalse((Path(tmp) / ".work").exists())
 
 
-AGENT = {"GIT_AUTHOR_NAME": "Aware Agent (DEV/test-model)", "GIT_AUTHOR_EMAIL": "agent@aware.local"}
+# Decision 0015: every commit is authored by the operator identity; the Agent trailer carries the role.
+AGENT = None
 GOOD = """generator: add thing
 
 Body.
@@ -252,10 +253,12 @@ class LintCommits(unittest.TestCase):
         commit_file(self.repo, "generator/b.txt", "2", "generator: no trailers\n\nBody only.", env=AGENT)
         bad_agent = GOOD.replace("Agent: DEV", "Agent: REV").replace("Stage: P0\n", "")
         commit_file(self.repo, "generator/c.txt", "3", bad_agent, env=AGENT)
-        res = run_script("lint_commits.py", "--cwd", self.repo)
+        res = run_script("lint_commits.py", "--cwd", self.repo)  # default: only commits with an Agent trailer
         self.assertEqual(res.returncode, lib.EXIT_FAIL)
-        self.assertIn("missing trailer Area", res.stdout)
-        self.assertIn("Agent trailer REV != author role DEV", res.stdout)
+        self.assertIn("1/2 commit(s) OK", res.stdout)
+        self.assertIn("missing trailer Stage (required for REV)", res.stdout)
+        res = run_script("lint_commits.py", "--cwd", self.repo, "--range", "main~2..main")
+        self.assertIn("1/2 commit(s) OK", res.stdout)  # the trailer-less commit is not an agent commit
 
     def test_spec_and_clients_in_one_commit(self):
         (self.repo / "spec").mkdir()
@@ -268,15 +271,14 @@ class LintCommits(unittest.TestCase):
 
     def test_clients_commit_needs_regen_subject(self):
         sha = commit_file(self.repo, "clients/web/a.ts", "y", GOOD, env=AGENT)
-        problems = lint_commits.lint(lint_commits.load_commits(self.repo, f"{sha}~1..{sha}", "Aware")[0],
+        problems = lint_commits.lint(lint_commits.load_commits(self.repo, f"{sha}~1..{sha}")[0],
                                      CONFIG["commits"])
         self.assertTrue(any("regen(<app>)" in p for p in problems))
         self.assertTrue(any("Boundary is not generated" in p for p in problems))
 
-    def lint_one(self, msg, name="Aware Agent (PM/test-model)", path="spec/x.md", strict=False):
-        env = {**AGENT, "GIT_AUTHOR_NAME": name}
-        sha = commit_file(self.repo, path, msg, msg, env=env)
-        commit = lint_commits.load_commits(self.repo, f"{sha}~1..{sha}", "Aware")[0]
+    def lint_one(self, msg, path="spec/x.md", strict=False):
+        sha = commit_file(self.repo, path, msg, msg, env=AGENT)
+        commit = lint_commits.load_commits(self.repo, f"{sha}~1..{sha}")[0]
         return lint_commits.lint(commit, CONFIG["commits"], strict)
 
     def test_gate_and_feature_stage_rules(self):
@@ -297,11 +299,33 @@ class LintCommits(unittest.TestCase):
         single = GOOD.replace("\n\nCo-Authored-By", "\nCo-Authored-By")
         self.assertEqual(lint_commits.trailer_blocks(single), 1)
         self.assertEqual(lint_commits.trailer_blocks(GOOD), 2)
-        self.assertEqual(self.lint_one(GOOD, name="Aware Agent (DEV/test-model)", path="generator/s.txt"), [])
-        strict = self.lint_one(GOOD, name="Aware Agent (DEV/test-model)", path="generator/t.txt", strict=True)
+        self.assertEqual(self.lint_one(GOOD, path="generator/s.txt"), [])
+        strict = self.lint_one(GOOD, path="generator/t.txt", strict=True)
         self.assertEqual(strict, ["trailers are split over several paragraphs (use one final block)"])
-        self.assertEqual(self.lint_one(single, name="Aware Agent (DEV/test-model)", path="generator/u.txt",
+        self.assertEqual(self.lint_one(single, path="generator/u.txt",
                                        strict=True), [])
+
+    def test_commit_without_agent_trailer_is_not_an_agent_commit(self):
+        no_agent = GOOD.replace("Agent: DEV\n", "")
+        self.assertEqual(self.lint_one(no_agent, path="generator/na.txt"), [])
+        commit_file(self.repo, "generator/nb.txt", "1", no_agent, env=AGENT)
+        commit_file(self.repo, "generator/nc.txt", "2", GOOD, env=AGENT)
+        default = lint_commits.load_commits(self.repo)
+        self.assertEqual(len(default), 1)
+        self.assertIn("Agent", lint_commits.parse_trailers(default[0]["body"]))
+        res = run_script("lint_commits.py", "--cwd", self.repo)
+        self.assertIn("1/1 commit(s) OK", res.stdout)
+
+    def test_unknown_agent_role_fails(self):
+        problems = self.lint_one(GOOD.replace("Agent: DEV", "Agent: XYZ"), path="generator/x.txt")
+        self.assertTrue(any("Agent 'XYZ' not in" in p for p in problems))
+
+    def test_exclusivity_applies_without_agent_trailer(self):
+        (self.repo / "spec").mkdir()
+        (self.repo / "spec" / "x.md").write_text("x")
+        sha = commit_file(self.repo, "clients/web/b.ts", "y", "plain human commit")
+        problems = lint_commits.lint(lint_commits.load_commits(self.repo, f"{sha}~1..{sha}")[0], CONFIG["commits"])
+        self.assertEqual(problems, ["touches both spec/ and clients/"])
 
     def test_human_commits_skip_trailer_rules(self):
         commit_file(self.repo, "docs/x.md", "x", "docs: human note")

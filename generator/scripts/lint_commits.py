@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """Commit attribution lint (E-PIPE-3; rules in WORKFLOW §8, values in config "commits").
 
-Checks agent-authored commits (author `Aware Agent (<ROLE>/<model>)`) for:
-  * required trailers (Area, Boundary, Authored-By-Role, Agent, Model), Agent/Model
-    matching the author, valid Boundary / Authored-By-Role / Refs values;
-  * Stage for pipeline roles; Feature for feature stages; Approved-By at gates;
+Decision 0015: the operator is author and committer of every commit; agents appear only in
+trailers. An agent commit is a commit with an `Agent` trailer (the author name is not used).
+Checks agent commits for:
+  * required trailers (Area, Boundary, Authored-By-Role, Agent, Model), `Agent` a known role
+    (config commits.agent_roles), valid Boundary / Authored-By-Role / Refs values;
+  * Stage for pipeline roles (role = the Agent trailer); Feature for feature stages;
+    Approved-By at gates;
   * commits touching clients/ are `regen(<app>): ...` with Boundary: generated.
-Checks every commit in range for the rule that no commit touches both spec/ and clients/.
+Checks EVERY commit in range for the rule that no commit touches both spec/ and clients/.
 
 Canonical form: ALL trailers in one final block (git reads only the last paragraph as
 trailers). Trailers split over several trailing paragraphs are still understood so existing
@@ -15,7 +18,7 @@ optional at gates (a phase-level gate such as `Stage: G1` has none); when presen
 feature id (F1..) or a phase id (P0..P8).
 
 Examples:
-  lint_commits.py                      # every Aware Agent commit reachable from HEAD
+  lint_commits.py                      # every commit with an Agent trailer reachable from HEAD
   lint_commits.py --range main..HEAD   # every commit in the range
 """
 from __future__ import annotations
@@ -54,15 +57,17 @@ def parse_trailers(body: str) -> dict[str, list[str]]:
     return trailers
 
 
-def load_commits(cwd, rev_range: str | None, author_prefix: str) -> list[dict]:
-    args = ["log", f"--format=%H{SEP_FIELD}%an{SEP_FIELD}%B{SEP_RECORD}"]
-    args += [rev_range] if rev_range else [f"--author=^{author_prefix}", "HEAD"]
+def load_commits(cwd, rev_range: str | None = None) -> list[dict]:
+    """Commits in rev_range, or (default) the commits reachable from HEAD that have an Agent trailer."""
+    args = ["log", f"--format=%H{SEP_FIELD}%an{SEP_FIELD}%B{SEP_RECORD}", rev_range or "HEAD"]
     commits = []
     for rec in lib.git(args, cwd).split(SEP_RECORD):
         rec = rec.strip("\n")
         if not rec:
             continue
         sha, author, body = rec.split(SEP_FIELD, 2)
+        if not rev_range and "Agent" not in parse_trailers(body):
+            continue
         files = lib.git(["show", "--name-only", "--format=", "--no-renames", sha], cwd).split()
         commits.append({"sha": sha, "author": author, "body": body, "subject": body.splitlines()[0] if body else "",
                         "files": files})
@@ -74,20 +79,18 @@ def lint(commit: dict, rules: dict, strict_trailers: bool = False) -> list[str]:
     touched = [d for d in rules["exclusive_dirs"] if any(f.startswith(d) for f in commit["files"])]
     if len(touched) > 1:
         problems.append(f"touches both {' and '.join(touched)}")
-    m = re.match(rules["agent_author_regex"], commit["author"])
-    if not m:
-        return problems  # human commits: only the directory rule applies
     t = parse_trailers(commit["body"])
+    if "Agent" not in t:
+        return problems  # not an agent commit: only the directory rule applies
     if strict_trailers and trailer_blocks(commit["body"]) > 1:
         problems.append("trailers are split over several paragraphs (use one final block)")
     one = {k: v[0] for k, v in t.items()}
     for key in rules["required_trailers"]:
         if key not in t:
             problems.append(f"missing trailer {key}")
-    if one.get("Agent") and one["Agent"] != m["role"]:
-        problems.append(f"Agent trailer {one['Agent']} != author role {m['role']}")
-    if one.get("Model") and one["Model"] != m["model"]:
-        problems.append(f"Model trailer {one['Model']} != author model {m['model']}")
+    role = one.get("Agent", "")
+    if role and role not in rules["agent_roles"]:
+        problems.append(f"Agent '{role}' not in {rules['agent_roles']}")
     if one.get("Boundary") and one["Boundary"] not in rules["boundary_values"]:
         problems.append(f"Boundary '{one['Boundary']}' not in {rules['boundary_values']}")
     if one.get("Authored-By-Role") and one["Authored-By-Role"] not in rules["role_values"]:
@@ -96,8 +99,8 @@ def lint(commit: dict, rules: dict, strict_trailers: bool = False) -> list[str]:
         if not re.match(rules["refs_regex"], ref):
             problems.append(f"bad Refs value '{ref}'")
     stage = one.get("Stage", "")
-    if m["role"] in rules["stage_roles"] and not stage:
-        problems.append(f"missing trailer Stage (required for {m['role']})")
+    if role in rules["stage_roles"] and not stage:
+        problems.append(f"missing trailer Stage (required for {role})")
     if stage and re.match(rules["feature_stage_regex"], stage) and "Feature" not in t:
         problems.append(f"missing trailer Feature (stage {stage})")
     if one.get("Feature") and not re.match(rules["feature_id_regex"], one["Feature"]):
@@ -114,12 +117,12 @@ def lint(commit: dict, rules: dict, strict_trailers: bool = False) -> list[str]:
 
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--range", help="git rev range, e.g. main..HEAD (default: all Aware Agent commits)")
+    p.add_argument("--range", help="git rev range, e.g. main..HEAD (default: all commits with an Agent trailer)")
     p.add_argument("--cwd", default=".", help="repository to inspect")
     p.add_argument("--strict-trailers", action="store_true", help="also fail trailers split over several paragraphs")
     args = p.parse_args(argv)
     rules = lib.load_config()["commits"]
-    commits = load_commits(args.cwd, args.range, rules["agent_author_prefix"])
+    commits = load_commits(args.cwd, args.range)
     bad = 0
     for c in commits:
         problems = lint(c, rules, args.strict_trailers)

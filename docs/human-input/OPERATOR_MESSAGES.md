@@ -4,14 +4,14 @@ This file records messages written **only by the human operator** (Caique Bertan
 
 Rules:
 - Messages are pasted **verbatim** — typos, wording and formatting are not corrected.
-- Each entry has a date (America/Sao_Paulo time) and a short note on what it triggered. The note is written by the AI; the message body is not.
+- Each entry has a date (America/Sao_Paulo time). Lines starting with **AI note:** are written by the AI orchestrator; everything inside the `text` block is the operator's own words.
 - Append new entries at the bottom; never edit past entries.
 
 ---
 
 ## 2026-10-13 12:08 — Initial repo shell
 
-_Triggered: initial folder structure, brief transcription, project context update._
+**AI note:** _Triggered: initial folder structure, brief transcription, project context update._
 
 ````text
 can you structure a shell of our folder to this folder I pointed out? Bring the files we have, update the documents if needed, so we can start to work on this
@@ -21,7 +21,7 @@ can you structure a shell of our folder to this folder I pointed out? Bring the 
 
 ## 2026-10-13 12:11 — Git setup
 
-_Triggered: `git init`, initial commit._
+**AI note:** _Triggered: `git init`, initial commit._
 
 ````text
 create the git setup so we can start splitting the commits as well. And you can call this first initial commit or something like that
@@ -31,7 +31,7 @@ create the git setup so we can start splitting the commits as well. And you can 
 
 ## 2026-10-13 12:51 — Agent pipeline workflow definition
 
-_Triggered: `generator/WORKFLOW.md` (AI-readable translation of the instruction below), this log, `docs/retros/`, and the Opus gap-analysis agent run (`docs/planning/workflow-gap-analysis.md`)._
+**AI note:** _Triggered: `generator/WORKFLOW.md` (AI-readable translation of the instruction below), this log, `docs/retros/`, and the Opus gap-analysis agent run (`docs/planning/workflow-gap-analysis.md`)._
 
 ````text
 I'll present to you a human written instruction of all the workflow I want to build; I want you to translate that to a more ai readable file, in a MD, so you can have clear knowledge of triggers, workflow, gaps and evals you need to know and use. After creating this document, Run an opus agent to create an scratch of steps and gaps we have in the current plan (checking against project context and initial doc). I expect this agent to have questions to write the plan, because we will have gaps and he needs to account all of them. Like moving back from a step to another one, or even if some specific flow is really necessary, and he can suggest changes to the workflow... Also, I want to have logs of each feature delivered, the gaps we found, what we can improve for the next ticket and etc, like a small retrospective;
@@ -67,4 +67,31 @@ Also you need to create this structure in a way its replicable and possible to b
 The plan to this structure is also going to account a plan from PM to track the apps like epics, features and stories; And we are going to use our pipeline to work on each feature at a time, and you can launch agents parallel when we have enough information to know for sure they're not going to touch the same files; 
 
 For all the loop, at all steps, always have a tmp file of the diff we're working on it, so the next agent doesn't need to get the diff again; You're responsible to make sure if we're moving to next step, the diff is up to date;
+````
+
+---
+
+## 2026-10-13 13:19 — Questions on gap-analysis Q19 and Q21
+
+**AI note:** _Triggered: explanation of Android verification options (Q19) and evolution demo options (Q21)._
+
+````text
+first
+Q19: can you give me more details on the options?
+Q21: I need more details as well
+````
+
+---
+
+## 2026-10-13 13:24 — Decisions on gap-analysis questions
+
+**AI note:** _Triggered: `docs/decisions/0002-workflow-gap-answers.md`, web stack decision accepted; pipeline-vs-generator relationship (Q1) sent back to the operator for confirmation._
+
+````text
+Ok, We can use this pipeline to finish the assignment, but then, we will have a generator flow only pointing to a single spec, that we can write as we write the apps; Does that sound feasible?
+
+You can take all the recommendations, including Q19 and Q21, note these comments below:
+
+Q8: option c, for external we can have the checks for the ACs, and in the projects we have the testing to the code, unit and ui;
+Q9: for the generated flow, there will be no human gate, it will read the specs, build the plan and execute;
 ````

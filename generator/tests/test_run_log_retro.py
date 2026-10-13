@@ -18,7 +18,7 @@ class RunLogAndRetro(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
-        m = Machine(Machine.new_state(), CAPS, self.root)
+        m = Machine(Machine.new_state(), CAPS, self.root, regen_per_feature=True)
         m.start_feature("F9", "stub", ["web"], "light")
         m.transition("F9", "no_delta", log_extra={"spec_version": "0.1.0", "agent": "PM+TL"})
         m.transition("F9", "ok", app="web")

@@ -9,6 +9,7 @@ import awarelib as lib
 import check_headers
 import check_trace
 import lint_commits
+import regen_check
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
@@ -184,6 +185,20 @@ class RegenCheck(unittest.TestCase):
                 self.assertIn(word, res.stdout)
             self.assertFalse((Path(tmp) / ".work").exists())
 
+    def test_all_apps_run_in_order_each_in_a_fresh_checkout(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            res = run_script("regen_check.py", "--root", tmp, "--app", "all", "--dry-run")
+            out = res.stdout
+            self.assertLess(out.index("# regen-check android"), out.index("# regen-check web"))
+            adds = [ln for ln in out.splitlines() if "git worktree add" in ln]
+            self.assertEqual(len(adds), 2)
+            self.assertNotEqual(adds[0].split()[-2], adds[1].split()[-2])   # distinct worktrees
+
+    def test_combined_summary_names_every_app(self):
+        reports = [{"app": "android", "ok": True, "steps": []},
+                   {"app": "web", "ok": False, "steps": [{"step": "generate"}]}]
+        self.assertEqual(regen_check.summary(reports), "android PASS, web FAIL (generate)")
+
     def test_real_run_fails_loudly_while_unconfigured(self):
         if not CONFIG["generate_model"].startswith("TBD"):
             self.skipTest("model pinned; covered by P3 regen runs")
@@ -266,7 +281,7 @@ class LintCommits(unittest.TestCase):
     def test_phase_level_gate_needs_no_feature(self):
         gate = (GOOD.replace("Stage: P0", "Stage: G1\nApproved-By: operator").replace("Agent: DEV", "Agent: PM"))
         self.assertEqual(self.lint_one(gate), [])
-        for feature in ("F3", "P2"):
+        for feature in ("F3", "D1", "P2"):
             self.assertEqual(self.lint_one(gate.replace("Refs:", f"Feature: {feature}\nRefs:"), path="spec/z.md"), [])
         self.assertIn("Feature 'X9' is neither a feature id nor a phase id",
                       self.lint_one(gate.replace("Refs:", "Feature: X9\nRefs:"), path="spec/w.md"))

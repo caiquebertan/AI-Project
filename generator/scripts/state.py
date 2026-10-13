@@ -3,13 +3,16 @@
 
 State lives in .work/STATE.json (schema: generator/schemas/state.schema.json).
 Feature-level stages: S0 G0 S1 [S2 G1] APPS S7 DONE, plus G2.
-Inside APPS each app runs its own S3 S4 S5 S6 S6b, so apps can proceed in
-parallel worktrees (§7). Every transition is checkpointed to STATE.json and
+Inside APPS each app runs its own S3 S4 S5 S6 [S6b], so apps can proceed in
+parallel worktrees (§7). S6b (regen-check) is only visited when config
+regen.per_feature is true; by default S6 `met` finishes the app and the
+regeneration check runs once at P7. A "feature" id is any unit of delivery:
+F1..F5, the core delivery D1, or a phase id such as P3. Every transition is checkpointed to STATE.json and
 appended to docs/runs/<feature>/run.jsonl.
 
 Examples:
   state.py init [--autonomous]
-  state.py start-feature F1 --title "..." --apps android,web --chain full
+  state.py start-feature D1 --title "Core messaging" --apps android,web --chain full
   state.py transition --event delta
   state.py transition --app web --event blockers --expect-stage S4
   state.py transition --event approve --decided-by operator --log-extra '{"operator_msg_ref":"OM-0010"}'
@@ -69,9 +72,11 @@ def default_state_path(root: Path) -> Path:
 
 
 class Machine:
-    def __init__(self, state: dict, caps: dict, root: Path | None = None, log: bool = True):
+    def __init__(self, state: dict, caps: dict, root: Path | None = None, log: bool = True,
+                 regen_per_feature: bool = False):
         self.s = state
         self.caps = caps
+        self.regen_per_feature = regen_per_feature
         self.root = root
         self.log = log and root is not None
 
@@ -82,10 +87,11 @@ class Machine:
                 "features": {}, "updated_at": lib.now_iso()}
 
     @classmethod
-    def load(cls, path: Path, caps: dict, root: Path | None = None, log: bool = True) -> "Machine":
+    def load(cls, path: Path, caps: dict, root: Path | None = None, log: bool = True,
+             regen_per_feature: bool = False) -> "Machine":
         state = lib.read_json(path)
         cls.check(state)
-        return cls(state, caps, root, log)
+        return cls(state, caps, root, log, regen_per_feature)
 
     @staticmethod
     def check(state: dict) -> None:
@@ -152,6 +158,12 @@ class Machine:
         for a in f["apps"].values():
             self.set_app_stage(a, "S3")
             a["after_fix"] = None
+
+    def finish_app(self, f: dict, a: dict) -> None:
+        """App is done; the feature moves to S7 once every app is."""
+        self.set_app_stage(a, "DONE")
+        if all(x["stage"] == "DONE" for x in f["apps"].values()):
+            self.set_feature_stage(f, "S7")
 
     def to_stage(self, f: dict, stage: str) -> None:
         """Move back to a feature-level stage; every app waits for the next APPS entry."""
@@ -446,7 +458,10 @@ class Machine:
                 self.enter_g2(f, f"QA exhausted: {detail}", app=app, app_stage="S5")
         elif st == "S6":
             if ev == "met":
-                self.set_app_stage(a, "S6b")
+                if self.regen_per_feature:
+                    self.set_app_stage(a, "S6b")
+                else:
+                    self.finish_app(f, a)
             elif ev == "unmet_code":
                 self.bump(a, "accept_reopen")
                 if self.exceeded(a, "accept_reopen"):
@@ -459,9 +474,7 @@ class Machine:
                 f["backlog_notes"].append(detail or "(no detail)")
         elif st == "S6b":
             if ev == "green":
-                self.set_app_stage(a, "DONE")
-                if all(x["stage"] == "DONE" for x in f["apps"].values()):
-                    self.set_feature_stage(f, "S7")
+                self.finish_app(f, a)
             else:
                 self.bump(a, "regen_check")
                 if self.exceeded(a, "regen_check"):
@@ -573,7 +586,7 @@ def main(argv=None) -> int:
     i.add_argument("--force", action="store_true", help="overwrite an existing STATE.json")
     m = sub.add_parser("set-mode", help="switch interactive/autonomous")
     m.add_argument("mode", choices=["interactive", "autonomous"])
-    sf = sub.add_parser("start-feature", help="register a feature at S0")
+    sf = sub.add_parser("start-feature", help="register a feature or delivery (F1, D1, P3, ...) at S0")
     sf.add_argument("feature")
     sf.add_argument("--title", default="")
     sf.add_argument("--apps", required=True, help="comma list, e.g. android,web or server")
@@ -623,7 +636,8 @@ def main(argv=None) -> int:
     if not path.exists():
         lib.die(f"{path} not found; run `state.py init` first", lib.EXIT_USAGE)
     try:
-        mach = Machine.load(path, caps, root, log=not args.no_log)
+        mach = Machine.load(path, caps, root, log=not args.no_log,
+                            regen_per_feature=cfg["regen"]["per_feature"])
         if args.cmd == "set-mode":
             mach.s["mode"] = args.mode
         elif args.cmd == "start-feature":

@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Clean regeneration check (S6b; evals E-PIPE-1, E-BOUND-1).
+"""Clean regeneration check (project-level P7 tool; evals E-PIPE-1, E-BOUND-1).
+
+By default it runs once at the end (P7) for `--app all`. It is also the S6b stage when
+config regen.per_feature is true. Apps run one after the other in config order (android, then
+web), each in its own fresh checkout, and a failure in one does not stop the next; the combined
+result is one line per app plus the overall PASS/FAIL (exit 0 only if every app passed).
 
 Per app:
   1. fresh checkout of --ref (git worktree under .work/wt/, or --clone)
@@ -95,6 +100,18 @@ def execute(p: dict, root: Path, keep: bool) -> dict:
                 lib.git(["worktree", "remove", "--force", str(p["worktree"])], root, check=False)
 
 
+def summary(reports: list[dict]) -> str:
+    """One line for the combined result, e.g. `android PASS, web FAIL (generate)`."""
+    parts = []
+    for r in reports:
+        if r["ok"]:
+            parts.append(f"{r['app']} PASS")
+        else:
+            last = r["steps"][-1]["step"] if r["steps"] else "checkout"
+            parts.append(f"{r['app']} FAIL ({last})")
+    return ", ".join(parts)
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--app", default="all", help="app name from config, or 'all'")
@@ -133,7 +150,7 @@ def main(argv=None) -> int:
     out = root / cfg["regen"]["report_dir"] / f"regen-{stamp}.json"
     lib.write_json_atomic(out, {"ref": args.ref, "created_at": lib.now_iso(), "reports": reports})
     ok = all(r["ok"] for r in reports)
-    print(f"regen-check {'PASS' if ok else 'FAIL'}; report {out}")
+    print(f"regen-check {'PASS' if ok else 'FAIL'}: {summary(reports)}; report {out}")
     return lib.EXIT_OK if ok else lib.EXIT_FAIL
 
 

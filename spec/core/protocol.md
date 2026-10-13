@@ -70,8 +70,15 @@ Send form (E3 body): `{"id", "from", "to", "type", "payload", "created_at"}`. De
 - **CORE-ENV-003** — `from` MUST be the sender's canonical name and `to` the recipient's canonical name (CORE-NAME-001); `to` MAY equal `from` (a note to self).
 - **CORE-ENV-004** — `type` MUST match `^[a-z][a-z0-9_.-]{0,63}$`. Core types contain no `.`; extension types MUST be `<capability-id>.<name>` (§11).
 - **CORE-ENV-005** — `payload` MUST be a JSON object; its shape is defined by `type` (core: §6; extensions: their own spec).
-- **CORE-ENV-006** — `created_at` MUST be the sender's clock at compose time (CORE-HTTP-007); it is informational only and MUST NOT influence order, dedupe or validity beyond its format.
-- **CORE-ENV-007** — `seq` (integer ≥ 1) and `accepted_at` (server clock, CORE-HTTP-007) MUST be assigned by the server when it first accepts the envelope and MUST be identical in every later response or delivery of that envelope.
+- **CORE-ENV-006** — `created_at` MUST be the sender's `Clock` reading at compose time, in UTC (CORE-HTTP-007, CORE-TIME-001); it is informational only and MUST NOT influence order, dedupe or validity beyond its format.
+- **CORE-ENV-007** — `seq` (integer ≥ 1) and `accepted_at` (server clock in UTC, CORE-HTTP-007, CORE-TIME-001) MUST be assigned by the server when it first accepts the envelope and MUST be identical in every later response or delivery of that envelope.
+
+### 5.1 Time
+
+Operator decision OM-0010, decision 0012: instants are UTC everywhere; only text produced for the user is in the device's local time zone. Which instant is shown and in what format is client behavior ([`client-behavior.md`](client-behavior.md), PM); the rules below fix the representation and the conversion.
+
+- **CORE-TIME-001** — Every instant on the wire, in the local store, in state snapshots and in test fixtures MUST be a UTC string in the exact form `YYYY-MM-DDTHH:mm:ss.sssZ` (CORE-HTTP-007; never a local time, never a numeric offset such as `+09:00`); a client MUST store `accepted_at` with every message that has a `seq` and MUST convert to a local time zone only when it produces text for display.
+- **CORE-TIME-002** — The display conversion MUST obtain the device's time zone from the `TimeZone` provider and "now" from the `Clock` at the moment the text is produced (never cached from an earlier display), so a zone change takes effect at the next display; local wall time = the UTC instant plus the zone's UTC offset at that instant, fields are taken from that wall time with seconds and milliseconds dropped (truncated, not rounded), and the viewer's current local date is the date of "now" plus the zone's offset at "now".
 
 ## 6. Core type `text`
 
@@ -236,7 +243,7 @@ Single normative table; [`schema/constants.json`](schema/constants.json) MUST ho
 
 ## Appendix A — Worked trace of the Alice/Bob scenario (normative example)
 
-**Fixed test data.** Steps 1 and 2 use the brief's texts. The queued texts of steps 3 and 4 are fixed for test purposes as `Queued by Alice while offline` and `Queued by Bob while offline`. Message ids below are fixed for this trace and the schema examples only (real clients generate random UUIDs, CORE-ENV-002). Epoch `3f9a1c7e5b2d4086`. Timestamps are illustrative; nothing depends on them.
+**Fixed test data.** Steps 1 and 2 use the brief's texts. The queued texts of steps 3 and 4 are fixed for test purposes as `Queued by Alice while offline` and `Queued by Bob while offline`. Message ids below are fixed for this trace and the schema examples only (real clients generate random UUIDs, CORE-ENV-002). Epoch `3f9a1c7e5b2d4086`. The `accepted_at` values are fixed test data for displayed times (table "Displayed times" at the end of this appendix): A1 `2026-10-13T15:00:01.010Z`, B1 `2026-10-13T15:00:02.010Z`, A2 `2026-10-13T15:00:05.010Z`, B2 `2026-10-13T15:00:07.010Z`. `created_at` values are illustrative; nothing depends on them.
 
 | Label | id | from → to | text |
 |---|---|---|---|
@@ -270,7 +277,7 @@ Server: counter 1; mailbox bob [1:A1]; mailbox alice []. Alice view: A1(sent,1).
 ### Step 2 — Bob → Alice: B1
 | # | Client | Request | Response |
 |---|---|---|---|
-| 2.1 | Bob | `E3(B1)` | `201 {"seq":2,…}` |
+| 2.1 | Bob | `E3(B1)` | `201 {"seq":2,"accepted_at":"2026-10-13T15:00:02.010Z",…}` |
 | 2.2 | Alice | held `E4(alice, 0, 20)` returns | `200 {"messages":[B1 seq 2],"next_cursor":2}`; cursor 2; `E4(alice, 2, 20)` |
 
 Server: counter 2; bob [1:A1]; alice [2:B1]. Alice view: A1(sent,1), B1(received,2). Bob view: A1(received,1), B1(sent,2). Cursors: alice 2, bob 1.
@@ -288,7 +295,7 @@ Server unchanged. Bob view: A1(received,1), B1(sent,2), B2(pending).
 |---|---|---|---|
 | 5.1 | Alice | `POST /v1/session` | `200 {"name":"alice","epoch":"3f9a…","new_user":false}` (same epoch: no reset) → `online` |
 | 5.2 | Alice | `E4(alice, 2, 0)` | `200 {"messages":[],"next_cursor":2,"has_more":false}` (B2 is still in Bob's outbox) |
-| 5.3 | Alice | `E3(A2)` | `201 {"seq":3,…}`; outbox [] |
+| 5.3 | Alice | `E3(A2)` | `201 {"seq":3,"accepted_at":"2026-10-13T15:00:05.010Z",…}`; outbox [] |
 | 5.4 | Alice | `E4(alice, 2, 20)` | held |
 
 Server: counter 3; bob [1:A1, 3:A2]; alice [2:B1]. Alice view: A1(sent,1), B1(received,2), A2(sent,3). Bob view unchanged (offline). The step is complete when A2 is `sent` on Alice's client.
@@ -301,7 +308,7 @@ Server: counter 3; bob [1:A1, 3:A2]; alice [2:B1]. Alice view: A1(sent,1), B1(re
 |---|---|---|---|
 | 7.1 | Bob | `POST /v1/session` | `200 {"name":"bob","epoch":"3f9a…","new_user":false}` → `online` |
 | 7.2 | Bob | `E4(bob, 1, 0)` | `200 {"messages":[A2 with seq 3],"next_cursor":3,"has_more":false}` (example `poll-response.bob-step7.json`); cursor 3 |
-| 7.3 | Bob | `E3(B2)` | `201 {"seq":4,…}`; outbox [] |
+| 7.3 | Bob | `E3(B2)` | `201 {"seq":4,"accepted_at":"2026-10-13T15:00:07.010Z",…}`; outbox [] |
 | 7.4 | Bob | `E4(bob, 3, 20)` | held |
 
 Server: counter 4; bob [1:A1, 3:A2]; alice [2:B1, 4:B2]. Bob view: A1(received,1), B1(sent,2), A2(received,3), B2(sent,4). Alice view (still offline): A1(sent,1), B1(received,2), A2(sent,3) — she does **not** see B2 yet. Cursors: alice 2, bob 3.
@@ -313,6 +320,19 @@ Session (no reset) → `E4(alice, 2, 0)` returns B2 (seq 4), cursor 4 → outbox
 
 ### Variant — lost ack
 If in 5.3 Alice goes offline after the server accepted A2 but before the response is processed, A2 stays `pending`; on the next cycle `E3(A2)` returns `200` with `seq` 3 (CORE-MSG-001), and the result is identical to the trace above.
+
+### Displayed times (CORE-TIME-001, CORE-TIME-002)
+
+Fixed zones for this example: Alice's device at UTC−03:00 (IANA `America/Sao_Paulo`, no daylight saving time), Bob's device at UTC+09:00 (IANA `Asia/Tokyo`). Two values of "now": N1 = `2026-10-13T15:00:10.000Z` (right after step 7 / step 8) and N2 = `2026-10-14T15:00:00.000Z` (one day later). Format per the PM's behavior spec: `HH:mm`, or `YYYY-MM-DD HH:mm` when the message's local date differs from the viewer's current local date. A message without `seq` (`pending`, `failed`) shows no time.
+
+| Msg | `accepted_at` (UTC) | Alice local | Bob local | Alice at N1 (today 2026-10-13) | Bob at N1 (today 2026-10-14) | Alice at N2 (today 2026-10-14) | Bob at N2 (today 2026-10-15) |
+|---|---|---|---|---|---|---|---|
+| A1 | `2026-10-13T15:00:01.010Z` | 2026-10-13 12:00:01 | 2026-10-14 00:00:01 | `12:00` | `00:00` | `2026-10-13 12:00` | `2026-10-14 00:00` |
+| B1 | `2026-10-13T15:00:02.010Z` | 2026-10-13 12:00:02 | 2026-10-14 00:00:02 | `12:00` | `00:00` | `2026-10-13 12:00` | `2026-10-14 00:00` |
+| A2 | `2026-10-13T15:00:05.010Z` | 2026-10-13 12:00:05 | 2026-10-14 00:00:05 | `12:00` | `00:00` | `2026-10-13 12:00` | `2026-10-14 00:00` |
+| B2 | `2026-10-13T15:00:07.010Z` | 2026-10-13 12:00:07 | 2026-10-14 00:00:07 | `12:00` (after step 8) | `00:00` | `2026-10-13 12:00` | `2026-10-14 00:00` |
+
+Notes: the same instant shows a different local date for the two users (Bob's 00:00 is on the 14th); before step 8 Alice holds no B2; during steps 3–4 A2 and B2 are `pending` and show no time; order is by `seq` regardless of the times shown (CORE-SEQ-003).
 
 ## Appendix B — How an extension rides the envelope (non-normative)
 

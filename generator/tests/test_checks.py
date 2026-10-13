@@ -64,9 +64,15 @@ class CheckTrace(unittest.TestCase):
             self.assertEqual(res.returncode, 0, res.stderr)
             self.assertIn("ACs: 0/0 met", res.stdout)
 
-    def test_repo_template_parses_to_zero_rows(self):
-        text = (SCRIPTS.parents[1] / "docs" / "product" / "TRACEABILITY.md").read_text()
-        self.assertEqual(check_trace.parse_trace(text), [])
+    def test_repo_traceability_parses_and_refers_to_defined_spec_ids(self):
+        root = SCRIPTS.parents[1]
+        cfg = CONFIG["trace"]
+        rows = check_trace.parse_trace((root / cfg["file"]).read_text())
+        self.assertTrue(rows, "TRACEABILITY.md has no rows")
+        defined = check_trace.defined_ids(root / cfg["spec_dir"], cfg["spec_id_regex"])
+        for row in rows:
+            self.assertRegex(row["scope"], cfg["scope_regex"], f"line {row['line']}")
+            self.assertIn(row["spec"], defined, f"line {row['line']}: {row['spec']} is not defined in spec/")
 
 
 class CheckHeaders(unittest.TestCase):

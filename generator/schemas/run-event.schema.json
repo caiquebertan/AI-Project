@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Aware run-log event (one line of docs/runs/<feature>/run.jsonl)",
+  "description": "Fields per generator/WORKFLOW.md §8. Only ts, feature and event are required; everything else is filled when known.",
+  "type": "object",
+  "required": ["ts", "feature", "event"],
+  "additionalProperties": false,
+  "properties": {
+    "ts": {"type": "string"},
+    "feature": {"type": "string", "pattern": "^[A-Za-z0-9._-]+$"},
+    "app": {"type": "string"},
+    "stage": {"type": "string"},
+    "event": {"type": "string"},
+    "transition": {
+      "type": "object",
+      "properties": {
+        "from": {"type": "string"},
+        "to": {"type": "string"},
+        "app_from": {"type": ["string", "null"]},
+        "app_to": {"type": ["string", "null"]},
+        "status": {"type": "string"}
+      }
+    },
+    "agent": {"type": "string", "enum": ["ORC", "PM", "TL", "DEV", "REV", "QA", "OP", "PM+TL", "SCRIPT"]},
+    "model": {"type": "string"},
+    "model_id": {"type": "string"},
+    "model_reason": {"type": "string"},
+    "counters": {"type": "object"},
+    "base_sha": {"type": "string"},
+    "head_sha": {"type": "string"},
+    "changed_lines": {"type": "integer", "minimum": 0},
+    "spec_version": {"type": "string"},
+    "prompt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "inputs": {"type": "array", "items": {"type": "string"}},
+    "outputs": {"type": "array", "items": {"type": "string"}},
+    "result": {},
+    "findings": {},
+    "return_code": {"type": "string", "enum": ["OK", "SPEC_ISSUE", "PLAN_DEVIATION", "STALE_DIFF", "ENV_FAILURE", "BLOCKED"]},
+    "duration": {"type": "number", "minimum": 0},
+    "tokens": {"type": "integer", "minimum": 0},
+    "gate": {"type": "string", "enum": ["G0", "G1", "G2"]},
+    "decided_by": {"type": "string"},
+    "operator_msg_ref": {"type": "string", "pattern": "^OM-[0-9]{4}$"},
+    "parallel_with": {"type": "array", "items": {"type": "string"}},
+    "commit": {"type": "string"},
+    "detail": {"type": "string"}
+  }
+}

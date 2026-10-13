@@ -1,0 +1,17 @@
+{
+  "$comment": "Single source for harness limits and thresholds. WORKFLOW.md §2, §5.2 and §6 cite this file. Read by generator/scripts/awarelib.py.",
+  "base_branch": "main",
+  "limits": {
+    "rev_opus_changed_lines": 400,
+    "snapshot_split_lines": 2000,
+    "caps": {
+      "review_rounds": 3,
+      "qa_fix": 2,
+      "accept_reopen": 1,
+      "g1_rejections": 2,
+      "spec_reopen": 2,
+      "regen_check": 2,
+      "env_retry": 1
+    }
+  }
+}

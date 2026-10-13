@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Aware pipeline state (.work/STATE.json)",
+  "description": "Written only by generator/scripts/state.py. State machine: generator/WORKFLOW.md §5, counters §5.2, autonomous mode §9.",
+  "type": "object",
+  "required": ["schema_version", "mode", "seq", "current_feature", "features", "updated_at"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"type": "integer", "enum": [1]},
+    "mode": {"type": "string", "enum": ["interactive", "autonomous"]},
+    "seq": {"type": "integer", "minimum": 0},
+    "current_feature": {"type": ["string", "null"]},
+    "updated_at": {"type": "string"},
+    "features": {"type": "object", "additionalProperties": {"$ref": "#/$defs/feature"}}
+  },
+  "$defs": {
+    "counters": {
+      "type": "object",
+      "additionalProperties": {"type": "integer", "minimum": 0}
+    },
+    "position": {
+      "type": "object",
+      "required": ["stage"],
+      "properties": {
+        "stage": {"type": "string"},
+        "app": {"type": ["string", "null"]},
+        "app_stage": {"type": ["string", "null"]},
+        "counter": {"type": ["string", "null"]},
+        "reason": {"type": "string"}
+      }
+    },
+    "app": {
+      "type": "object",
+      "required": ["stage", "counters", "cap_extra", "after_fix", "needs_snapshot"],
+      "additionalProperties": false,
+      "properties": {
+        "stage": {"type": "string", "enum": ["PENDING", "S3", "S4", "S5", "S6", "S6b", "DONE"]},
+        "counters": {"$ref": "#/$defs/counters"},
+        "cap_extra": {"$ref": "#/$defs/counters"},
+        "after_fix": {"type": ["string", "null"], "enum": ["S4", "S5", null]},
+        "needs_snapshot": {"type": "boolean"},
+        "head_sha": {"type": ["string", "null"]}
+      }
+    },
+    "history_entry": {
+      "type": "object",
+      "required": ["seq", "ts", "event", "from", "to"],
+      "properties": {
+        "seq": {"type": "integer"},
+        "ts": {"type": "string"},
+        "event": {"type": "string"},
+        "app": {"type": ["string", "null"]},
+        "from": {"type": "string"},
+        "to": {"type": "string"},
+        "detail": {"type": ["string", "null"]}
+      }
+    },
+    "feature": {
+      "type": "object",
+      "required": ["id", "title", "chain", "status", "stage", "apps", "counters", "cap_extra", "history"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string", "pattern": "^[A-Za-z0-9._-]+$"},
+        "title": {"type": "string"},
+        "chain": {"type": "string", "enum": ["full", "light"]},
+        "status": {"type": "string", "enum": ["active", "blocked", "done", "aborted", "descoped"]},
+        "stage": {"type": "string", "enum": ["S0", "G0", "S1", "S2", "G1", "APPS", "G2", "S7", "DONE"]},
+        "apps": {"type": "object", "additionalProperties": {"$ref": "#/$defs/app"}},
+        "counters": {"$ref": "#/$defs/counters"},
+        "cap_extra": {"$ref": "#/$defs/counters"},
+        "needs_snapshot": {"type": "boolean"},
+        "g2": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/position"}]},
+        "blocked": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/position"}]},
+        "flagged_for_review": {"type": "array", "items": {"type": "string"}},
+        "backlog_notes": {"type": "array", "items": {"type": "string"}},
+        "budget": {"type": "object"},
+        "history": {"type": "array", "items": {"$ref": "#/$defs/history_entry"}}
+      }
+    }
+  }
+}

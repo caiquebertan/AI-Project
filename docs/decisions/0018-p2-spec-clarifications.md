@@ -1,5 +1,5 @@
 # 0018 — P2 spec clarifications (S-1..S-13)
-- Status: proposed (needs operator G0 approval)
+- Status: accepted (operator, OM-0016)
 - Date: 2026-10-13
 - Author: TL (agent, claude-opus-5-5)
 - Input: the P2 DEV agent's questions in [`docs/runs/P2/spec-issues.md`](../runs/P2/spec-issues.md).

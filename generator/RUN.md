@@ -4,6 +4,8 @@ Fallback for environments where `.claude/commands/` is not picked up, for CI, an
 
 ## Prerequisites
 ```bash
+python3 generator/scripts/setup_env.py --check  # exit 0 if the build environment is complete (/generate runs this first)
+python3 generator/scripts/setup_env.py          # if not: dry-run plan with the install commands for your OS; then add --install
 python3 generator/scripts/preflight.py          # versions of python, git, node, java, gradle, Android SDK, claude
 python3 -m unittest discover -s generator/tests  # harness self-test (stdlib only)
 ```

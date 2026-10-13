@@ -38,6 +38,16 @@ python3 generator/scripts/preflight.py --strict   # exit 1 if a required tool is
 
 `--strict` must pass on the operator's machine before Phase 3 (generator) starts.
 
+## Set it up
+
+```
+python3 generator/scripts/setup_env.py             # dry run: what is missing or too old, exact install commands for your OS
+python3 generator/scripts/setup_env.py --install   # runs them one by one, asking before each (--yes skips the questions)
+python3 generator/scripts/setup_env.py --check     # quiet, exit code only; /generate runs this first and stops on failure
+```
+
+Supported: macOS with Homebrew, Debian/Ubuntu with apt, Windows with winget; any other OS gets link hints only. Rules: `sudo` commands are always confirmed by hand, even with `--yes`; shell profiles are never edited (the script prints the `ANDROID_HOME`/`PATH` lines to add); the checks are the ones in `preflight.py`, plus a best-effort Playwright browser cache check that is reported but does not fail `--check`. After `--install`, open a new terminal so PATH changes apply.
+
 ## What runs where
 
 | Step | Where it runs |

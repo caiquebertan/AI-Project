@@ -169,3 +169,21 @@ I accept all the proposed cuts, backlog and specs are approved too; Fix this par
 ````text
 lets change that commit rule, now commits are all authored by me, agents only in trailers; I have the repo ready for you to use as origin: caiquebertan/AI-Project
 ````
+
+---
+
+## OM-0013 · 2026-10-13 18:16 — Preflight output from the operator's machine
+
+**AI note:** _Triggered: environment setup before P3 (decision 0011). Result: Python 3.9.6 is below the 3.10 minimum; JDK, Android SDK and the Claude Code CLI are missing. The Q1-Q7 answers requested in `docs/PLAN.md` §7 will be logged under a later id._
+
+````text
+output for preflight: 
+python       Python 3.9.6                                       harness scripts, server, protocol tests
+git          git version 2.54.0 (Apple Git-157)                 snapshots, worktrees, regen-check
+node         v26.11.1                                           web client build
+npm          11.20.0                                            web client build
+java         The operation couldn’t be completed. Unable to locate a Java Runtime. Android build (JDK)
+gradle       MISSING                                            optional: the generated project ships a wrapper
+claude       MISSING                                            /generate and /pipeline
+android-sdk  MISSING                                            Android build (ANDROID_HOME)
+````

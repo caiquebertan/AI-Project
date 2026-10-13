@@ -6,19 +6,22 @@ The spec is the single source of truth for behavior: questions are answered here
 
 ## Index
 
-| Path | Purpose | Owner | Status |
-|---|---|---|---|
-| [`core/protocol.md`](core/protocol.md) | Wire protocol: transport, endpoints, identity, envelope, send/ack, poll/cursor, epoch, order, connection cycle and outbox, capabilities, errors, constants; Appendix A Alice/Bob protocol trace | TL | draft (G0) |
-| [`core/server-behavior.md`](core/server-behavior.md) | Server internals: registry, mailboxes, `seq`, long-poll, dedupe, relay, what it does not do | TL | draft (G0) |
-| [`core/schema/`](core/schema/) | JSON Schemas per request/response, [`index.json`](core/schema/index.json) (endpoint → schema), [`constants.json`](core/schema/constants.json), examples (checked by `generator/scripts/check_schema_examples.py`) | TL | draft (G0) |
-| [`core/client-behavior.md`](core/client-behavior.md) | Observable client behavior: login, send, offline queue, flush, display, visible states | PM | skeleton (PM, S0) |
-| [`scenarios/alice-bob-offline.md`](scenarios/alice-bob-offline.md) | The brief's 7-step scenario with exact expected states per step | PM | skeleton (PM, S0) |
-| [`platform/test-hooks.md`](platform/test-hooks.md) | Hook ids, readable values and state snapshot shared by all clients ([`client-snapshot.schema.json`](platform/client-snapshot.schema.json)) | TL | draft (G0) |
-| [`platform/android.md`](platform/android.md) | Android stack, modules, storage, networking, hooks, generated tests | TL | draft (G0) |
-| [`platform/web.md`](platform/web.md) | Web stack, structure, storage, configuration, hooks, generated tests | TL | draft (G0) |
-| [`extensions/`](extensions/) | Optional capabilities (reactions, attachments, groups, …); template in its README | TL + PM | template only |
+| Path | Purpose | Owner | Status | Rules (MUST) / ACs |
+|---|---|---|---|---|
+| [`core/protocol.md`](core/protocol.md) | Wire protocol: transport, endpoints, identity, envelope, send/ack, poll/cursor, epoch, order, connection cycle and outbox, capabilities, errors, constants; Appendix A Alice/Bob protocol trace | TL | draft (G0) | 88 (88) |
+| [`core/server-behavior.md`](core/server-behavior.md) | Server internals: registry, mailboxes, `seq`, long-poll, dedupe, relay, what it does not do | TL | draft (G0) | 28 (27) |
+| [`core/schema/`](core/schema/) | JSON Schemas per request/response, [`index.json`](core/schema/index.json) (endpoint → schema), [`constants.json`](core/schema/constants.json), examples (checked by `generator/scripts/check_schema_examples.py`) | TL | draft (G0) | — |
+| [`core/client-behavior.md`](core/client-behavior.md) | Observable client behavior: screens, login, send, offline queue, flush, receive, order, fixed texts; acceptance criteria | PM | draft (G0) | 50 (49) / 33 ACs |
+| [`scenarios/alice-bob-offline.md`](scenarios/alice-bob-offline.md) | The brief's 7-step scenario (SC-1..SC-7, plus SC-8 beyond the brief) with exact expected states per step | PM | draft (G0) | 9 ACs |
+| [`scenarios/additional-scenarios.md`](scenarios/additional-scenarios.md) | Extra scenarios SX-1..SX-5 (no server at login, lost ack, server restart, input edge cases, unknown type) | PM | draft (G0) | 5 ACs |
+| [`platform/test-hooks.md`](platform/test-hooks.md) | Hook ids, readable values and state snapshot shared by all clients ([`client-snapshot.schema.json`](platform/client-snapshot.schema.json)), relaunch and request-visibility controls | TL | draft (G0) | 12 (12) |
+| [`platform/android.md`](platform/android.md) | Android stack, modules, storage, networking, hooks, generated tests | TL | draft (G0) | 25 (25) |
+| [`platform/web.md`](platform/web.md) | Web stack, structure, storage, configuration, hooks, generated tests | TL | draft (G0) | 18 (17) |
+| [`extensions/`](extensions/) | Optional capabilities (reactions, attachments, groups, …); template in its README | TL + PM | template only | — |
 
-Decision records behind the core choices: `docs/decisions/0004`–`0009`.
+Totals: 221 rule ids (218 on `MUST` lines, counted by `check_trace.py`) and 47 acceptance criteria, counted by script on 2026-10-13 from the `- **<id>** —` definition lines; recount after every spec change.
+
+Decision records behind the core choices: `docs/decisions/0004`–`0010`.
 
 ## Rule ids
 
@@ -31,7 +34,7 @@ Decision records behind the core choices: `docs/decisions/0004`–`0009`.
 |---|---|---|
 | `HTTP` `NAME` `SESSION` `EPOCH` `ENV` `TEXT` `MSG` `POLL` `CURSOR` `DEDUPE` `SEQ` `CONN` `OUTBOX` `CAP` `EXT` `ERR` `CONST` | `core/protocol.md` | TL |
 | `SRV` | `core/server-behavior.md` | TL |
-| `LOGIN` `SEND` `OFFLINE` `FLUSH` `RECEIVE` `ORDER` `VISIBLE` (and new areas PM adds) | `core/client-behavior.md`, `scenarios/` | PM |
+| `LOGIN` `SEND` `OFFLINE` `FLUSH` `RECEIVE` `ORDER` `VISIBLE` (and new areas PM adds); acceptance criteria `AC-F<n>-<m>`; scenario steps `SC-n`, `SX-n` | `core/client-behavior.md`, `scenarios/` | PM |
 | `ANDROID` `WEB` `HOOK` | `platform/` | TL |
 
 ## Conventions

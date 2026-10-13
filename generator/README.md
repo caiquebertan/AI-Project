@@ -1,11 +1,16 @@
-# Generator / agentic harness
+# Generator and agentic harness
 
-**Tool:** Claude Code (or Codex). **Input:** `spec/`. **Output:** `clients/<platform>/`.
+Full design: [`WORKFLOW.md`](WORKFLOW.md) (v0.2).
 
-_To be defined._ Intended shape:
-- `.claude/commands/generate-client.md` — `/generate-client <platform>`: regenerates one client from the spec.
-- `.claude/commands/verify-client.md` — `/verify-client <platform>`: runs conformance scenarios.
-- `generator/prompts/` — reusable prompt fragments, parameterised by platform and spec version.
-- `generator/WORKFLOW.md` — orchestrator + specialist agent pipeline.
+| Entry point | Tool | Purpose |
+|---|---|---|
+| `/generate <android\|web\|all>` | Claude Code | **The generator.** Spec → `clients/<app>/`. Headless, no gates. What graders run. ☐ |
+| `/pipeline [feature] [--autonomous]` | Claude Code | Gated delivery pipeline (PM, TL, DEV, REV, QA) that evolves spec and generator and calls `/generate`. ☐ |
 
-The harness must stay generic: it reads whatever is in `spec/` (including new `extensions/`) and does not hard-code the messaging scenario.
+Planned layout (built in Phase 0 / Phase 3):
+- `prompts/` — role prompt templates (variables only, no feature names)
+- `conventions/` — per-platform code-shape rules the generator follows (incl. test requirements)
+- `templates/` — copied build infra and module skeletons (Gradle wrapper, Vite config, …)
+- `config/` — pinned model IDs, self-repair limit
+- `scripts/` — snapshot-diff, count-lines, run-log, check-headers, check-trace, regen-check, lint-commits, preflight
+- `RUN.md` — manual fallback for running without slash commands

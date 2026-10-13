@@ -1,142 +1,177 @@
-# Agent pipeline workflow (AI-readable)
+# Agent pipeline workflow (AI-readable) — v0.2
 
-> **Source:** operator instruction of 2026-10-13 12:51, verbatim in [`docs/human-input/OPERATOR_MESSAGES.md`](../docs/human-input/OPERATOR_MESSAGES.md).
-> This file translates that instruction into explicit roles, triggers, stages, gates, loops, artifacts and evals. Where this file and the operator's words disagree, the operator's words win; where either disagrees with the brief ([`docs/brief/aware-test-brief.md`](../docs/brief/aware-test-brief.md)), the brief wins.
-> **Status:** v0.1 draft. Open items are marked `GAP-xx` and collected in §10. The gap analysis is in [`docs/planning/workflow-gap-analysis.md`](../docs/planning/workflow-gap-analysis.md).
+> **Sources:** operator instructions in [`docs/human-input/OPERATOR_MESSAGES.md`](../docs/human-input/OPERATOR_MESSAGES.md) (12:51 workflow; 13:24 and 13:29 decisions), decisions in [`docs/decisions/0002-workflow-gap-answers.md`](../docs/decisions/0002-workflow-gap-answers.md), gap analysis in [`docs/planning/workflow-gap-analysis.md`](../docs/planning/workflow-gap-analysis.md).
+> **Precedence:** brief > operator's words > this file. If they conflict, stop and ask the operator (or log `BLOCKED` in autonomous mode).
+> **Changes from v0.1:** generator is the development step (two entry points); spec stage S0 + gate G0; S1 becomes Trace; S2 only for generator/architecture changes; S6 automated; new S6b regen-check; return codes, counters, abort paths; commit-addressed diff rule; worktrees for parallel work; run log; executable evals.
 
 ---
 
-## 1. Goal
+## 1. Goal and the two machines
 
-Deliver the Aware project (spec → generated Android + web clients + hand-written Python server) through a **pipeline of specialised agents**, always **human-in-the-loop** at defined gates, while being **replicable and launchable without a human** from a **single entry point**.
+Deliver the Aware project through a gated multi-agent pipeline whose **development step is the generator**. Client code is only ever produced by the generator from the spec, so the path graders run ("delete generated code → run generator → working clients") is exercised on every feature.
+
+| | **Delivery pipeline** `/pipeline` | **Generator** `/generate <android\|web\|all>` |
+|---|---|---|
+| Purpose | Evolve spec, generator, server, external tests | Rebuild `clients/<app>/` from `spec/` + `generator/` |
+| Run by | Operator → ORC (interactive) or ORC (autonomous) | Graders, CI, and pipeline stage S3 / S6b |
+| Human gates | G0, G1, G2 | **None** (operator decision, Q9): reads specs → builds plan → executes |
+| Writes | `spec/`, `generator/`, `server/`, `tests/`, `docs/` | **Only** `clients/<app>/` (incl. its unit + UI tests and `.generated` manifest) |
+| Quality gate | REV, QA, trace check, regen-check | Automated: build → in-project unit/UI tests → bounded self-repair (≤3) → fail loudly |
+
+Hard rule: **no agent ever hand-edits `clients/*`.** A defect in generated code is fixed in `spec/` or `generator/` (prompts, conventions, templates), then regenerated.
 
 ## 2. Roles
 
-| ID | Role | Model | Owns | Never does |
+| ID | Role | Model | Owns | Never |
 |---|---|---|---|---|
-| ORC | **Orchestrator / manager** (main session) | session model | Plan, project status, prompts for each agent, triage, diff file freshness, gates, parallelism decisions, retros | Writes production code itself (delegates) |
-| PM | **Product manager** | Sonnet | WHAT: acceptance criteria (ACs) for android, web and server, in non-technical language; backlog of epics → features → stories; final AC acceptance check | Technical design |
-| TL | **Tech lead** | **Opus, always** | HOW: implementation plan per app (android, web, server), per feature, the first time that feature is implemented | Code |
-| DEV | **Developer** | Opus for the **first implementation**; Sonnet when the task maps objectively to the TL plan; Opus again when ORC judges it needs interpretation or must test scenarios/options | Implementation + **simple** unit tests only | Robust or UI test suites (QA's job) |
-| REV | **Reviewer** | Sonnet; **Opus if the diff is > 400 changed lines** | Review report classifying each finding as **blocker** or **nit**, from magic strings/numbers up to race conditions and wrong-thread calls | Fixes code |
-| QA | **QA engineer** | _unspecified (GAP-01)_ | Robust unit tests + UI tests where they fit; reports implementation changes needed to ORC | Changes production code directly |
-| OP | **Operator** (human) | — | Approves TL plans; decides when review loop exceeds 3; answers escalations | — |
+| ORC | Orchestrator / manager (main session) | session model | Plan, `STATE.json`, run log, rendering prompts from templates, triage, diff snapshots, gates, parallelism, retros, operator log | Writes production code |
+| PM | Product manager | Sonnet | WHAT: backlog (epics → features → stories); drafts `spec/core/client-behavior.md` + `spec/scenarios/`; `docs/product/TRACEABILITY.md` (ACs as references to spec IDs); handles acceptance exceptions | Technical design |
+| TL | Tech lead | **Opus always** | HOW: drafts `spec/core/protocol.md`, `server-behavior.md`, `schema/`, `spec/platform/*`; designs generator (`generator/conventions`, `templates`, `prompts`); server plan | Code |
+| DEV | Developer | **Opus** for first generation of a module/app and when interpretation or trying options is needed; **Sonnet** when the change maps objectively to an approved plan | Edits generator inputs and runs `/generate` (clients); writes `server/` + its simple unit tests | Hand-edits `clients/*`; writes robust/UI suites |
+| REV | Reviewer | Sonnet; **Opus if changed lines > 400**, first generation of a module, or concurrency/threading paths | Review report: `blocker` / `nit` / `design-concern`, from magic strings/numbers to race conditions and wrong-thread calls | Fixes code |
+| QA | QA engineer | Opus to design a suite (once per app/suite); Sonnet to extend one | External AC checks in `tests/` (protocol, interop, e2e); test requirements for in-project unit/UI tests, delivered as generator conventions (Q8) | Changes production code |
+| OP | Operator (human) | — | G0, G1, G2; backlog approval once | — |
 
-The operator always talks to ORC. ORC never lets agents talk to the operator directly.
+Every launch is logged with `model`, `model_id`, `reason` (§8).
 
 ## 3. Artifacts
 
-| Artifact | Path (proposed) | Written by | Read by |
-|---|---|---|---|
-| Brief (authoritative) | `docs/brief/aware-test-brief.md` | — | all |
-| Spec (behavior source of truth) | `spec/` | ORC / TL (GAP-02) | all |
-| ACs, all apps, one document | `docs/product/ACCEPTANCE_CRITERIA.md` | PM | TL, DEV, QA, PM-accept |
-| Backlog (epics, features, stories) | `docs/product/BACKLOG.md` | PM | ORC |
-| TL plan per app per feature | `docs/plans/<feature-id>/<app>.md` (`app` ∈ android, web, server) | TL | OP (approval), DEV, REV |
-| **Working diff file** | `.work/<feature-id>/<app>/diff.patch` + `diff.meta` (base commit, head commit, stage, timestamp) | ORC | next agent |
-| Review report | `.work/<feature-id>/<app>/review-<n>.md` | REV | ORC, DEV |
-| QA report | `.work/<feature-id>/<app>/qa.md` | QA | ORC |
-| PM acceptance report | `.work/<feature-id>/acceptance.md` | PM | ORC |
-| Retrospective (per feature) | `docs/retros/<feature-id>.md` (template: `docs/retros/TEMPLATE.md`) | ORC | OP, evaluators |
-| Operator messages | `docs/human-input/OPERATOR_MESSAGES.md` | ORC (verbatim copy) | evaluators |
-| Pipeline state | `.work/STATE.md` (current feature, stage, loop counters, gate status) | ORC | ORC on resume / autonomous run |
-
-`.work/` is scratch (git-ignored, GAP-03); anything evaluators should see is summarised into the retro.
-
-## 4. Pipeline
-
-### 4.0 Phase 0 — AI structure (one-off)
-Build the harness itself: agent definitions (`.claude/agents/`), entry point (§7), prompts (`generator/prompts/`), templates, this workflow. Respects the brief's deliverables (README, DESIGN.md, AGENTS.md/CLAUDE.md, spec, generator, marked generated code, FUTURE.md).
-
-### 4.1 Per-project
-| Step | Trigger | Agent | Output | Exit |
-|---|---|---|---|---|
-| P1 Backlog | Phase 0 done | PM | `BACKLOG.md` (epics → features → stories) + `ACCEPTANCE_CRITERIA.md` | ORC checks every brief requirement maps to ≥1 AC (eval E-PM-1). Operator gate? GAP-04 |
-
-### 4.2 Per-feature loop (one feature at a time)
-
-```
- S1 PM ACs ─► S2 TL plan ─► [G1 OPERATOR APPROVES PLAN] ─► S3 DEV ─► S4 REVIEW ⟲ (≤3) ─► S5 QA ─► S6 PM ACCEPT ─► S7 RETRO
-                                   ▲ reject: back to S2          ▲   │ blockers → DEV     │ code change needed:
-                                                                 │   └ >3 loops → [G2 OPERATOR]│ ORC triages → DEV
-                                                                 └──── flow change ◄────────────┘ (nit → skip REV)
-                                                        S6 unmet AC → ORC decides: new task / reopen (GAP-05)
-```
-
-| Step | Trigger | Agent / model | Input | Output | Exit / next |
-|---|---|---|---|---|---|
-| S1 | Feature selected from backlog | PM (Sonnet) | brief, spec, backlog | ACs for this feature, per app | ACs present for every affected app → S2 |
-| S2 | ACs ready **and** first implementation of this feature | TL (Opus) | ACs, spec, existing code | One plan per affected app | → **G1** |
-| **G1** | Plan written | **Operator** | plans | approve / request changes | approve → S3; changes → S2 |
-| S3 | Plan approved (or, for non-first iterations, task assigned by ORC) | DEV (model per §2) | plan, ACs, diff file | Code + simple unit tests; ORC regenerates diff file | Builds + its tests pass → S4 |
-| S4 | Diff file updated after DEV | REV (Sonnet / Opus > 400 lines) | diff file, plan, spec, ACs | Review report: blockers, nits | No blockers → S5. Blockers → DEV → S4 again. Loop counter +1. **Counter > 3 → G2** |
-| **G2** | 4th review loop would start | **Operator** | review history | decide how to proceed | per operator |
-| S5 | Review passed | QA (GAP-01) | diff file, ACs, plan | Unit + UI tests; QA report | Needs code change → ORC triage: **flow change** → DEV → S4 (counter rules GAP-06); **nit** → DEV → back to S5 directly. Clean → S6 |
-| S6 | QA passed | PM (Sonnet) | ACs, QA report, running behavior evidence (GAP-07) | Acceptance report per AC: met / unmet / invalid AC | All met → S7. Unmet → ORC decides new task or reopen. Invalid AC → PM revises AC (GAP-05) |
-| S7 | Feature accepted | ORC | all reports | `docs/retros/<feature-id>.md`; commits | Next feature → S1 |
-
-### 4.3 Diff-file rule (all steps)
-- At every stage transition ORC regenerates `.work/<feature-id>/<app>/diff.patch` from `git diff <base>...HEAD` (plus working tree if uncommitted) and updates `diff.meta`.
-- No agent is launched unless `diff.meta.head` == current HEAD of the feature branch. ORC verifies before each handoff.
-- Agents read the diff file; they do not run `git diff` themselves.
-- "Changed lines" for the REV model rule = insertions + deletions from `git diff --shortstat`, excluding generated client code? (GAP-08)
-
-### 4.4 Parallelism rule
-ORC may run agents in parallel only when it can show they touch **disjoint file sets** (e.g. android DEV and server DEV on the same feature, since `clients/android/` and `server/` don't overlap). Shared files (`spec/`, `docs/product/`, root docs) are serialised. ORC records the decision in `STATE.md`.
-
-## 5. Triggers (event → action)
-
-| Event | Action |
-|---|---|
-| Operator asks for a feature / says "next" | ORC picks next backlog feature → S1 |
-| ACs written | ORC checks: first implementation? → S2 TL; else → S3 |
-| TL plan written | Stop; present to operator (G1). Autonomous mode: GAP-09 |
-| Operator approves plan | S3, choose DEV model |
-| DEV done | Refresh diff → S4, choose REV model by line count |
-| REV report: blockers | Loop counter +1; ≤3 → DEV with report; >3 → G2 |
-| REV report: nits only | ORC decides fix-now vs defer (GAP-10) → S5 |
-| QA reports code change | ORC classifies flow vs nit → DEV (± REV) |
-| PM acceptance fails | ORC: new task in backlog or reopen feature |
-| Feature accepted | S7 retro, commit, update backlog status |
-| Spec changes (GAP-02) | Regenerate affected clients, re-run QA/acceptance for affected features |
-
-## 6. Prompts for agents
-ORC builds each agent prompt from: role file (`.claude/agents/<role>.md`), scope (feature id, app), inputs (paths, not pasted content), the **boundaries** (brief constraints, generated-code rules from `AGENTS.md`), required output path and format, and the exit criteria from §4. Prompt templates live in `generator/prompts/`.
-
-## 7. Single entry point & autonomous mode
-- One entry point (proposed: a Claude Code skill / command `/pipeline`, with `docs`-level fallback `generator/RUN.md`).
-- Modes: `interactive` (default; stops at G1, G2 and escalations) and `autonomous` (no human). Behaviour of gates in autonomous mode: **GAP-09**.
-- Resumable from `.work/STATE.md`.
-
-## 8. Retrospective (per feature)
-ORC writes `docs/retros/<feature-id>.md` at S7 using `docs/retros/TEMPLATE.md`: what was delivered, loop counts, models used, gaps found, decisions taken, what to improve for the next ticket, changes proposed to this workflow.
-
-## 9. Evals
-
-| ID | Stage | Check |
+| Artifact | Path | Writer |
 |---|---|---|
-| E-PM-1 | P1/S1 | Every brief "Required behavior" and the Alice/Bob scenario map to ≥1 AC per affected app |
-| E-PM-2 | S1 | ACs are testable (observable outcome, no implementation terms) |
-| E-TL-1 | S2 | Plan references the spec sections it implements; follows context-doc stack (Kotlin/Compose/Hilt/Retrofit/multi-module; Python in-memory server); no messaging SDKs |
-| E-DEV-1 | S3 | Builds; DEV unit tests pass; GENERATED headers present in `clients/*` |
-| E-REV-1 | S4 | Every finding labelled blocker/nit with file:line |
-| E-QA-1 | S5 | Tests cover offline queue/flush and Alice/Bob scenario where the feature touches them |
-| E-PM-3 | S6 | Each AC marked met/unmet with evidence |
-| E-PIPE-1 | project | **Regeneration works**: delete generated code, run generator, clients pass conformance + interop (brief's primary criterion) |
-| E-PIPE-2 | project | Spec is authoritative: no behavior exists only in code |
-| E-PIPE-3 | project | Commit history shows stages; authorship (human vs agent) is clear |
+| Brief | `docs/brief/aware-test-brief.md` | — |
+| **Spec** (only source of behavior), versioned semver + git tag `spec-vX.Y.Z` | `spec/` (`core/`, `core/schema/`, `scenarios/`, `platform/`, `extensions/`) | PM + TL at S0 only |
+| Backlog | `docs/product/BACKLOG.md` | PM |
+| Traceability: brief req (`BR-n`, `SC-n`) → spec ID → AC ID → test ID → status | `docs/product/TRACEABILITY.md` | PM (rows), `check-trace` (status) |
+| Generator inputs | `generator/{prompts,conventions,templates,config,scripts}/` | TL design, DEV implementation |
+| Plans (history only; generator never reads them) | `docs/plans/<feature>/<app>.md` | TL |
+| Generated clients + manifest | `clients/<app>/**`, `clients/<app>/.generated` (paths, sha256, spec version, generator commit, model id) | `/generate` only |
+| Server (maintained) | `server/` | DEV |
+| External AC checks | `tests/protocol/`, `tests/interop/`, `tests/web-e2e/`, `tests/android-conformance/` | QA |
+| Working diff snapshot | `.work/<feature>/<app>/diff.patch` + `diff.meta.json` | ORC |
+| Pipeline state | `.work/STATE.json` (+ rendered `STATE.md`) | ORC |
+| Worktrees for parallel agents | `.work/wt/<feature>-<app>/` | ORC |
+| Run log + final reports (committed) | `docs/runs/<feature>/{run.jsonl, review-<n>.md, qa.md, acceptance.md}`, `docs/runs/INDEX.md` | ORC |
+| Retro | `docs/retros/<feature>.md` (template `docs/retros/TEMPLATE.md`) | ORC (+ operator "Human notes") |
+| Operator messages | `docs/human-input/OPERATOR_MESSAGES.md` (`OM-nnnn` ids) | ORC appends verbatim, operator confirms |
+| Decisions | `docs/decisions/NNNN-*.md` | ORC / TL |
 
-## 10. Known gaps (initial; expanded by the gap analysis)
-- **GAP-01** QA model not specified.
-- **GAP-02** Who writes/owns `spec/` (the brief's source of truth)? PM writes ACs (WHAT), TL writes plans (HOW) — the platform-neutral protocol spec has no owner. ACs must not become a second source of truth.
-- **GAP-03** Should review/QA reports be committed (evidence for evaluators) or stay scratch?
-- **GAP-04** Is there an operator gate on ACs/backlog?
-- **GAP-05** Rules for "unmet AC": new task vs reopen; who may change an AC.
-- **GAP-06** Does a QA-triggered flow change reset or continue the review loop counter?
-- **GAP-07** What evidence does PM use in S6 (test results? demo run of the scenario?)
-- **GAP-08** 400-line threshold: count generated code or not?
-- **GAP-09** Autonomous mode: what replaces G1/G2 (auto-approve with logged rationale, or halt)?
-- **GAP-10** Nits: must they be fixed before QA?
-- **GAP-11** Brief's **generator** (delete generated code → regenerate) vs this **delivery pipeline**: how does a regeneration run work — does it re-run TL/DEV/REV/QA, or a lighter deterministic path? Clients are "generated", so DEV writes code only inside `clients/*` via the generator?
-- **GAP-12** Branching/commit policy per stage (feature branches? commit after each stage?).
-- **GAP-13** Order of apps: server first so clients have something to talk to?
+`.work/` is git-ignored scratch.
+
+## 4. Phases (project level)
+
+| Phase | Steps | Gate | Exit |
+|---|---|---|---|
+| **P0 Harness** | Agent role files `.claude/agents/{pm,tl,dev,rev,qa}.md`; prompt templates `generator/prompts/`; scripts `generator/scripts/` (`snapshot-diff`, `count-lines`, `run-log`, `check-headers`, `check-trace`, `regen-check`, `lint-commits`, `preflight`); `/pipeline` + `/generate` commands, `generator/RUN.md` fallback; `STATE.json` + run-log schemas; README/AGENTS updates | OP reviews harness | Dry run of `/pipeline` on a stub feature passes E-WF-1 |
+| **P1 Backlog + core spec** | PM backlog (F1 identity, F2 send/receive, F3 offline queue/flush, F4 interop, F5 reactions extension) + TRACEABILITY skeleton; decision records (transport = HTTP + polling/long-poll with per-recipient cursor; message identity; ordering; delivery/dedupe; generic-relay `type`+payload; app-controlled offline); `spec/core/*` with `CORE-xxx` ids, `schema/`, Alice/Bob expected states, test hooks (test tags / `data-testid`, JVM-testable Android core module) | OP approves backlog once; **G0** spec v0.1.0 | `check-trace`: every BR/SC has a spec id |
+| **P2 Server** (light chain) | TL-lite plan → DEV server + `tests/protocol` → REV | G1-light | E-PROTO-1 green |
+| **P3 Generator v1** | TL generator design (templates for build infra and module skeletons, conventions per platform, generation order, self-repair bound, manifest) → DEV implements → first `/generate android` + `/generate web` (parallel worktrees) | **G1** | Both clients build + in-project tests pass |
+| **P4 Feature loops** | F1 → F3 via §5 | per §5 | per §5 |
+| **P5 Interop** | QA `tests/interop/` runs Alice/Bob both pairings (android↔web) against the real server | — | E-INTEROP-1 green ×3 |
+| **P6 Evolution demo** | F5 reactions as `spec/extensions/reactions.md` → `/generate` with no prompt changes | G0 | E-EVOL-1 |
+| **P7 Regen verification** | `regen-check` from a fresh clone ×2; operator repeats once following only README | OP | E-PIPE-1 |
+| **P8 Packaging** | Final README / DESIGN / AGENTS / FUTURE (from retros); lint scripts; archive; unzip + regen in clean sandbox | OP final review | Submitted |
+
+## 5. Per-feature state machine
+
+Chains: **full** = first feature per app, or any generator/architecture change (S2 + G1 run). **light** = everything else (S2/G1 skipped).
+
+```
+ S0 SPEC ─► [G0] ─► S1 TRACE ─► (S2 TL ─► [G1])? ─► S3 GENERATE ─► S4 REVIEW ─► S5 QA ─► S6 ACCEPT ─► S6b REGEN ─► S7 RETRO
+```
+
+| Step | Trigger | Agent | Output | Next |
+|---|---|---|---|---|
+| **S0 Spec delta** | Feature selected; or any `SPEC_ISSUE` | PM (behavior, scenarios) + TL (protocol, schema, platform) | Spec diff + version bump | delta → G0; none needed → S1 |
+| **G0** | Spec delta drafted | **OP** | approve / revise / descope | approve → S1 (tag); revise → S0; descope → backlog |
+| **S1 Trace** | G0 approved | PM | TRACEABILITY rows for the feature, per app (`core` / `platform:android` / `platform:web`) | AC needs behavior not in spec → S0. Generator/arch change needed → S2. Else → S3 |
+| **S2 TL plan** | Full chain only | TL (Opus) | Plan per affected app (`docs/plans/`) + proposed edits to `generator/conventions`, `templates`, `spec/platform` | → G1 |
+| **G1** | Plan written | **OP** | approve / revise-plan / revise-spec / descope | → S3 / S2 / S0 / backlog |
+| **S3 Generate / implement** | G1 approved or light chain from S1 | DEV | Clients: edits to generator inputs + `/generate <app>` (module-scoped). Server: code + simple unit tests. ORC commits and snapshots the diff | build + in-project tests OK → S4. `PLAN_DEVIATION` → S2 (G1-delta). `SPEC_ISSUE` → S0. Self-repair exhausted / `ENV_FAILURE` → G2 |
+| **S4 Review** | Fresh diff snapshot | REV (model by §2) | `review-<n>.md` with YAML front matter `{blockers, nits, design_concerns}` | no blockers → S5. Blockers and `review_rounds` < 3 → S3. `design-concern` → S2 (plan/convention) or S0 (spec), not counted. Blockers after round 3 → **G2** |
+| **S5 QA** | Review passed | QA | External AC checks in `tests/`; test requirements for in-project tests as conventions; **full** suite run (regression) | green → S6. Flow change → S3 → S4 (review counter continues). Nit-level → S3 → back to S5 (`qa_fix` ≤ 2). Untestable AC / `SPEC_ISSUE` → S0. Exhausted → G2 |
+| **S6 Accept** | QA green | `check-trace` (automated); PM only on failure | `acceptance.md`: every AC → passing test id | all met → S6b. Unmet (code) → S3 (`accept_reopen` ≤ 1). Unmet (spec gap) / invalid AC → S0. New work → backlog. Second unmet → G2 |
+| **S6b Regen-check** | Accepted | ORC runs `regen-check` | Fresh worktree, delete `clients/<app>`, `/generate`, full tests | green → S7. Fail → S3 (`regen_check` ≤ 2) → then G2 |
+| **S7 Retro** | Regen green | ORC | `docs/runs/<feature>/`, retro from run log, merge `feat/<id>` `--no-ff`, update backlog + INDEX | next feature → S0 |
+| **G2 Escalation** | Any counter exhausted, `ENV_FAILURE`, or conflict | **OP** | change spec / replan / one more round / defer / stop | → S0 / S2 / S3 / backlog / ABORTED |
+
+### 5.1 Return codes (every agent ends with exactly one)
+`OK` · `SPEC_ISSUE{spec_id, question}` · `PLAN_DEVIATION{reason, proposal}` · `STALE_DIFF` · `ENV_FAILURE{detail}` · `BLOCKED{reason}`.
+ORC routes non-`OK` codes per the table above and never lets an agent continue past one.
+
+### 5.2 Counters and budgets (`STATE.json`, per feature per app)
+
+| Counter | Cap | On exceed |
+|---|---|---|
+| `review_rounds` (round 1 = first review; includes QA-triggered re-reviews) | 3 | G2 |
+| `qa_fix` | 2 | G2 |
+| `accept_reopen` | 1 | G2 |
+| `g1_rejections` | 2 | ORC asks operator for a discussion instead of another round |
+| `spec_reopen` | 2 | G2 |
+| `gen_self_repair` (per `/generate` run) | 3 | `/generate` fails → G2 |
+| `regen_check` | 2 | G2 |
+| Budget: wall time, tokens (soft / hard) | set per feature at S1 | soft → note in retro; hard → G2 |
+
+### 5.3 Abort and failure
+`BLOCKED` = feature parked with reason; ORC continues independent features. `ABORTED` = branch kept, STATE + partial retro written. Rollback = reset feature branch to the last green stage commit. `ENV_FAILURE` is retried at most once, then G2. `preflight` checks JDK, Android SDK, Node, Python versions before P3.
+
+## 6. Diff snapshot rule
+1. Before every handoff ORC commits (WIP commits allowed) so the diff is commit-addressed, then runs `snapshot-diff` → `diff.patch` + `diff.meta.json` `{base_sha, head_sha, worktree, porcelain_clean, patch_sha256, numstat, changed_lines, created_at, stage}`.
+2. `changed_lines` = insertions + deletions from `git diff --numstat base...head`, excluding lockfiles, wrapper/binaries and `.generated` manifests (`count-lines`). This value drives the REV model rule.
+3. Every agent's first action: check `HEAD == head_sha` and a clean worktree; otherwise return `STALE_DIFF`.
+4. Agents read the snapshot; they do not run `git diff` themselves. If `changed_lines` > 2000, the snapshot is a file list + per-module patches and agents read the files.
+5. ORC must not launch a stage on a stale snapshot.
+
+## 7. Parallelism
+- Allowed only for DEV / REV / QA of **different apps** after G0 (and G1 if run), each in its own worktree `.work/wt/<feature>-<app>`.
+- `spec/`, `docs/product/`, `generator/` shared files and root files are serialised through ORC.
+- ORC merges worktrees sequentially, re-snapshots, and logs `parallel_with` in the run log.
+
+## 8. Prompts, logging, commits
+- **Prompts:** templates in `generator/prompts/<role>.md` with variables only (feature, app, input paths, output path, boundaries, exit criteria, return codes). ORC fills variables; the rendered prompt's sha256 goes in the run log. Generator prompts must not name features (E-EVOL-1).
+- **Run log:** one JSON line per transition in `docs/runs/<feature>/run.jsonl` (ts, feature, app, stage, event, agent, model, model_id, model_reason, counters, base/head sha, changed_lines, spec_version, prompt_sha256, inputs, outputs, result, findings, return_code, duration, tokens, gate, decided_by, operator_msg_ref, parallel_with).
+- **Commits:** branch `feat/<id>`, one commit per stage output, merge `--no-ff`, no squash. Generated output in its own commit: `regen(<app>): spec X.Y.Z @ gen <sha>`. No commit touches both `spec/` and `clients/`. Agent commits use author `Aware Agent (<ROLE>/<model>) <agent@aware.local>`, operator as committer. Trailers: `Area`, `Boundary: generated|maintained`, `Authored-By-Role: human|agent`, `Agent`, `Model`, `Stage`, `Feature`, `Approved-By: operator` (gates), `Refs: OM-nnnn`.
+- **Operator log:** ORC appends verbatim with an `OM-nnnn` id; AI notes prefixed `AI note:`; operator confirms in the commit (`Approved-By: operator`).
+
+## 9. Autonomous mode (`/pipeline --autonomous`)
+| Gate | Behaviour |
+|---|---|
+| G0 | Halt the feature (`BLOCKED`), continue independent features |
+| G1 | Auto-approve if E-TL-1 passes; log rationale; flag for operator review |
+| G2 | Halt the feature (`BLOCKED`), continue independent features |
+| Hard budget | Halt |
+Resumable from `STATE.json` + run log; ORC checkpoints after every transition.
+`/generate` never has gates in either mode.
+
+## 10. Retrospective (per feature)
+Rendered at S7 from `run.jsonl` (stage table, counters, models, durations, backward transitions, spec version in/out, regen result, budget actuals), then ORC adds: gaps found, decisions, what to improve next ticket, proposed workflow changes (with status). The operator may add "Human notes". `docs/runs/INDEX.md` links every feature.
+
+## 11. Evals
+
+| ID | Check | How |
+|---|---|---|
+| E-PM-1 | Every BR/SC maps to spec id + AC per affected app | `check-trace` |
+| E-PM-2 | ACs testable, no implementation terms | Given/When/Then regex + denylist lint |
+| E-TL-1 | Plan cites spec ids; stack matches context doc; no messaging SDKs | grep plan; check `libs.versions.toml` / Gradle modules / `package.json`; dependency denylist |
+| E-DEV-1 | Build + in-project tests pass; manifest == tree; headers | `./gradlew assembleDebug testDebugUnitTest`, `npm ci && npm run build && npm test`, `check-headers` |
+| E-REV-1 | Report schema valid | YAML front matter + `- [blocker\|nit\|design] path:line — ` lines |
+| E-QA-1 | Every `CORE-xxx` MUST has ≥1 test carrying its id | `check-trace` over JUnit XML / Playwright JSON |
+| E-PM-3 | Every AC → passing test id | `check-trace` |
+| E-PROTO-1 | Server conforms to schema + server-behavior | `tests/protocol` (pytest) |
+| E-INTEROP-1 | Alice/Bob step states match spec, android↔web both pairings | `tests/interop/run.sh` |
+| E-BOUND-1 | `/generate` writes only inside `clients/<app>` | `git status --porcelain` after regen |
+| E-LOCAL-1 | No external hosts | grep for non-localhost / 10.0.2.2 URLs |
+| E-DET-1 | Two regens: same file set per module, same test results | `regen-check` ×2 |
+| E-EVOL-1 | Harness generic | prompt lint (no feature nouns); F5 regenerates with no prompt edits |
+| E-PIPE-1 | **Regeneration works** (primary criterion) | `regen-check` from fresh clone, pinned model, full suites |
+| E-PIPE-2 | Spec authoritative | E-QA-1 at 100% + E-DET-1 + no open `SPEC_ISSUE` at release |
+| E-PIPE-3 | Commit history and attribution | `lint-commits` |
+| E-README-1 | README covers each brief deliverable | checklist script |
+| E-WF-1 | State machine mechanics | stub-agent dry run with injected `SPEC_ISSUE`, 4 blocker rounds, `STALE_DIFF` |
+| E-WF-2 | Resume works | kill ORC mid-S4, resume, no duplicated/skipped stage |
+| E-ATTR-1 | Operator log append-only, AI notes prefixed | git-blame check |
+| E-COST-1 | Budget adherence | run.jsonl totals vs caps |
+
+## 12. Remaining open items
+- Exact budgets per feature (set at P1).
+- Pinned model IDs and fallback for `/generate` (`generator/config`, set at P3).
+- Messaging-SDK denylist contents (review at P0).

@@ -30,6 +30,18 @@ class SchemaExamples(unittest.TestCase):
                 self.assertIn(needle, errs)
             self.assertIn("missing 'n'", " ".join(cse.validate({"id": "ab"}, schema, s, "t")))
 
+    def test_value_cases(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            (base / "defs.schema.json").write_text(json.dumps({"$defs": {"d": {"type": "string", "pattern": "^[0-9]$"}}}))
+            (base / "c.json").write_text(json.dumps({"valid": ["1", "x"], "invalid": ["22", "3"]}))
+            probs = cse.value_case_problems(base, {"c.json": "defs.schema.json#/$defs/d"}, cse.Schemas(base))
+            self.assertEqual(len(probs), 2, probs)
+            self.assertIn("valid[1]", probs[0])
+            self.assertIn("invalid[1]", probs[1])
+            self.assertIn("cannot load", cse.value_case_problems(base, {"missing.json": "defs.schema.json"},
+                                                                 cse.Schemas(base))[0])
+
     def test_unsupported_keyword_and_constants(self):
         self.assertTrue(cse.unsupported_keywords({"properties": {"a": {"oneOf": []}}}))
         table = "| `TEXT_MAX_BYTES` | `4096` | x |\n| Name | Value | Used |"

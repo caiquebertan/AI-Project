@@ -1,5 +1,5 @@
 {
-  "$comment": "Machine-readable map of spec/core/protocol.md. Endpoint ids E1-E5 match protocol.md section 1. Checked by generator/scripts/check_schema_examples.py.",
+  "$comment": "Machine-readable map of spec/core/protocol.md. Endpoint ids E1-E5 match protocol.md section 1. Checked by generator/scripts/check_schema_examples.py. value_cases: files of {valid: [...], invalid: [...]} values checked against a schema (pointer allowed); every valid value must validate and every invalid one must be rejected.",
   "protocol_version": 1,
   "base_path": "/v1",
   "spec": "spec/core/protocol.md",
@@ -77,12 +77,6 @@
           "required": true,
           "pattern": "^(0|[1-9][0-9]{0,15})$"
         },
-        "wait": {
-          "required": false,
-          "pattern": "^(0|[1-9][0-9]{0,15})$",
-          "default": 0,
-          "clamp_max": 30
-        },
         "limit": {
           "required": false,
           "pattern": "^(0|[1-9][0-9]{0,15})$",
@@ -135,5 +129,8 @@
     "examples/send-response.a1.json": "send-response.schema.json",
     "examples/poll-response.bob-step7.json": "poll-response.schema.json",
     "examples/error.epoch-mismatch.json": "error.schema.json"
+  },
+  "value_cases": {
+    "cases/timestamp.json": "common.schema.json#/$defs/timestamp"
   }
 }

@@ -1,5 +1,5 @@
 # 0012 — Time representation: UTC everywhere, local zone only for display
-- Status: proposed (awaiting G0)
+- Status: proposed (awaiting G0); amended (operator, OM-0011)
 - Date: 2026-10-13
 - Author: TL (agent, claude-opus-5-5); principle decided by operator (OM-0010)
 - Spec ids driven: `CORE-TIME-001`, `CORE-TIME-002`, `CORE-ENV-006`, `CORE-ENV-007` (wording only), `PLAT-HOOK-009`, `PLAT-HOOK-013`, `PLAT-ANDROID-026`..`028`, `PLAT-WEB-019`..`021`. Rules are in [`spec/core/protocol.md`](../../spec/core/protocol.md) §5.1 and Appendix A, and in [`spec/platform/`](../../spec/platform/).
@@ -30,3 +30,12 @@ Operator (OM-0010): "save the time in UTC, and each client gets the local device
 
 ## Brief constraint affected
 None.
+
+## Amendment (OM-0011)
+Operator: "server will expect times to be sent in UTC as well, and we won't have any hardcoded local timezone. Each client will implement their function to get the local time based on UTC server time, therefore clients will send the message time in UTC to the server too".
+1. **Strict on input.** The server rejects any `created_at` that is not the exact UTC form of CORE-HTTP-007 and a real calendar instant (valid month, valid day for the month including leap years, hour 00–23, minute and second 00–59, no leap second, no offset, no lowercase `z`, exactly three fraction digits) with `400 malformed_request`. The position of that error in CORE-ERR-002 does not change. The schema pattern `common.schema.json#/$defs/timestamp` encodes the same rule; `spec/core/schema/cases/timestamp.json` lists valid and invalid cases (CORE-HTTP-007, CORE-SRV-030).
+2. **The server has no time zone.** It reads only its UTC clock for `accepted_at`, never converts, and treats `created_at` as an opaque string once the format is checked (CORE-SRV-031, CORE-SRV-037).
+3. **No hardcoded zone anywhere in production code or configuration** (CORE-TIME-003). A client's only zone source is its `TimeZone` provider reading the device. Zone values in specs, fixtures and tests are injected fakes or test-runner options. Generated in-project tests scan production sources with a shared denylist (PLAT-HOOK-015, PLAT-ANDROID-030, PLAT-WEB-023).
+4. Clients send `created_at` in UTC from the injected `Clock` (CORE-ENV-006). It is sent, stored and validated but never shown; the displayed instant is `accepted_at`, converted at display time (decision point 2 above, unchanged).
+- Alternatives: accept any RFC 3339 instant and normalise it on the server. Rejected: two spellings for one instant break the byte equality in duplicate checks (CORE-SRV-034), and the operator asked for UTC end to end.
+- Spec ids: `CORE-HTTP-007`, `CORE-ENV-006`, `CORE-TIME-003`, `CORE-ERR-002`, `CORE-SRV-030`, `CORE-SRV-031`, `CORE-SRV-037`, `PLAT-HOOK-015`, `PLAT-ANDROID-030`, `PLAT-WEB-023`.

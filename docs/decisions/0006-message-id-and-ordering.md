@@ -1,4 +1,5 @@
 # 0006 — Message ids and conversation order
+> **Amended by 0014:** the `failed` state is withdrawn; messages without a `seq` are only `pending`.
 - Status: proposed (awaiting G0)
 - Date: 2026-10-13
 - Author: TL (agent, claude-opus-5-5)

@@ -103,9 +103,9 @@
             "enum": [
               "pending",
               "sent",
-              "received",
-              "failed"
-            ]
+              "received"
+            ],
+            "description": "CORE-MSG-006 (no failed state, decision 0014)."
           },
           "created_at": {
             "type": "string",

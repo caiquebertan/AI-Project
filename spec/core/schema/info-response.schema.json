@@ -38,7 +38,6 @@
       "required": [
         "text_max_bytes",
         "body_max_bytes",
-        "poll_wait_max_s",
         "poll_limit_max"
       ],
       "properties": {
@@ -47,9 +46,6 @@
         },
         "body_max_bytes": {
           "const": 65536
-        },
-        "poll_wait_max_s": {
-          "const": 30
         },
         "poll_limit_max": {
           "const": 100

@@ -161,7 +161,8 @@
     "$comment": "Values render_prompt.py --generate fills into generator/prompts/generate.md. {app} is substituted.",
     "prompt": "generator/prompts/generate.md",
     "spec_index": "spec/README.md",
-    "spec_version_regex": "\\*\\*Version:\\*\\*\\s*(\\d+\\.\\d+\\.\\d+)",
+    "spec_version_regex": "\\*\\*Version:\\*\\*\\s*(\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?)",
+    "draft_suffix_regex": "-(?:draft|rc|alpha|beta)",
     "spec_dirs": [
       "spec/core/",
       "spec/scenarios/",

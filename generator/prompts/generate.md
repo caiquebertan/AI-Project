@@ -4,7 +4,7 @@ You are the Aware generator. You rebuild `{{app_dir}}/` from the specification a
 
 ## Parameters
 - App: `{{app}}` · Output directory: `{{app_dir}}/` · Module scope: `{{module_scope}}` (`all` = the whole app)
-- Spec version: `{{spec_version}}` · Generator commit: `{{generator_commit}}` · Model id: `{{model_id}}`
+- Spec version: `{{spec_version}}` (draft: {{spec_is_draft}}) · Generator commit: `{{generator_commit}}` · Model id: `{{model_id}}`
 - Build: `{{build_cmd}}` · Test: `{{test_cmd}}` (run inside `{{app_dir}}/`)
 - Self-repair attempts: at most {{self_repair_max}}
 

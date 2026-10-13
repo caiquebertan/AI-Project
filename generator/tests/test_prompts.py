@@ -118,6 +118,23 @@ class GeneratePrompt(unittest.TestCase):
         self.assertIn("test-hooks.md", res.stdout)
         self.assertIn("client-snapshot.schema.json", res.stdout)
 
+    def test_draft_version_is_stamped_in_full_and_warned(self):
+        res = self.render_with_version("**Version:** 0.1.0-draft (test)")
+        self.assertEqual(res.returncode, 0, res.stderr)
+        self.assertIn("Spec version: `0.1.0-draft` (draft: yes)", res.stdout)
+        self.assertIn(CONFIG["headers"]["marker"] + " from spec 0.1.0-draft", res.stdout)
+        self.assertIn("WARNING: spec 0.1.0-draft is a draft", res.stderr)
+        final = self.render_with_version("**Version:** 1.0.0")
+        self.assertIn("(draft: no)", final.stdout)
+        self.assertNotIn("WARNING", final.stderr)
+
+    def test_draft_version_passes_manifest_schema_pattern(self):
+        import re
+        pattern = lib.read_json(lib.SCHEMA_DIR / "manifest.schema.json")["properties"]["spec_version"]["pattern"]
+        self.assertTrue(re.match(pattern, "0.1.0-draft"))
+        self.assertTrue(re.match(pattern, "0.1.0"))
+        self.assertFalse(re.match(pattern, "0.1"))
+
 
 class ManifestRoundTrip(unittest.TestCase):
     def test_written_manifest_passes_check(self):

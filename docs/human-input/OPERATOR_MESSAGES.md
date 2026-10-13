@@ -187,3 +187,13 @@ gradle       MISSING                                            optional: the ge
 claude       MISSING                                            /generate and /pipeline
 android-sdk  MISSING                                            Android build (ANDROID_HOME)
 ````
+
+---
+
+## OM-0014 · 2026-10-13 18:24 — Plan accepted with defaults; environment helper script requested
+
+**AI note:** _Triggered: decision 0016 (Q1-Q7 defaults accepted, start of P2 and of the P3 design); an environment helper script (`generator/scripts/setup_env.py`). The operator reports the Claude Code CLI is installed. Note: the preflight output of 18:23 and the earlier environment chat were off record and are not logged._
+
+````text
+done, create a small script that can handle the missing pieces from an environment if they try to generate the code. Also, about the plan, I accept the defaults and we can start
+````

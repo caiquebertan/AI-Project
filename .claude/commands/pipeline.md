@@ -67,8 +67,8 @@ Subject `<area>: <what>`; trailers in one block: `Area`, `Boundary: generated|ma
 Generated output gets its own commit: `regen(<app>): spec X.Y.Z @ gen <sha>` with `Boundary: generated`. Never stage `spec/` and `clients/` in one commit. Never commit `.work/`. Before merging run `$S/lint_commits.py --range main..HEAD`.
 
 ## 6. S7 Retro and merge
-1. Commit `docs/runs/<id>/` (run.jsonl, review-*.md, qa.md, acceptance.md).
-2. `$S/render_retro.py --feature <id> --update-index`, then fill the narrative sections (gaps, decisions, improvements, proposed workflow changes); in interactive mode ask the operator for "Human notes".
+1. Commit `docs/runs/<id>/` (run.jsonl, review-*.md, qa.md, acceptance.md). The run log is script-written (`run_log.py`, `state.py`), so it costs nothing extra for every delivery.
+2. **Retros are per milestone** (OM-0011): D1, F4, F5 and each phase (P0..P8), not per feature stage. For a milestone: `$S/render_retro.py --feature <id> --update-index`, then fill the narrative sections in the short form of `docs/retros/TEMPLATE.md` (a line each, `-` when empty); in interactive mode ask the operator for "Human notes". For any other unit, skip the retro and note anything worth keeping in the next milestone's retro.
 3. `$S/state.py transition --event ok --expect-stage S7`, commit, then `git switch main && git merge --no-ff feat/<id>`; update `docs/product/BACKLOG.md`.
 
 ## 7. Abort and rollback (§5.3)

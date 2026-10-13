@@ -2,7 +2,6 @@
 import json
 import re
 import unittest
-from pathlib import Path
 
 import harness
 from harness import Proc, RunningServer, ServerTestCase, send_body, uid, utc_ms

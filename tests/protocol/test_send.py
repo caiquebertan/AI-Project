@@ -45,7 +45,7 @@ class AcceptTests(ServerTestCase, unittest.TestCase):
         far = self.c.send(send_body(2, created_at="2999-01-01T00:00:00.000Z"))
         self.assertLess(utc_ms(far.json["accepted_at"]), utc_ms("2100-01-01T00:00:00.000Z"))
 
-    def test_CORE_SRV_032_note_to_self_is_appended_once(self):
+    def test_CORE_SRV_032_CORE_ENV_003_note_to_self_is_appended_once(self):
         self.c.send(send_body(1, to="alice"))
         msgs = self.c.poll("alice").json["messages"]
         self.assertEqual([(m["id"], m["from"], m["to"]) for m in msgs], [(uid(1), "alice", "alice")])

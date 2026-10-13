@@ -7,7 +7,7 @@ from harness import ERROR_STATUS, JSON, ServerTestCase, raw_exchange, send_body
 
 
 class RoutingErrors(ServerTestCase, unittest.TestCase):
-    def test_CORE_ERR_001_unknown_paths_are_404_not_found_for_every_method(self):
+    def test_CORE_ERR_001_CORE_HTTP_002_unknown_paths_and_paths_outside_v1_are_404_not_found_for_every_method(self):
         paths = ["/", "/v1", "/v1/", "/v1/info/", "/v1/Info", "/v2/info", "/info", "/v1/mailboxes", "/v1/mailboxes/bob",
                  "/v1/mailboxes/bob/messages/x", "/v1/mailboxes/bob/Messages", "/v1/mailboxes/a/b/messages",
                  "/v1/session/x", "/v1/messages/", "/v1/users/alice", "/v1//info", "/favicon.ico"]

@@ -77,7 +77,10 @@ class PollTests(ServerTestCase, unittest.TestCase):
             r = self.c.call("GET", base + query)
             self.assertEqual((r.status, r.code), (400, "malformed_request"), query)
         for query in ("&after=0", "&after=7", "&after=0&limit=1", "&after=0&limit=100", "&after=1234567890123456&limit=3"):
-            self.assertEqual(self.c.call("GET", base + query, check="1234567890123456" not in query).status, 200, query)
+            self.assertEqual(self.c.call("GET", base + query).status, 200, query)
+        # 16 digits above 2**53-1 match the pattern; the echoed cursor then breaks the schema (spec-issues S-3)
+        r = self.c.call("GET", base + "&after=9999999999999999", check=False)
+        self.assertEqual((r.status, r.json["next_cursor"]), (200, 9999999999999999))
 
     def test_CORE_POLL_005_CORE_SRV_016_answers_at_once_wait_is_ignored_and_nothing_is_held(self):
         for extra in ("", "&wait=30", "&wait=0", "&wait=abc"):

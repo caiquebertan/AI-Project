@@ -152,6 +152,7 @@ class Handler(BaseHTTPRequestHandler):
         else:
             status, err = 400, "malformed_request"
         self.close_connection = True
+        self.request_version = "HTTP/1.1"  # a response without status line and headers (HTTP/0.9) is no JSON error
         self._log(self.command or "-", status, time.monotonic())
         self._send(status, error_body(err, message or "bad request"), self.command or "GET")
 

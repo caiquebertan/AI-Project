@@ -1,9 +1,9 @@
 # Additional scenarios
 
-- **Status:** draft for G0 (spec 0.1.0-draft). Owner: PM. They pin behavior the brief's scenario ([`alice-bob-offline.md`](alice-bob-offline.md)) does not reach. Ids `SX-1`..`SX-6` (extra, not brief steps).
+- **Status:** G0 draft with the MVP cuts of decisions 0013 and 0014 applied. Owner: PM. They pin behavior the brief's scenario ([`alice-bob-offline.md`](alice-bob-offline.md)) does not reach. Ids `SX-1`..`SX-6` (extra, not brief steps).
 - **Rules exercised:** [`../core/client-behavior.md`](../core/client-behavior.md) and the protocol rules it cites.
-- **Pairings.** Each scenario runs once per client (Android, Web) as the client under test. Where a second user appears (`bob`), it runs for the same pairings as in the main scenario, section 3, but no more than the pairings P-1 and P-2 are required.
-- **Method.** "The test" means the external test harness. It may talk to the server directly using the protocol (as a stand-in for a user or to stop and start the server), and reads each client's state snapshot (PLAT-HOOK-006..008). It waits on conditions, not on fixed delays. Messages are identified by text.
+- **Pairings.** Each scenario runs once per client under test: the web client through the UI, and the Android client through the JVM driver (PLAT-ANDROID-031, PLAT-ANDROID-032). Where a second user appears (`bob`), it is the web client through the UI, as in the main scenario, section 3 (web↔web and Android driver↔web). Steps that need the Android screens (validation texts, field behavior, the time text on screen) are not driven externally on Android: they are checked only by the Android project's Robolectric tests (PLAT-ANDROID-022) and, for the time text, the JVM tests of PLAT-ANDROID-028.
+- **Method.** "The test" means the external test harness. It may talk to the server directly using the protocol (as a stand-in for a user or to stop and start the server), and reads each client's state snapshot (PLAT-HOOK-006..008: web `window.__AWARE__`; Android driver `snapshot` line). It waits on conditions, not on fixed delays. Messages are identified by text.
 
 ## SX-1: Login with no server, queue, relaunch, connect later
 
@@ -36,7 +36,7 @@ Pins the user's view of a new server lifetime (CORE-VISIBLE-008; assumed default
 
 ## SX-4: Edge inputs for names and texts
 
-Pins BR-1 + BR-2 input rules and the lowercase display.
+Pins BR-1 + BR-2 input rules and the lowercase display. These are UI edge cases: they run through the web UI. For Android they run only in the Robolectric tests (PLAT-ANDROID-022); the driver covers just the name and text checks of its own commands (`invalid_name`, `invalid_text`, PLAT-ANDROID-032), not the texts shown on screen.
 
 1. **Invalid login names.** On a fresh client the user tries `` (empty), `bad name`, ` alice` (leading space), `al!ce`, and a 33-character name. For each: the login screen stays, `Names use 1 to 32 letters, digits, underscores or hyphens.` is shown, the typed text stays. (CORE-LOGIN-002, CORE-LOGIN-003)
 2. **Case.** The user enters `ALICE`. Expected: logged in; the header shows `alice`. A 32-character name is accepted. (CORE-LOGIN-004)

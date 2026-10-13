@@ -1,6 +1,5 @@
 """count_lines exclusions, snapshot_diff output and check_snapshot staleness (WORKFLOW §6)."""
 import unittest
-from pathlib import Path
 
 from _util import CONFIG, commit_file, git, make_repo, run_script
 import awarelib as lib

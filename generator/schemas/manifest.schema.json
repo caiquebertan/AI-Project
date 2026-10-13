@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Generated client manifest (clients/<app>/.generated)",
+  "description": "Written by /generate as its last step (WORKFLOW §3). Proposed at P0 for check_headers.py; the tech lead confirms it with the generator design at P3. Paths are relative to clients/<app>/ and exclude the manifest itself.",
+  "type": "object",
+  "required": ["app", "spec_version", "generator_commit", "model_id", "generated_at", "files"],
+  "properties": {
+    "app": {"type": "string"},
+    "spec_version": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$"},
+    "generator_commit": {"type": "string", "pattern": "^[0-9a-f]{7,40}$"},
+    "model_id": {"type": "string"},
+    "generated_at": {"type": "string"},
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": {"type": "string"},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    }
+  }
+}

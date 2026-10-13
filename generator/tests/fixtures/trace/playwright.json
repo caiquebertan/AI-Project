@@ -1,0 +1,17 @@
+{
+  "suites": [
+    {
+      "title": "web",
+      "specs": [],
+      "suites": [
+        {
+          "title": "second thing",
+          "specs": [
+            {"title": "works in the browser", "tags": ["@T-F1-2", "@CORE-002"], "ok": true,
+             "tests": [{"status": "expected", "results": [{"status": "passed"}]}]}
+          ]
+        }
+      ]
+    }
+  ]
+}

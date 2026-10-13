@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="core" tests="3">
+    <testcase classname="core.FirstTest" name="T-F1-1 CORE-001 does the first thing"/>
+    <testcase classname="core.SecondTest" name="T-F1-3 CORE-002 android variant">
+      <failure message="expected X">trace</failure>
+    </testcase>
+    <testcase classname="core.SkippedTest" name="T-F2-2 not ready">
+      <skipped/>
+    </testcase>
+  </testsuite>
+</testsuites>

@@ -197,3 +197,13 @@ android-sdk  MISSING                                            Android build (A
 ````text
 done, create a small script that can handle the missing pieces from an environment if they try to generate the code. Also, about the plan, I accept the defaults and we can start
 ````
+
+---
+
+## OM-0015 · 2026-10-13 18:37 — G1 approved with the defaults
+
+**AI note:** _Triggered: decision 0017 (G1 for the P3 generator design and D1 plan, all ten recommended defaults). Changes the self-repair budget in WORKFLOW (Q3) when the generator is implemented._
+
+````text
+defaults approved for g1
+````

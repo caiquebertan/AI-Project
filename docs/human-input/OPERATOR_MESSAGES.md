@@ -207,3 +207,13 @@ done, create a small script that can handle the missing pieces from an environme
 ````text
 defaults approved for g1
 ````
+
+---
+
+## OM-0016 · 2026-10-13 18:51 — Decision 0018 approved; REV round 2 on Sonnet
+
+**AI note:** _Triggered: decision 0018 accepted, spec 0.1.1 (G0 for the P2 clarifications); REV round 2 of the P2 server runs on Sonnet (operator override of the Opus-above-400-lines default, review cap unchanged)._
+
+````text
+approve 0018, and you can run REV on sonnet for second round
+````

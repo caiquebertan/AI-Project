@@ -17,7 +17,7 @@ Instructions for any coding agent (Claude Code, Codex) working in this repo. `CL
 - Everything must run locally with no cloud or third-party services.
 - **Agents cannot build or test the clients** in their sandbox (no Android SDK, no npm/Maven/Gradle access; `docs/ENVIRONMENT.md`). Never claim a client builds or passes unless a log from the operator's machine says so. Python-only work (harness, server, protocol tests) can be run and verified in the sandbox.
 - Keep the server small; invest in protocol clarity and generation reliability.
-- One commit per stage output; generated output in its own `regen(<app>)` commit; never one commit touching both `spec/` and `clients/`. Commit conventions: `generator/WORKFLOW.md` §8.
+- One commit per stage output; generated output in its own `regen(<app>)` commit; never one commit touching both `spec/` and `clients/`. Commit conventions: `generator/WORKFLOW.md` §8 and decision 0015 (operator is author and committer; agents only in trailers).
 - End every agent task with one return code: `OK`, `SPEC_ISSUE`, `PLAN_DEVIATION`, `STALE_DIFF`, `ENV_FAILURE`, `BLOCKED`. Never fill a spec gap in code; return `SPEC_ISSUE`.
 - Read the diff snapshot ORC gives you; check it isn't stale before starting (`python3 generator/scripts/check_snapshot.py --meta <diff.meta.json>`).
 - Sub-agents end their reply with `OUTCOME: <event>` and a final `RETURN: <code>` line (formats in `.claude/agents/`). ORC routes them only through `generator/scripts/state.py`.

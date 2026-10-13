@@ -62,7 +62,7 @@ Two separate labels: **boundary** (generated = rebuilt by `/generate`; maintaine
 | `server/`, `tests/` | maintained | agent |
 | `clients/*` | **generated** | agent via `/generate` |
 
-Per-commit detail: agent commits use the author `Aware Agent (<ROLE>/<model>)` with the operator as committer; trailers record area, boundary, stage and approval. Earlier commits (before this convention) say it in the message body.
+Per-commit detail: every commit is authored and committed by the operator (decision 0015); the agent that did the work appears only in the trailers (`Agent`, `Model`, `Authored-By-Role`), which also record area, boundary, stage and approval.
 
 ## Repository layout
 

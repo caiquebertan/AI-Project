@@ -5,6 +5,9 @@
     Schema subset (so server and both clients can rely on the same keywords);
   * every example listed in index.json "examples" validates against its schema,
     and payloads of core types inside it validate against index.json "core_types";
+  * every file listed in index.json "value_cases" ({"valid": [...], "invalid": [...]},
+    checked against a schema reference that may carry a #pointer) has every valid value
+    accepted and every invalid value rejected;
   * constants.json equals the constants table in spec/core/protocol.md.
 
 Supported subset: $schema $id $ref $defs $comment title description type
@@ -140,6 +143,25 @@ def core_payload_errors(value, core_types: dict, schemas: Schemas, path: str = "
     return errs
 
 
+def value_case_problems(schema_dir: Path, value_cases: dict, schemas: Schemas) -> list[str]:
+    """Valid values must validate, invalid values must be rejected (negative examples)."""
+    problems = []
+    for case_file, ref in value_cases.items():
+        path = schema_dir / case_file
+        try:
+            cases = json.loads(path.read_text(encoding="utf-8"))
+            schema, sfile = schemas.resolve(ref, "")
+        except (OSError, KeyError, ValueError) as exc:
+            problems.append(f"{case_file}: cannot load cases or schema {ref}: {exc}")
+            continue
+        for i, value in enumerate(cases.get("valid", [])):
+            problems += [f"{case_file} valid[{i}] {e}" for e in validate(value, schema, schemas, sfile)]
+        for i, value in enumerate(cases.get("invalid", [])):
+            if not validate(value, schema, schemas, sfile):
+                problems.append(f"{case_file} invalid[{i}] {value!r}: accepted by {ref}")
+    return problems
+
+
 def protocol_constants(text: str) -> dict:
     out = {}
     for line in text.splitlines():
@@ -170,6 +192,7 @@ def check(schema_dir: Path, protocol: Path | None) -> list[str]:
         errs = validate(value, schemas.load(name), schemas, name)
         errs += core_payload_errors(value, index["core_types"], schemas)
         problems += [f"{example} {e}" for e in errs]
+    problems += value_case_problems(schema_dir, index.get("value_cases", {}), schemas)
     if protocol is not None:
         consts = {k: v for k, v in json.loads((schema_dir / index["constants"]).read_text()).items()
                   if not k.startswith("$")}

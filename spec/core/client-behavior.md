@@ -126,7 +126,7 @@ Mapping of machine states to labels: `pending` → `Pending`, `sent` → `Sent`,
 
 ## 9. Acceptance criteria
 
-Given/When/Then, observable by a user; each cites the rules it checks. Traceability (test ids per scope): [`docs/product/TRACEABILITY.md`](../../docs/product/TRACEABILITY.md). Scenario-level criteria (`AC-F4-*` and those of the extra scenarios) are in [`../scenarios/`](../scenarios/).
+Given/When/Then, observable by a user; each cites the rules it checks. Traceability (test ids per scope): [`docs/product/TRACEABILITY.md`](../../docs/product/TRACEABILITY.md). Scenario-level criteria (`AC-F4-*`, `AC-F2-15`, `AC-F2-16`, `AC-F3-13` to `AC-F3-15`) are in [`../scenarios/`](../scenarios/).
 
 ### F1: Identity and login (BR-1)
 

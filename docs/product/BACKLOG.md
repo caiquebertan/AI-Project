@@ -54,7 +54,7 @@
 
 - **Goal.** A person opens either app for the first time, types a name, and lands on an empty conversation screen under that name. Next time they open the app they are already in. It works with no server running.
 - **Apps.** Android, web. Server: none (registration happens when the app first connects).
-- **Covers.** `CORE-LOGIN-001..005`, `CORE-VISIBLE-001`; wire: `CORE-NAME`, `CORE-SESSION`. ACs `AC-F1-1..7`.
+- **Covers.** `CORE-LOGIN-001..006`, `CORE-VISIBLE-001`; wire: `CORE-NAME`, `CORE-SESSION`. ACs `AC-F1-1..7`.
 - **Chain.** Android `full`, web `full` (first feature per app; includes app skeleton, connection engine shell, hooks).
 - **Depends on.** E1 (G0), E2, E3.
 - **Status.** planned.

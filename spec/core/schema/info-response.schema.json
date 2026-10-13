@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "info-response.schema.json",
+  "title": "E1 response 200 (CORE-CAP-001)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "protocol_version",
+    "epoch",
+    "core_types",
+    "server_capabilities",
+    "limits"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "aware"
+    },
+    "protocol_version": {
+      "const": 1
+    },
+    "epoch": {
+      "$ref": "common.schema.json#/$defs/epoch"
+    },
+    "core_types": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/type"
+      },
+      "uniqueItems": true
+    },
+    "server_capabilities": {
+      "$ref": "common.schema.json#/$defs/capabilities"
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "text_max_bytes",
+        "body_max_bytes",
+        "poll_wait_max_s",
+        "poll_limit_max"
+      ],
+      "properties": {
+        "text_max_bytes": {
+          "const": 4096
+        },
+        "body_max_bytes": {
+          "const": 65536
+        },
+        "poll_wait_max_s": {
+          "const": 30
+        },
+        "poll_limit_max": {
+          "const": 100
+        }
+      }
+    }
+  }
+}

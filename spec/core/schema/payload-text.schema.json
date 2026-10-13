@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "payload-text.schema.json",
+  "title": "Payload of core type text (CORE-TEXT-001..003)",
+  "$comment": "maxLength counts code points; the normative limit is TEXT_MAX_BYTES of UTF-8 (CORE-TEXT-003), checked in code. The pattern requires one non-blank character (CORE-TEXT-002).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "text"
+  ],
+  "properties": {
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096,
+      "pattern": "[^\\t\\n\\r ]"
+    }
+  }
+}

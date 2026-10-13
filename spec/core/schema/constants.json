@@ -1,0 +1,15 @@
+{
+  "$comment": "Normative constants; must equal the table in spec/core/protocol.md section 13 (CORE-CONST-001).",
+  "PROTOCOL_VERSION": 1,
+  "NAME_MAX_LENGTH": 32,
+  "TEXT_MAX_BYTES": 4096,
+  "BODY_MAX_BYTES": 65536,
+  "POLL_WAIT_S": 20,
+  "POLL_WAIT_MAX_S": 30,
+  "POLL_LIMIT_MAX": 100,
+  "REQUEST_TIMEOUT_MS": 10000,
+  "POLL_TIMEOUT_MARGIN_MS": 10000,
+  "RETRY_INITIAL_MS": 500,
+  "RETRY_MAX_MS": 8000,
+  "SERVER_DEFAULT_PORT": 8080
+}

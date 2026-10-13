@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "envelope.schema.json",
+  "title": "Envelope, delivered form (CORE-ENV-001, CORE-ENV-007)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "seq",
+    "from",
+    "to",
+    "type",
+    "payload",
+    "created_at",
+    "accepted_at"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "seq": {
+      "$ref": "common.schema.json#/$defs/seq"
+    },
+    "from": {
+      "$ref": "common.schema.json#/$defs/name"
+    },
+    "to": {
+      "$ref": "common.schema.json#/$defs/name"
+    },
+    "type": {
+      "$ref": "common.schema.json#/$defs/type"
+    },
+    "payload": {
+      "$ref": "common.schema.json#/$defs/payload"
+    },
+    "created_at": {
+      "$ref": "common.schema.json#/$defs/timestamp"
+    },
+    "accepted_at": {
+      "$ref": "common.schema.json#/$defs/timestamp"
+    }
+  }
+}

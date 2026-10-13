@@ -1,0 +1,139 @@
+{
+  "$comment": "Machine-readable map of spec/core/protocol.md. Endpoint ids E1-E5 match protocol.md section 1. Checked by generator/scripts/check_schema_examples.py.",
+  "protocol_version": 1,
+  "base_path": "/v1",
+  "spec": "spec/core/protocol.md",
+  "endpoints": [
+    {
+      "id": "E1",
+      "method": "GET",
+      "path": "/v1/info",
+      "query": {},
+      "request": null,
+      "responses": {
+        "200": "info-response.schema.json",
+        "405": "error.schema.json"
+      },
+      "rules": [
+        "CORE-CAP-001"
+      ]
+    },
+    {
+      "id": "E2",
+      "method": "POST",
+      "path": "/v1/session",
+      "query": {},
+      "request": "session-request.schema.json",
+      "responses": {
+        "200": "session-response.schema.json",
+        "400": "error.schema.json",
+        "405": "error.schema.json",
+        "413": "error.schema.json",
+        "415": "error.schema.json"
+      },
+      "rules": [
+        "CORE-SESSION-001",
+        "CORE-SESSION-002"
+      ]
+    },
+    {
+      "id": "E3",
+      "method": "POST",
+      "path": "/v1/messages",
+      "query": {
+        "epoch": {
+          "required": true,
+          "pattern": "^[0-9a-f]{16}$"
+        }
+      },
+      "request": "send-request.schema.json",
+      "responses": {
+        "201": "send-response.schema.json",
+        "200": "send-response.schema.json",
+        "400": "error.schema.json",
+        "403": "error.schema.json",
+        "405": "error.schema.json",
+        "409": "error.schema.json",
+        "413": "error.schema.json",
+        "415": "error.schema.json"
+      },
+      "rules": [
+        "CORE-MSG-001",
+        "CORE-MSG-002",
+        "CORE-MSG-003",
+        "CORE-EPOCH-002"
+      ]
+    },
+    {
+      "id": "E4",
+      "method": "GET",
+      "path": "/v1/mailboxes/{name}/messages",
+      "query": {
+        "epoch": {
+          "required": true,
+          "pattern": "^[0-9a-f]{16}$"
+        },
+        "after": {
+          "required": true,
+          "pattern": "^(0|[1-9][0-9]{0,15})$"
+        },
+        "wait": {
+          "required": false,
+          "pattern": "^(0|[1-9][0-9]{0,15})$",
+          "default": 0,
+          "clamp_max": 30
+        },
+        "limit": {
+          "required": false,
+          "pattern": "^(0|[1-9][0-9]{0,15})$",
+          "default": 100,
+          "min": 1,
+          "clamp_max": 100
+        }
+      },
+      "request": null,
+      "responses": {
+        "200": "poll-response.schema.json",
+        "400": "error.schema.json",
+        "405": "error.schema.json",
+        "409": "error.schema.json"
+      },
+      "rules": [
+        "CORE-POLL-001",
+        "CORE-POLL-002",
+        "CORE-POLL-003",
+        "CORE-POLL-004",
+        "CORE-POLL-005"
+      ]
+    },
+    {
+      "id": "E5",
+      "method": "GET",
+      "path": "/v1/users",
+      "query": {},
+      "request": null,
+      "responses": {
+        "200": "users-response.schema.json",
+        "405": "error.schema.json"
+      },
+      "rules": [
+        "CORE-CAP-003"
+      ]
+    }
+  ],
+  "any_path": {
+    "404": "error.schema.json"
+  },
+  "core_types": {
+    "text": "payload-text.schema.json"
+  },
+  "constants": "constants.json",
+  "examples": {
+    "examples/session-request.alice.json": "session-request.schema.json",
+    "examples/session-response.alice.json": "session-response.schema.json",
+    "examples/send-request.a1.json": "send-request.schema.json",
+    "examples/send-response.a1.json": "send-response.schema.json",
+    "examples/poll-response.bob-step7.json": "poll-response.schema.json",
+    "examples/error.epoch-mismatch.json": "error.schema.json"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "send-request.schema.json",
+  "title": "E3 request: envelope, send form (CORE-ENV-001)",
+  "$comment": "Clients send canonical names (CORE-NAME-004); the server also accepts mixed case and canonicalizes (CORE-NAME-003).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "from",
+    "to",
+    "type",
+    "payload",
+    "created_at"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "from": {
+      "$ref": "common.schema.json#/$defs/name_input"
+    },
+    "to": {
+      "$ref": "common.schema.json#/$defs/name_input"
+    },
+    "type": {
+      "$ref": "common.schema.json#/$defs/type"
+    },
+    "payload": {
+      "$ref": "common.schema.json#/$defs/payload"
+    },
+    "created_at": {
+      "$ref": "common.schema.json#/$defs/timestamp"
+    }
+  }
+}

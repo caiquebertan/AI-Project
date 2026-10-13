@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "session-request.schema.json",
+  "title": "E2 request (CORE-SESSION-001, -002)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "name",
+    "capabilities"
+  ],
+  "properties": {
+    "name": {
+      "$ref": "common.schema.json#/$defs/name_input"
+    },
+    "capabilities": {
+      "$ref": "common.schema.json#/$defs/capabilities"
+    }
+  }
+}

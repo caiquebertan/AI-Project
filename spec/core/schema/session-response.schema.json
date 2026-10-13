@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "session-response.schema.json",
+  "title": "E2 response 200 (CORE-SESSION-001)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "name",
+    "epoch",
+    "new_user"
+  ],
+  "properties": {
+    "name": {
+      "$ref": "common.schema.json#/$defs/name"
+    },
+    "epoch": {
+      "$ref": "common.schema.json#/$defs/epoch"
+    },
+    "new_user": {
+      "type": "boolean"
+    }
+  }
+}

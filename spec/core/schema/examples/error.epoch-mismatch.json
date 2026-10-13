@@ -1,0 +1,6 @@
+{
+  "error": {
+    "code": "epoch_mismatch",
+    "message": "epoch 0000000000000000 is not the current server epoch"
+  }
+}

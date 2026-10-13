@@ -40,3 +40,6 @@ Sub-agents: [`../.claude/agents/`](../.claude/agents/). Commands: [`../.claude/c
 | `preflight.py` | §5.3 | Toolchain versions; `--strict` to gate |
 
 All scripts share exit codes: `0` ok, `1` check failed, `2` usage, `3` stale snapshot, `4` illegal transition.
+
+## Requirements
+Harness scripts and tests use only the Python standard library and need **Python 3.10 or newer** (tested on 3.10 and 3.13). Run the tests with `python3 -m unittest discover -s generator/tests`.

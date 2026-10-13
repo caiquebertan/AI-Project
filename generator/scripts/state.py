@@ -246,8 +246,8 @@ class Machine:
             return self.global_event(f, ev, app, detail)
         if stage == "APPS":
             if not app:
-                raise TransitionError(f"feature {f['id']} is in per-app stages; pass --app "
-                                      f"({', '.join(f'{k}:{v['stage']}' for k, v in f['apps'].items())})")
+                per_app = ", ".join("%s:%s" % (k, v["stage"]) for k, v in f["apps"].items())
+                raise TransitionError(f"feature {f['id']} is in per-app stages; pass --app ({per_app})")
             return self.app_event(f, app, ev, detail, target)
         return self.feature_event(f, ev, detail, decided_by, target, evals_passed)
 

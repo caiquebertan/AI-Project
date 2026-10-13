@@ -18,11 +18,11 @@ APP = "stub-app"
 class Harness:
     """Drives a Machine on a temp root and asserts each landing stage."""
 
-    def __init__(self, tc, mode="interactive"):
+    def __init__(self, tc, mode="interactive", regen_per_feature=False):
         self.tc = tc
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name)
-        self.m = Machine(Machine.new_state(mode), CAPS, self.root)
+        self.m = Machine(Machine.new_state(mode), CAPS, self.root, regen_per_feature=regen_per_feature)
 
     def step(self, fid, event, expect, app=None, **kw):
         entry = self.m.transition(fid, event, app=app, **kw)
@@ -37,10 +37,13 @@ class Harness:
 
 
 class EWF1DryRun(unittest.TestCase):
-    """E-WF-1: stub-agent dry run with injected SPEC_ISSUE, blocker rounds, STALE_DIFF, QA loops."""
+    """E-WF-1: stub-agent dry run with injected SPEC_ISSUE, blocker rounds, STALE_DIFF, QA loops.
+
+    Runs with regen.per_feature=true, so S6b is part of the chain (the pre-OM-0011 behavior).
+    """
 
     def setUp(self):
-        self.h = Harness(self)
+        self.h = Harness(self, regen_per_feature=True)
         self.addCleanup(self.h.tmp.cleanup)
 
     def test_full_chain_with_injected_failures(self):
@@ -188,6 +191,80 @@ class EWF1DryRun(unittest.TestCase):
         h.step(F, "green", "DONE", app="a")
         self.assertEqual(h.feature(F)["stage"], "APPS")
         h.step(F, "green", "S7", app="b")
+
+
+class DefaultRegenPath(unittest.TestCase):
+    """regen.per_feature=false (the default): S6 `met` finishes the app; regen-check is a P7 tool."""
+
+    def setUp(self):
+        self.h = Harness(self)
+        self.addCleanup(self.h.tmp.cleanup)
+
+    def run_to_s6(self, F, apps):
+        h = self.h
+        h.step(F, "no_delta", "S1")
+        h.step(F, "ok", "S3", app=apps[0])
+        for app in apps:
+            for ev, to in (("ok", "S4"), ("pass", "S5"), ("green", "S6")):
+                h.step(F, ev, to, app=app)
+
+    def test_met_goes_straight_to_done_and_never_counts_regen(self):
+        h, F = self.h, "STUB-7"
+        h.m.start_feature(F, "stub", [APP], "light")
+        self.run_to_s6(F, [APP])
+        h.step(F, "met", "S7", app=APP)
+        self.assertEqual(h.counters(F)["regen_check"], 0)
+        with self.assertRaises(TransitionError):
+            h.m.transition(F, "green", app=APP)   # S6b does not exist on this path
+        h.step(F, "ok", "DONE")
+        events = lib.read_run_events(h.root, F)
+        self.assertNotIn("S6b", [e["transition"]["to"] for e in events if "transition" in e])
+
+    def test_core_delivery_d1_with_two_apps(self):
+        h, F = self.h, "D1"
+        h.m.start_feature(F, "Core messaging", ["android", "web"], "full")
+        h.step(F, "delta", "G0")
+        h.step(F, "approve", "S1", decided_by=OP)
+        h.step(F, "ok", "S2")
+        h.step(F, "ok", "G1")
+        h.step(F, "approve", "S3", app="android", decided_by=OP)
+        for app in ("android", "web"):
+            for ev, to in (("ok", "S4"), ("pass", "S5"), ("green", "S6")):
+                h.step(F, ev, to, app=app)
+        h.step(F, "met", "DONE", app="android")
+        self.assertEqual(h.feature(F)["stage"], "APPS")        # web is not done yet
+        h.step(F, "met", "S7", app="web")
+        h.step(F, "ok", "DONE")
+        self.assertEqual(h.feature(F)["status"], "done")
+        self.assertEqual(h.feature(F)["title"], "Core messaging")
+        self.assertTrue(all(e["feature"] == "D1" for e in lib.read_run_events(h.root, F)))
+
+    def test_unmet_still_reopens_without_regen(self):
+        h, F = self.h, "STUB-8"
+        h.m.start_feature(F, "stub", [APP], "light")
+        self.run_to_s6(F, [APP])
+        h.step(F, "unmet_code", "S3", app=APP)
+        self.assertEqual(h.counters(F)["accept_reopen"], 1)
+
+    def test_cli_default_config_runs_d1_without_s6b(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            def ok(*args):
+                res = run_script("state.py", "--root", tmp, *args)
+                self.assertEqual(res.returncode, 0, res.stderr)
+                return res.stdout
+
+            ok("init")
+            ok("start-feature", "D1", "--title", "Core messaging", "--apps", "android,web", "--chain", "light")
+            ok("transition", "--event", "no_delta")
+            ok("transition", "--event", "ok", "--app", "android")
+            for app in ("android", "web"):
+                for ev in ("ok", "pass", "green"):
+                    ok("transition", "--event", ev, "--app", app)
+            ok("transition", "--event", "met", "--app", "android")
+            out = ok("transition", "--event", "met", "--app", "web")
+            self.assertIn("D1/web: S6 --met--> S7", out)
+            self.assertIn("S7 -> ORC", ok("status"))
+            self.assertEqual(len(lib.read_run_events(Path(tmp), "D1")), 11)
 
 
 class IllegalTransitions(unittest.TestCase):

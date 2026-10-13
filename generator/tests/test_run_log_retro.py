@@ -18,7 +18,7 @@ class RunLogAndRetro(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
-        m = Machine(Machine.new_state(), CAPS, self.root)
+        m = Machine(Machine.new_state(), CAPS, self.root, regen_per_feature=True)
         m.start_feature("F9", "stub", ["web"], "light")
         m.transition("F9", "no_delta", log_extra={"spec_version": "0.1.0", "agent": "PM+TL"})
         m.transition("F9", "ok", app="web")
@@ -74,6 +74,37 @@ class RunLogAndRetro(unittest.TestCase):
         index = (self.root / "docs" / "runs" / "INDEX.md").read_text()
         self.assertEqual(index.count("| F9 |"), 1)
         self.assertIn("| F9 | stub | done |", index)
+
+    def test_retro_for_delivery_and_phase_ids(self):
+        """Milestone retros: a delivery id (D1, default regen path) and a phase id (P3, run log only)."""
+        m = Machine(Machine.new_state(), CAPS, self.root)
+        m.start_feature("D1", "Core messaging", ["android", "web"], "full")
+        for ev in ("no_delta", "ok", "ok"):                    # S0 -> S1 -> S2 -> G1
+            m.transition("D1", ev)
+        m.transition("D1", "approve", app="android", decided_by=OP)
+        for app in ("android", "web"):
+            for ev in ("ok", "pass", "green", "met"):
+                m.transition("D1", ev, app=app)
+        m.transition("D1", "ok")
+        m.save(default_state_path(self.root))
+        run_script("run_log.py", "--root", self.root, "append", "--feature", "P3", "--stage", "P3",
+                   "--event", "launch", "--agent", "DEV", "--model", "opus")
+        for feature, title in (("D1", "Core messaging"), ("P3", "Generator v1")):
+            res = run_script("render_retro.py", "--root", self.root, "--feature", feature, "--title", title,
+                             "--update-index")
+            self.assertEqual(res.returncode, 0, res.stderr)
+        d1 = (self.root / "docs" / "retros" / "D1.md").read_text()
+        self.assertIn("# Retro — D1: Core messaging", d1)
+        self.assertIn("- Regen-check (S6b): not run", d1)
+        self.assertIn("- Apps touched: android, web", d1)
+        self.assertNotIn("S6b [", d1)                          # no regen-check stage in the pipeline table
+        self.assertIn("# Retro — P3: Generator v1", (self.root / "docs" / "retros" / "P3.md").read_text())
+        index = (self.root / "docs" / "runs" / "INDEX.md").read_text()
+        self.assertIn("| D1 | Core messaging | done |", index)
+        self.assertIn("[retro](../retros/P3.md)", index)
+
+    def test_template_has_short_form_note(self):
+        self.assertIn("Short form", TEMPLATE)
 
     def test_render_needs_a_log(self):
         res = run_script("render_retro.py", "--root", self.root, "--feature", "NOPE")

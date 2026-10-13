@@ -1,7 +1,8 @@
-# Agent pipeline workflow (AI-readable) — v0.2.2
+# Agent pipeline workflow (AI-readable) — v0.3.0
 
-> **Sources:** operator instructions in [`docs/human-input/OPERATOR_MESSAGES.md`](../docs/human-input/OPERATOR_MESSAGES.md) (12:51 workflow; 13:24 and 13:29 decisions), decisions in [`docs/decisions/0002-workflow-gap-answers.md`](../docs/decisions/0002-workflow-gap-answers.md), gap analysis in [`docs/planning/workflow-gap-analysis.md`](../docs/planning/workflow-gap-analysis.md).
+> **Sources:** operator instructions in [`docs/human-input/OPERATOR_MESSAGES.md`](../docs/human-input/OPERATOR_MESSAGES.md) (12:51 workflow; 13:24 and 13:29 decisions; OM-0011 accepted MVP cuts), decisions in [`docs/decisions/0002-workflow-gap-answers.md`](../docs/decisions/0002-workflow-gap-answers.md), gap analysis in [`docs/planning/workflow-gap-analysis.md`](../docs/planning/workflow-gap-analysis.md).
 > **Precedence:** brief > operator's words > this file. If they conflict, stop and ask the operator (or log `BLOCKED` in autonomous mode).
+> **v0.3.0:** MVP cuts accepted (OM-0011): acceptance gated by ACs only (spec-rule coverage reported, not gated); one core delivery D1 (F1+F2+F3) instead of three feature loops; regeneration check once at P7 (`regen.per_feature` default false); light server chain; interop requires web↔web and Android driver↔web UI; reactions demo (P6) is the cut line; retros per milestone.
 > **v0.2.2:** §5.4 environment rule (decision 0011); P3 requires `preflight --strict` on the operator's machine.
 > **v0.2.1:** §8 requires all commit trailers in one final block.
 > **Changes from v0.1:** generator is the development step (two entry points); spec stage S0 + gate G0; S1 becomes Trace; S2 only for generator/architecture changes; S6 automated; new S6b regen-check; return codes, counters, abort paths; commit-addressed diff rule; worktrees for parallel work; run log; executable evals.
@@ -10,15 +11,15 @@
 
 ## 1. Goal and the two machines
 
-Deliver the Aware project through a gated multi-agent pipeline whose **development step is the generator**. Client code is only ever produced by the generator from the spec, so the path graders run ("delete generated code → run generator → working clients") is exercised on every feature.
+Deliver the Aware project through a gated multi-agent pipeline whose **development step is the generator**. Client code is only ever produced by the generator from the spec, so the path graders run ("delete generated code → run generator → working clients") is exercised by every generation and by the regeneration check at P7.
 
 | | **Delivery pipeline** `/pipeline` | **Generator** `/generate <android\|web\|all>` |
 |---|---|---|
 | Purpose | Evolve spec, generator, server, external tests | Rebuild `clients/<app>/` from `spec/` + `generator/` |
-| Run by | Operator → ORC (interactive) or ORC (autonomous) | Graders, CI, and pipeline stage S3 / S6b |
+| Run by | Operator → ORC (interactive) or ORC (autonomous) | Graders, CI, pipeline stage S3, and the regeneration check (P7; per delivery only if `regen.per_feature`) |
 | Human gates | G0, G1, G2 | **None** (operator decision, Q9): reads specs → builds plan → executes |
 | Writes | `spec/`, `generator/`, `server/`, `tests/`, `docs/` | **Only** `clients/<app>/` (incl. its unit + UI tests and `.generated` manifest) |
-| Quality gate | REV, QA, trace check, regen-check | Automated: build → in-project unit/UI tests → bounded self-repair (≤3) → fail loudly |
+| Quality gate | REV, QA, AC trace check; regen-check once at P7 | Automated: build → in-project unit/UI tests → bounded self-repair (≤3) → fail loudly |
 
 Hard rule: **no agent ever hand-edits `clients/*`.** A defect in generated code is fixed in `spec/` or `generator/` (prompts, conventions, templates), then regenerated.
 
@@ -28,8 +29,8 @@ Hard rule: **no agent ever hand-edits `clients/*`.** A defect in generated code 
 |---|---|---|---|---|
 | ORC | Orchestrator / manager (main session) | session model | Plan, `STATE.json`, run log, rendering prompts from templates, triage, diff snapshots, gates, parallelism, retros, operator log | Writes production code |
 | PM | Product manager | Sonnet | WHAT: backlog (epics → features → stories); drafts `spec/core/client-behavior.md` + `spec/scenarios/`; `docs/product/TRACEABILITY.md` (ACs as references to spec IDs); handles acceptance exceptions | Technical design |
-| TL | Tech lead | **Opus always** | HOW: drafts `spec/core/protocol.md`, `server-behavior.md`, `schema/`, `spec/platform/*`; designs generator (`generator/conventions`, `templates`, `prompts`); server plan | Code |
-| DEV | Developer | **Opus** for first generation of a module/app and when interpretation or trying options is needed; **Sonnet** when the change maps objectively to an approved plan | Edits generator inputs and runs `/generate` (clients); writes `server/` + its simple unit tests | Hand-edits `clients/*`; writes robust/UI suites |
+| TL | Tech lead | **Opus always** | HOW: drafts `spec/core/protocol.md`, `server-behavior.md`, `schema/`, `spec/platform/*`; designs generator (`generator/conventions`, `templates`, `prompts`); plans for generator/architecture changes (no server plan: the server uses the light chain, §5.5) | Code |
+| DEV | Developer | **Opus** for first generation of a module/app and when interpretation or trying options is needed; **Sonnet** when the change maps objectively to an approved plan | Edits generator inputs and runs `/generate` (clients); writes `server/` + its simple unit tests and, in the light server chain (§5.5), the server's protocol tests | Hand-edits `clients/*`; writes robust/UI suites |
 | REV | Reviewer | Sonnet; **Opus if changed lines > 400**, first generation of a module, or concurrency/threading paths | Review report: `blocker` / `nit` / `design-concern`, from magic strings/numbers to race conditions and wrong-thread calls | Fixes code |
 | QA | QA engineer | Opus to design a suite (once per app/suite); Sonnet to extend one | External AC checks in `tests/` (protocol, interop, e2e); test requirements for in-project unit/UI tests, delivered as generator conventions (Q8) | Changes production code |
 | OP | Operator (human) | — | G0, G1, G2; backlog approval once | — |
@@ -43,7 +44,7 @@ Every launch is logged with `model`, `model_id`, `reason` (§8).
 | Brief | `docs/brief/aware-test-brief.md` | — |
 | **Spec** (only source of behavior), versioned semver + git tag `spec-vX.Y.Z` | `spec/` (`core/`, `core/schema/`, `scenarios/`, `platform/`, `extensions/`) | PM + TL at S0 only |
 | Backlog | `docs/product/BACKLOG.md` | PM |
-| Traceability: brief req (`BR-n`, `SC-n`) → spec ID → AC ID → test ID → status | `docs/product/TRACEABILITY.md` | PM (rows), `check-trace` (status) |
+| Traceability: brief req (`BR-n`, `SC-n`) → spec ID → AC ID → test ID → status (keeps F1–F3 sections; the state machine runs them together as D1) | `docs/product/TRACEABILITY.md` | PM (rows), `check-trace` (status) |
 | Generator inputs | `generator/{prompts,conventions,templates,config,scripts}/` | TL design, DEV implementation |
 | Plans (history only; generator never reads them) | `docs/plans/<feature>/<app>.md` | TL |
 | Generated clients + manifest | `clients/<app>/**`, `clients/<app>/.generated` (paths, sha256, spec version, generator commit, model id) | `/generate` only |
@@ -53,7 +54,7 @@ Every launch is logged with `model`, `model_id`, `reason` (§8).
 | Pipeline state | `.work/STATE.json` (+ rendered `STATE.md`) | ORC |
 | Worktrees for parallel agents | `.work/wt/<feature>-<app>/` | ORC |
 | Run log + final reports (committed) | `docs/runs/<feature>/{run.jsonl, review-<n>.md, qa.md, acceptance.md}`, `docs/runs/INDEX.md` | ORC |
-| Retro | `docs/retros/<feature>.md` (template `docs/retros/TEMPLATE.md`) | ORC (+ operator "Human notes") |
+| Retro (per milestone: D1, F4, F5, phases; short form) | `docs/retros/<id>.md` (template `docs/retros/TEMPLATE.md`) | ORC (+ operator "Human notes") |
 | Operator messages | `docs/human-input/OPERATOR_MESSAGES.md` (`OM-nnnn` ids) | ORC appends verbatim, operator confirms |
 | Decisions | `docs/decisions/NNNN-*.md` | ORC / TL |
 
@@ -65,21 +66,31 @@ Every launch is logged with `model`, `model_id`, `reason` (§8).
 |---|---|---|---|
 | **P0 Harness** | Agent role files `.claude/agents/{pm,tech-lead,developer,reviewer,qa}.md`; prompt templates `generator/prompts/`; scripts `generator/scripts/` (`snapshot-diff`, `count-lines`, `run-log`, `check-headers`, `check-trace`, `regen-check`, `lint-commits`, `preflight`); `/pipeline` + `/generate` commands, `generator/RUN.md` fallback; `STATE.json` + run-log schemas; README/AGENTS updates | OP reviews harness | Dry run of `/pipeline` on a stub feature passes E-WF-1 |
 | **P1 Backlog + core spec** | PM backlog (F1 identity, F2 send/receive, F3 offline queue/flush, F4 interop, F5 reactions extension) + TRACEABILITY skeleton; decision records (transport = HTTP + polling/long-poll with per-recipient cursor; message identity; ordering; delivery/dedupe; generic-relay `type`+payload; app-controlled offline); `spec/core/*` with `CORE-xxx` ids, `schema/`, Alice/Bob expected states, test hooks (test tags / `data-testid`, JVM-testable Android core module) | OP approves backlog once; **G0** spec v0.1.0 | `check-trace`: every BR/SC has a spec id |
-| **P2 Server** (light chain) | TL-lite plan → DEV server + `tests/protocol` → REV | G1-light | E-PROTO-1 green |
+| **P2 Server** (light server chain, §5.5) | DEV (Sonnet; Opus if it needs interpretation) writes `server/` and its protocol tests in `tests/protocol` → ONE Sonnet REV round. No TL plan, no QA agent, no PM acceptance | none: no G1 (G0 already covers the spec) | E-PROTO-1 green |
 | **P3 Generator v1** | TL generator design (templates for build infra and module skeletons, conventions per platform, generation order, self-repair bound, manifest) → DEV implements → `preflight --strict` passes on the operator's machine → first `/generate android` + `/generate web` (parallel worktrees, run by the operator locally, §5.4) | **G1** | Both clients build + in-project tests pass (run on the operator's machine, §5.4) |
-| **P4 Feature loops** | F1 → F3 via §5 | per §5 | per §5 |
-| **P5 Interop** | QA `tests/interop/` runs Alice/Bob both pairings (android↔web) against the real server | — | E-INTEROP-1 green ×3 |
-| **P6 Evolution demo** | F5 reactions as `spec/extensions/reactions.md` → `/generate` with no prompt changes | G0 | E-EVOL-1 |
-| **P7 Regen verification** | `regen-check` from a fresh clone ×2; operator repeats once following only README | OP | E-PIPE-1 |
+| **P4 Core delivery, then interop feature** | **D1 "Core messaging" = F1 + F2 + F3**, generated, reviewed and QA'd as one unit per app (full chain, first generation, §5), then **F4 interop** (feature-level work; the P5 tests exercise it) | per §5 | per §5 |
+| **P5 Interop** | QA `tests/interop/` runs Alice/Bob against the real server. Required pairings: web↔web (through the UI) and Android driver (Alice) ↔ web UI (Bob), the Android side being the generated Android JVM driver (`spec/platform/android.md`). Other pairings are optional | — | E-INTEROP-1 green ×3 |
+| **P6 Evolution demo** | **First thing cut if time is short; only after P5 passes** (§4.1). F5 reactions as `spec/extensions/reactions.md` → `/generate` with no prompt changes | G0 | E-EVOL-1 |
+| **P7 Regen verification** | `regen-check --app all` (android, then web, each in a fresh clone/worktree) ×2: the one regeneration check of the project; operator repeats once following only README | OP | E-PIPE-1 |
 | **P8 Packaging** | Final README / DESIGN / AGENTS / FUTURE (from retros); lint scripts; archive; unzip + regen in clean sandbox | OP final review | Submitted |
 
-## 5. Per-feature state machine
+### 4.1 Cut order
+The phase order stays P5 → P6 → P7 → P8. If time runs short, cut in this order and record each cut in the retro and the README:
+1. **P6 evolution demo (F5 reactions)** goes first, and only after P5 passes; it is never started while interop is red.
+2. **Message-time display** (it is outside the brief) goes second.
+Nothing else is cut: core messaging (D1), interop (F4), the regeneration check (P7) and packaging (P8) are the brief.
 
-Chains: **full** = first feature per app, or any generator/architecture change (S2 + G1 run). **light** = everything else (S2/G1 skipped).
+## 5. Per-delivery state machine
+
+The unit is a *delivery*: `D1` (core messaging = F1+F2+F3 together), `F4`, `F5`, or a phase id; the state machine's "feature" id may therefore be `D1` (`state.py start-feature D1 --title "Core messaging" ...`). TRACEABILITY keeps its F1–F3 sections (PM owns that file); D1 is accepted when all their ACs are met.
+
+Chains: **full** = first delivery per app (D1), or any generator/architecture change (S2 + G1 run). **light** = everything else (S2/G1 skipped). The server has its own light chain (§5.5).
 
 ```
- S0 SPEC ─► [G0] ─► S1 TRACE ─► (S2 TL ─► [G1])? ─► S3 GENERATE ─► S4 REVIEW ─► S5 QA ─► S6 ACCEPT ─► S6b REGEN ─► S7 RETRO
+ S0 SPEC ─► [G0] ─► S1 TRACE ─► (S2 TL ─► [G1])? ─► S3 GENERATE ─► S4 REVIEW ─► S5 QA ─► S6 ACCEPT ─► [S6b REGEN]? ─► S7 RETRO
 ```
+
+`S6b` runs only when config `regen.per_feature` is true; by default an accepted app is done at S6 and the regeneration check runs once at P7 (`regen-check --app all`). The server skips S2, G1, S5 and S6 agents (§5.5).
 
 | Step | Trigger | Agent | Output | Next |
 |---|---|---|---|---|
@@ -88,19 +99,19 @@ Chains: **full** = first feature per app, or any generator/architecture change (
 | **S1 Trace** | G0 approved | PM | TRACEABILITY rows for the feature, per app (`core` / `platform:android` / `platform:web`) | AC needs behavior not in spec → S0. Generator/arch change needed → S2. Else → S3 |
 | **S2 TL plan** | Full chain only | TL (Opus) | Plan per affected app (`docs/plans/`) + proposed edits to `generator/conventions`, `templates`, `spec/platform` | → G1 |
 | **G1** | Plan written | **OP** | approve / revise-plan / revise-spec / descope | → S3 / S2 / S0 / backlog |
-| **S3 Generate / implement** | G1 approved or light chain from S1 | DEV | Clients: edits to generator inputs + `/generate <app>` (module-scoped). Server: code + simple unit tests. ORC commits and snapshots the diff | build + in-project tests OK → S4. `PLAN_DEVIATION` → S2 (G1-delta). `SPEC_ISSUE` → S0. Self-repair exhausted / `ENV_FAILURE` → G2 |
+| **S3 Generate / implement** | G1 approved or light chain from S1 | DEV | Clients: edits to generator inputs + `/generate <app>` (module-scoped). Server: code + simple unit tests, plus its protocol tests in the light server chain (§5.5). ORC commits and snapshots the diff | build + in-project tests OK → S4. `PLAN_DEVIATION` → S2 (G1-delta). `SPEC_ISSUE` → S0. Self-repair exhausted / `ENV_FAILURE` → G2 |
 | **S4 Review** | Fresh diff snapshot | REV (model by §2) | `review-<n>.md` with YAML front matter `{blockers, nits, design_concerns}` | no blockers → S5. Blockers and `review_rounds` < 3 → S3. `design-concern` → S2 (plan/convention) or S0 (spec), not counted. Blockers after round 3 → **G2** |
 | **S5 QA** | Review passed | QA | External AC checks in `tests/`; test requirements for in-project tests as conventions; **full** suite run (regression) | green → S6. Flow change → S3 → S4 (review counter continues). Nit-level → S3 → back to S5 (`qa_fix` ≤ 2). Untestable AC / `SPEC_ISSUE` → S0. Exhausted → G2 |
-| **S6 Accept** | QA green | `check-trace` (automated); PM only on failure | `acceptance.md`: every AC → passing test id | all met → S6b. Unmet (code) → S3 (`accept_reopen` ≤ 1). Unmet (spec gap) / invalid AC → S0. New work → backlog. Second unmet → G2 |
-| **S6b Regen-check** | Accepted | ORC runs `regen-check` | Fresh worktree, delete `clients/<app>`, `/generate`, full tests | green → S7. Fail → S3 (`regen_check` ≤ 2) → then G2 |
-| **S7 Retro** | Regen green | ORC | `docs/runs/<feature>/`, retro from run log, merge `feat/<id>` `--no-ff`, update backlog + INDEX | next feature → S0 |
+| **S6 Accept** | QA green | `check-trace` (automated); PM only on failure | `acceptance.md`: every AC → passing test id (spec-rule coverage listed as informational, never gating) | all ACs met → S7 (default; via S6b only if `regen.per_feature` is true). Unmet (code) → S3 (`accept_reopen` ≤ 1). Unmet (spec gap) / invalid AC → S0. New work → backlog. Second unmet → G2 |
+| **S6b Regen-check** (optional, per config `regen.per_feature`; default is once at P7) | Accepted, only when `regen.per_feature` is true | ORC runs `regen-check` | Fresh worktree, delete `clients/<app>`, `/generate`, full tests | green → S7. Fail → S3 (`regen_check` ≤ 2) → then G2. When false this step does not exist: the app is done at S6 and `regen-check --app all` runs once at P7 |
+| **S7 Retro** | All apps accepted (and regen green when per feature) | ORC | `docs/runs/<id>/`; retro from the run log only for milestones (D1, F4, F5, phases); merge `feat/<id>` `--no-ff`, update backlog + INDEX | next delivery → S0 |
 | **G2 Escalation** | Any counter exhausted, `ENV_FAILURE`, or conflict | **OP** | change spec / replan / one more round / defer / stop | → S0 / S2 / S3 / backlog / ABORTED |
 
 ### 5.1 Return codes (every agent ends with exactly one)
 `OK` · `SPEC_ISSUE{spec_id, question}` · `PLAN_DEVIATION{reason, proposal}` · `STALE_DIFF` · `ENV_FAILURE{detail}` · `BLOCKED{reason}`.
 ORC routes non-`OK` codes per the table above and never lets an agent continue past one.
 
-### 5.2 Counters and budgets (`STATE.json`, per feature per app)
+### 5.2 Counters and budgets (`STATE.json`, per delivery per app)
 
 | Counter | Cap | On exceed |
 |---|---|---|
@@ -110,8 +121,8 @@ ORC routes non-`OK` codes per the table above and never lets an agent continue p
 | `g1_rejections` | 2 | ORC asks operator for a discussion instead of another round |
 | `spec_reopen` | 2 | G2 |
 | `gen_self_repair` (per `/generate` run) | 3 | `/generate` fails → G2 |
-| `regen_check` | 2 | G2 |
-| Budget: wall time, tokens (soft / hard) | set per feature at S1 | soft → note in retro; hard → G2 |
+| `regen_check` (only used when `regen.per_feature` is true; unused by default) | 2 | G2 |
+| Budget: wall time, tokens (soft / hard) | set per delivery at S1 | soft → note in retro; hard → G2 |
 
 Caps, the §2 reviewer threshold (400 changed lines) and the §6 split threshold (2000) live only in `generator/config/generator.json` (`limits`); `generator/scripts/state.py` enforces the caps (exceeding one routes to G2).
 
@@ -119,7 +130,10 @@ Caps, the §2 reviewer threshold (400 changed lines) and the §6 split threshold
 `BLOCKED` = feature parked with reason; ORC continues independent features. `ABORTED` = branch kept, STATE + partial retro written. Rollback = reset feature branch to the last green stage commit. `ENV_FAILURE` is retried at most once, then G2. `preflight` checks JDK, Android SDK, Node, Python versions before P3.
 
 ### 5.4 Environment (decision 0011, `docs/ENVIRONMENT.md`)
-Agents in the cloud workspace cannot build or test clients (no Android SDK; npm, Maven, Google Maven and Gradle registries unreachable). Steps that need a client build (`/generate` with build and test, in-project tests, Playwright, Android core driver, S6b regen-check, interop) run on the **operator's machine** with Claude Code locally. ORC then stops, gives the operator the exact command and what to send back or commit, and logs it as an operator step (`decided_by: operator`). An agent never reports a client build or test as passing without a log from that machine. Python-only work (harness, server, protocol tests) runs in the sandbox.
+Agents in the cloud workspace cannot build or test clients (no Android SDK; npm, Maven, Google Maven and Gradle registries unreachable). Steps that need a client build (`/generate` with build and test, in-project tests, Playwright, Android core driver, the regeneration check (P7), interop) run on the **operator's machine** with Claude Code locally. ORC then stops, gives the operator the exact command and what to send back or commit, and logs it as an operator step (`decided_by: operator`). An agent never reports a client build or test as passing without a log from that machine. Python-only work (harness, server, protocol tests) runs in the sandbox.
+
+### 5.5 Server chain (P2, light)
+The server is built in the **light server chain**: DEV (Sonnet, or Opus if the work needs interpretation) writes `server/` and its protocol tests; REV (Sonnet) runs **one** review round; then ORC treats QA and acceptance as satisfied by green protocol tests (E-PROTO-1). There is **no TL plan, no QA agent and no PM acceptance**, and no G1 (G0 already covers the spec). The review cap stays 3 (§5.2) but one round is expected; a second blocker round is a retro item. In the state machine the server is a one-app feature (`--apps server --chain light`) and ORC sends S5 `green` and S6 `met` itself once the protocol tests pass.
 
 ## 6. Diff snapshot rule
 1. Before every handoff ORC commits (WIP commits allowed) so the diff is commit-addressed, then runs `snapshot-diff` → `diff.patch` + `diff.meta.json` `{base_sha, head_sha, worktree, porcelain_clean, patch_sha256, numstat, changed_lines, created_at, stage}`.
@@ -136,7 +150,7 @@ Agents in the cloud workspace cannot build or test clients (no Android SDK; npm,
 ## 8. Prompts, logging, commits
 - **Prompts:** templates in `generator/prompts/<role>.md` with variables only (feature, app, input paths, output path, boundaries, exit criteria, return codes). ORC fills variables; the rendered prompt's sha256 goes in the run log. Generator prompts must not name features (E-EVOL-1).
 - **Run log:** one JSON line per transition in `docs/runs/<feature>/run.jsonl` (ts, feature, app, stage, event, agent, model, model_id, model_reason, counters, base/head sha, changed_lines, spec_version, prompt_sha256, inputs, outputs, result, findings, return_code, duration, tokens, gate, decided_by, operator_msg_ref, parallel_with).
-- **Commits:** branch `feat/<id>`, one commit per stage output, merge `--no-ff`, no squash. Generated output in its own commit: `regen(<app>): spec X.Y.Z @ gen <sha>`. No commit touches both `spec/` and `clients/`. Agent commits use author `Aware Agent (<ROLE>/<model>) <agent@aware.local>`, operator as committer. Trailers: `Area`, `Boundary: generated|maintained`, `Authored-By-Role: human|agent`, `Agent`, `Model`, `Stage`, `Feature`, `Approved-By: operator` (gates), `Refs: OM-nnnn`. All trailers go in a single final block with no blank line inside it, because git reads only the last paragraph as trailers.
+- **Commits:** branch `feat/<id>`, one commit per stage output, merge `--no-ff`, no squash. Generated output in its own commit: `regen(<app>): spec X.Y.Z @ gen <sha>`. No commit touches both `spec/` and `clients/`. Agent commits use author `Aware Agent (<ROLE>/<model>) <agent@aware.local>`, operator as committer. Trailers: `Area`, `Boundary: generated|maintained`, `Authored-By-Role: human|agent`, `Agent`, `Model`, `Stage`, `Feature` (F1.., the core delivery D1, or P0..P8), `Approved-By: operator` (gates), `Refs: OM-nnnn`. All trailers go in a single final block with no blank line inside it, because git reads only the last paragraph as trailers.
 - **Operator log:** ORC appends verbatim with an `OM-nnnn` id; AI notes prefixed `AI note:`; operator confirms in the commit (`Approved-By: operator`).
 
 ## 9. Autonomous mode (`/pipeline --autonomous`)
@@ -149,8 +163,8 @@ Agents in the cloud workspace cannot build or test clients (no Android SDK; npm,
 Resumable from `STATE.json` + run log; ORC checkpoints after every transition.
 `/generate` never has gates in either mode.
 
-## 10. Retrospective (per feature)
-Rendered at S7 from `run.jsonl` (stage table, counters, models, durations, backward transitions, spec version in/out, regen result, budget actuals), then ORC adds: gaps found, decisions, what to improve next ticket, proposed workflow changes (with status). The operator may add "Human notes". `docs/runs/INDEX.md` links every feature.
+## 10. Retrospective (per milestone, short form)
+One retro per milestone: D1, F4, F5 and each phase (P0..P8), not per feature stage; other deliveries only leave their script-written run log (`docs/runs/<id>/run.jsonl`, cheap). Rendered at S7 from `run.jsonl` (stage table, counters, models, durations, backward transitions, spec version in/out, regen result, budget actuals), then ORC adds: gaps found, decisions, what to improve next ticket, proposed workflow changes (with status). The narrative sections may be one line each (`docs/retros/TEMPLATE.md`, short form). The operator may add "Human notes". `docs/runs/INDEX.md` links every milestone run.
 
 ## 11. Evals
 
@@ -161,24 +175,24 @@ Rendered at S7 from `run.jsonl` (stage table, counters, models, durations, backw
 | E-TL-1 | Plan cites spec ids; stack matches context doc; no messaging SDKs | grep plan; check `libs.versions.toml` / Gradle modules / `package.json`; dependency denylist |
 | E-DEV-1 | Build + in-project tests pass; manifest == tree; headers | `./gradlew assembleDebug testDebugUnitTest`, `npm ci && npm run build && npm test`, `check-headers` |
 | E-REV-1 | Report schema valid | YAML front matter + `- [blocker\|nit\|design] path:line — ` lines |
-| E-QA-1 | Every `CORE-xxx` MUST has ≥1 test carrying its id | `check-trace` over JUnit XML / Playwright JSON |
-| E-PM-3 | Every AC → passing test id | `check-trace` |
+| E-QA-1 | Every `CORE-xxx` MUST has ≥1 test carrying its id: **reported, not gated** (informational block of `check-trace`; `--strict-coverage` makes it fail) | `check-trace` over JUnit XML / Playwright JSON |
+| E-PM-3 | Every AC → passing test id: **the acceptance gate** (exit status of `check-trace`) | `check-trace` |
 | E-PROTO-1 | Server conforms to schema + server-behavior | `tests/protocol` (pytest) |
-| E-INTEROP-1 | Alice/Bob step states match spec, android↔web both pairings | `tests/interop/run.sh` |
+| E-INTEROP-1 | Alice/Bob step states match spec for the required pairings: web↔web (through the UI) and Android driver (Alice) ↔ web UI (Bob); other pairings optional | `tests/interop/run.sh` |
 | E-BOUND-1 | `/generate` writes only inside `clients/<app>` | `git status --porcelain` after regen |
 | E-LOCAL-1 | No external hosts | grep for non-localhost / 10.0.2.2 URLs |
-| E-DET-1 | Two regens: same file set per module, same test results | `regen-check` ×2 |
-| E-EVOL-1 | Harness generic | prompt lint (no feature nouns); F5 regenerates with no prompt edits |
-| E-PIPE-1 | **Regeneration works** (primary criterion) | `regen-check` from fresh clone, pinned model, full suites |
-| E-PIPE-2 | Spec authoritative | E-QA-1 at 100% + E-DET-1 + no open `SPEC_ISSUE` at release |
+| E-DET-1 | Two regens: same file set per module, same test results | `regen-check` ×2 (P7) |
+| E-EVOL-1 | Harness generic | prompt lint (no feature nouns); F5 regenerates with no prompt edits (P6, first thing cut, §4.1) |
+| E-PIPE-1 | **Regeneration works** (primary criterion) | `regen-check --app all` from fresh clone, pinned model, full suites; once at P7 by default |
+| E-PIPE-2 | Spec authoritative | all ACs met (E-PM-3) + E-DET-1 + no open `SPEC_ISSUE` at release; E-QA-1 coverage is reported alongside, not required |
 | E-PIPE-3 | Commit history and attribution | `lint-commits` |
 | E-README-1 | README covers each brief deliverable | checklist script |
-| E-WF-1 | State machine mechanics | stub-agent dry run with injected `SPEC_ISSUE`, 4 blocker rounds, `STALE_DIFF` |
+| E-WF-1 | State machine mechanics | stub-agent dry run with injected `SPEC_ISSUE`, 4 blocker rounds, `STALE_DIFF`; run with `regen.per_feature` true and false, plus a two-app `D1` |
 | E-WF-2 | Resume works | kill ORC mid-S4, resume, no duplicated/skipped stage |
 | E-ATTR-1 | Operator log append-only, AI notes prefixed | git-blame check |
 | E-COST-1 | Budget adherence | run.jsonl totals vs caps |
 
 ## 12. Remaining open items
-- Exact budgets per feature (set at P1).
+- Exact budgets per delivery (set at P1).
 - Pinned model IDs and fallback for `/generate` (`generator/config`, set at P3).
 - Messaging-SDK denylist contents (review at P0).

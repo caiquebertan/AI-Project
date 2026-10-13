@@ -1,6 +1,6 @@
 # Generator and agentic harness
 
-Full design: [`WORKFLOW.md`](WORKFLOW.md) (v0.2). Manual / CI usage: [`RUN.md`](RUN.md).
+Full design: [`WORKFLOW.md`](WORKFLOW.md) (v0.3). Manual / CI usage: [`RUN.md`](RUN.md).
 
 | Entry point | Tool | Purpose | Status |
 |---|---|---|---|
@@ -25,16 +25,16 @@ Sub-agents: [`../.claude/agents/`](../.claude/agents/). Commands: [`../.claude/c
 
 | Script | WORKFLOW | Does |
 |---|---|---|
-| `state.py` | §5, §5.1, §5.2, §9 | The state machine: `init`, `start-feature`, `transition --event`, `status`, `render`, `select`, `set-mode`, `model` (§2 model rules). Refuses illegal transitions; checkpoints STATE.json and logs every transition. |
+| `state.py` | §5, §5.1, §5.2, §9 | The state machine: `init`, `start-feature` (ids like `F4`, `D1`, `P3`), `transition --event`, `status`, `render`, `select`, `set-mode`, `model` (§2 model rules). Refuses illegal transitions; checkpoints STATE.json and logs every transition. |
 | `snapshot_diff.py` | §6.1, §6.4 | Commit-addressed `diff.patch` + `diff.meta.json`; per-file patches above the split threshold |
 | `count_lines.py` | §6.2 | `changed_lines` without lockfiles, wrapper, binaries, manifests |
 | `check_snapshot.py` | §6.3 | Agent self-check; prints `STALE_DIFF`, exit 3 |
 | `render_prompt.py` | §8 | Fills `{{var}}` templates, refuses unfilled ones, prints sha256; `--generate <app>` for the generator |
 | `run_log.py` | §8 | Append / show / validate `docs/runs/<feature>/run.jsonl` |
-| `render_retro.py` | §10 | Retro tables from the run log; `--update-index` for `docs/runs/INDEX.md` |
-| `check_trace.py` | S6, E-PM-1/3, E-QA-1 | AC met/unmet from JUnit XML + Playwright JSON; spec-id coverage per app: a rule is a defined bold id (not a citation); client rules need a passing test per app, `server-behavior.md` rules one from the server report. Tag reports `--junit android=<p> --junit web=<p> --junit server=<p> --playwright web=<p>`; untagged paths count for all apps. Uncovered is listed as `(spec id, app)` pairs; `protocol.md` rules default to all three apps unless a rule carries `[apps: ...]` |
+| `render_retro.py` | §10 | Retro tables from the run log (per milestone: D1, F4, F5, phases); `--update-index` for `docs/runs/INDEX.md` |
+| `check_trace.py` | S6, E-PM-1/3, E-QA-1 | AC met/unmet from JUnit XML + Playwright JSON; the exit status depends on the AC rows only. Spec-id coverage per app is reported as informational (`--strict-coverage` makes it fail the run again): a rule is a defined bold id (not a citation); client rules need a passing test per app, `server-behavior.md` rules one from the server report. Tag reports `--junit android=<p> --junit web=<p> --junit server=<p> --playwright web=<p>`; untagged paths count for all apps. Uncovered is listed as `(spec id, app)` pairs; `protocol.md` rules default to all three apps unless a rule carries `[apps: ...]` |
 | `check_headers.py` | E-DEV-1 | Manifest vs tree, GENERATED headers; `--write-manifest` for `/generate` |
-| `regen_check.py` | S6b, E-PIPE-1, E-BOUND-1 | Fresh worktree/clone → delete → generate → build → test → boundary; `--dry-run` |
+| `regen_check.py` | P7 (S6b if `regen.per_feature`), E-PIPE-1, E-BOUND-1 | Fresh worktree/clone → delete → generate → build → test → boundary, per app (`--app all`: android then web, combined result); `--dry-run` |
 | `lint_commits.py` | §8, E-PIPE-3 | Author + trailer rules (one final trailer block is canonical, split blocks tolerated, `--strict-trailers` rejects them; `Feature` optional at gates, F-id or P-id), no commit touching `spec/` and `clients/` |
 | `lint_prompts.py` | E-EVOL-1 | Feature-noun denylist over generator prompts |
 | `preflight.py` | §5.3 | Toolchain versions; `--strict` to gate |

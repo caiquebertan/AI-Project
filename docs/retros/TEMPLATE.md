@@ -1,11 +1,13 @@
 # Retro — <feature-id>: <feature name>
 
+> **Short form (OM-0011).** One retro per milestone: D1 (core messaging), F4, F5 and each phase (P0..P8), not per feature stage. The rendered tables are the record; every narrative section may be a single line, or `-` when there is nothing to say. Write more only where the pipeline surprised you.
+
 - Date:
 - Chain: full / light
 - Apps touched: android / web / server / spec
 - Spec version: in X.Y.Z → out X.Y.Z
 - Branch / merge commit:
-- Regen-check (S6b): pass / fail (attempts)
+- Regen-check (S6b): pass / fail (attempts); `not run` is normal when regen.per_feature is false (it runs once at P7)
 - Operator interventions: OM-nnnn, …
 
 ## Delivered

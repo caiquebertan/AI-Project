@@ -9,6 +9,7 @@ import awarelib as lib
 import check_headers
 import check_trace
 import lint_commits
+import regen_check
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
@@ -89,6 +90,35 @@ class CheckTrace(unittest.TestCase):
             self.assertIn("| SC-3 | CORE-010 | AC-F2-1 | core | T-F2-1 | pending |", text)  # F2 untouched
             self.assertIn("| AC-F1-3 |", acc.read_text())
 
+    def test_coverage_is_informational_unless_strict(self):
+        """OM-0011: exit status follows the AC rows only; --strict-coverage restores the coverage gate."""
+        with tempfile.TemporaryDirectory() as tmp:
+            trace = Path(tmp) / "T.md"
+            trace.write_text("## F1\n| BR/SC id | Spec id | AC id | Scope | Test id | Status |\n|---|---|---|---|---|---|\n"
+                             "| BR-1 | CORE-001 | AC-F1-1 | core | T-F1-1 | pending |\n")
+            args = ("check_trace.py", "--trace", trace, "--spec-dir", FIXTURES / "trace" / "spec",
+                    "--junit", FIXTURES / "trace" / "junit.xml")
+            res = run_script(*args)
+            self.assertEqual(res.returncode, lib.EXIT_OK, res.stderr)   # all ACs met, rules uncovered
+            self.assertIn("ACs: 1/1 met", res.stdout)
+            self.assertIn("informational", res.stdout)
+            self.assertIn("uncovered (spec id, app) pairs", res.stdout)
+            strict = run_script(*args, "--strict-coverage")
+            self.assertEqual(strict.returncode, lib.EXIT_FAIL)
+            self.assertIn("gated by --strict-coverage", strict.stdout)
+            self.assertEqual(run_script(*args, "--strict-spec").returncode, lib.EXIT_FAIL)   # old spelling
+
+    def test_unmet_ac_still_fails_without_strict(self):
+        res = self.run_trace()
+        self.assertEqual(res.returncode, lib.EXIT_FAIL)
+
+    def test_feature_filter_accepts_a_list_for_a_delivery(self):
+        res = self.run_trace("--feature", "F1,F2")
+        rows = json.loads(res.stdout)["rows"]
+        self.assertEqual(len(rows), 6)
+        only = json.loads(self.run_trace("--feature", "F2").stdout)["rows"]
+        self.assertEqual({r["ac"] for r in only}, {"AC-F2-1", "AC-F2-2", "AC-F2-3"})
+
     def test_empty_input(self):
         with tempfile.TemporaryDirectory() as tmp:
             res = run_script("check_trace.py", "--root", tmp)
@@ -161,6 +191,20 @@ class RegenCheck(unittest.TestCase):
             for word in ("git worktree add", "rm -rf clients/android", "/generate web", "boundary", "cleanup"):
                 self.assertIn(word, res.stdout)
             self.assertFalse((Path(tmp) / ".work").exists())
+
+    def test_all_apps_run_in_order_each_in_a_fresh_checkout(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            res = run_script("regen_check.py", "--root", tmp, "--app", "all", "--dry-run")
+            out = res.stdout
+            self.assertLess(out.index("# regen-check android"), out.index("# regen-check web"))
+            adds = [ln for ln in out.splitlines() if "git worktree add" in ln]
+            self.assertEqual(len(adds), 2)
+            self.assertNotEqual(adds[0].split()[-2], adds[1].split()[-2])   # distinct worktrees
+
+    def test_combined_summary_names_every_app(self):
+        reports = [{"app": "android", "ok": True, "steps": []},
+                   {"app": "web", "ok": False, "steps": [{"step": "generate"}]}]
+        self.assertEqual(regen_check.summary(reports), "android PASS, web FAIL (generate)")
 
     def test_real_run_fails_loudly_while_unconfigured(self):
         if not CONFIG["generate_model"].startswith("TBD"):
@@ -244,7 +288,7 @@ class LintCommits(unittest.TestCase):
     def test_phase_level_gate_needs_no_feature(self):
         gate = (GOOD.replace("Stage: P0", "Stage: G1\nApproved-By: operator").replace("Agent: DEV", "Agent: PM"))
         self.assertEqual(self.lint_one(gate), [])
-        for feature in ("F3", "P2"):
+        for feature in ("F3", "D1", "P2"):
             self.assertEqual(self.lint_one(gate.replace("Refs:", f"Feature: {feature}\nRefs:"), path="spec/z.md"), [])
         self.assertIn("Feature 'X9' is neither a feature id nor a phase id",
                       self.lint_one(gate.replace("Refs:", "Feature: X9\nRefs:"), path="spec/w.md"))

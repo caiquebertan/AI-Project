@@ -2,12 +2,12 @@
 from __future__ import annotations
 
 import bisect
-import json
 import secrets
 import threading
 import time
 
 from . import jsonvalue
+from .jsonvalue import quote as _s
 
 
 def format_utc(ms: int) -> str:
@@ -20,22 +20,19 @@ def utc_now_ms() -> int:
     return time.time_ns() // 1_000_000
 
 
-def _s(value) -> str:
-    return json.dumps(value, ensure_ascii=True)
-
-
 class Delivered:
     """An accepted envelope; never modified after creation (CORE-SRV-035)."""
 
     __slots__ = ("id", "seq", "sender", "to", "type", "payload", "created_at", "accepted_at", "json")
 
-    def __init__(self, id, seq, sender, to, type, payload, created_at, accepted_at):
+    def __init__(self, id, seq, sender, to, type, payload, payload_text, created_at, accepted_at):
         self.id, self.seq, self.sender, self.to, self.type = id, seq, sender, to, type
         self.payload, self.created_at, self.accepted_at = payload, created_at, accepted_at
-        # Delivered form (CORE-ENV-001), payload text verbatim (CORE-SRV-035).
+        # Delivered form (CORE-ENV-001); `payload_text` is the payload serialized by the caller
+        # before the lock was taken, verbatim (CORE-SRV-035).
         self.json = (
             '{"id":%s,"seq":%d,"from":%s,"to":%s,"type":%s,"payload":%s,"created_at":%s,"accepted_at":%s}'
-            % (_s(id), seq, _s(sender), _s(to), _s(type), jsonvalue.dumps(payload), _s(created_at), _s(accepted_at)))
+            % (_s(id), seq, _s(sender), _s(to), _s(type), payload_text, _s(created_at), _s(accepted_at)))
 
     def same_as_sent(self, sender, to, type, payload, created_at) -> bool:
         """CORE-SRV-034: all fields of the send form equal."""
@@ -70,7 +67,7 @@ class ServerState:
             return [{"name": n, "capabilities": list(c)}
                     for n, c in sorted(self._users.items(), key=lambda kv: kv[0].encode("utf-8"))]
 
-    def accept(self, id, sender, to, type, payload, created_at):
+    def accept(self, id, sender, to, type, payload, payload_text, created_at):
         """E3 steps 6-8. Returns (kind, Delivered) with kind 'new', 'duplicate', 'conflict' or 'unknown_sender'."""
         with self._lock:
             if sender not in self._users:
@@ -79,8 +76,11 @@ class ServerState:
             if stored is not None:
                 same = stored.same_as_sent(sender, to, type, payload, created_at)
                 return ("duplicate" if same else "conflict"), stored
-            self._seq += 1
-            env = Delivered(id, self._seq, sender, to, type, payload, created_at, format_utc(self._clock()))
+            # Everything that can fail runs first; the counter moves only once the envelope exists
+            # (CORE-SEQ-001: a request that fails consumes no value).
+            seq = self._seq + 1
+            env = Delivered(id, seq, sender, to, type, payload, payload_text, created_at, format_utc(self._clock()))
+            self._seq = seq
             self._index[id] = env
             seqs, envs = self._mailboxes.setdefault(to, ([], []))
             seqs.append(env.seq)

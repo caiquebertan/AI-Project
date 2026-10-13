@@ -6,7 +6,8 @@ from urllib.parse import parse_qsl
 
 from . import constants as C
 from . import jsonvalue, validation as V
-from .state import ServerState, _s
+from .jsonvalue import quote as _s
+from .state import ServerState
 
 
 class ApiError(Exception):
@@ -24,7 +25,8 @@ def _malformed(message: str) -> ApiError:
 
 
 def parse_object(raw: bytes, what: str) -> dict:
-    """Body to a JSON object (UTF-8, CORE-HTTP-001); anything else is malformed_request."""
+    """Body to a JSON object (UTF-8, CORE-HTTP-001); anything else is malformed_request.
+    Nesting the parser cannot take is rejected here too, so it keeps the precedence of CORE-ERR-002."""
     try:
         value = jsonvalue.parse(raw.decode("utf-8"))
     except (UnicodeDecodeError, ValueError) as exc:
@@ -104,12 +106,9 @@ def send(state: ServerState, query: str, raw: bytes) -> tuple[int, str]:
         raise ApiError(400, "invalid_payload", "payload must be a JSON object")
     if body["type"] in C.CORE_TYPES and not V.is_text_payload(payload):           # core types only
         raise ApiError(400, "invalid_payload", "payload of type text must be {\"text\": <non-blank string, at most 4096 bytes>}")
-    try:
-        jsonvalue.dumps(payload)  # nesting the server could not store and return
-    except RecursionError as exc:
-        raise _malformed("payload nesting too deep") from exc
+    payload_text = jsonvalue.dumps(payload)  # serialized once, outside the lock; cannot fail for a parsed value
     sender, to = V.canonical(body["from"]), V.canonical(body["to"])               # (5)
-    kind, env = state.accept(body["id"], sender, to, body["type"], payload, body["created_at"])  # (6)-(8)
+    kind, env = state.accept(body["id"], sender, to, body["type"], payload, payload_text, body["created_at"])  # (6)-(8)
     if kind == "unknown_sender":
         raise ApiError(403, "unknown_sender", f"{sender} has no session in this epoch")
     if kind == "conflict":

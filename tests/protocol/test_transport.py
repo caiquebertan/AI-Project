@@ -65,6 +65,71 @@ class MediaTypeAndLength(ServerTestCase, unittest.TestCase):
         self.assertEqual((r.status, r.code), (400, "malformed_request"))
 
 
+class ConnectionReuse(ServerTestCase, unittest.TestCase):
+    """Fresh connections hide framing defects: every error path is followed by a valid request on the same connection."""
+
+    def _after(self, conn, method, path, body=None, headers=None):
+        conn.request(method, path, body=body, headers=headers or {})
+        r = conn.getresponse()
+        first = (r.status, json.loads(r.read().decode("utf-8") or "null"))
+        conn.request("GET", "/v1/info")
+        r = conn.getresponse()
+        second = (r.status, json.loads(r.read().decode("utf-8")))
+        return first, second
+
+    def test_CORE_HTTP_001_CORE_ERR_001_a_request_with_an_unread_body_does_not_corrupt_the_next_request(self):
+        body = b'{"name":"alice","capabilities":[]}'
+        cases = [("POST", "/v1/info", body, JSON, 405), ("PUT", "/v1/session", body, JSON, 405),
+                 ("POST", "/v1/nowhere", body, JSON, 404), ("GET", "/v1/info", body, JSON, 200),
+                 ("GET", "/v1/users", body, JSON, 200), ("OPTIONS", "/v1/session", body, JSON, 204),
+                 ("POST", "/v1/session", body, {"Content-Type": "text/plain"}, 415),
+                 ("POST", "/v1/session", b"[" + b"0," * 200000 + b"0]", JSON, 413),
+                 ("POST", "/v1/session", b"{", JSON, 400),                       # body read, connection reusable
+                 ("GET", f"/v1/mailboxes/bob/messages?epoch={self.srv.epoch}&after=0", body, JSON, 200)]
+        for method, path, data, headers, status in cases:
+            conn = http.client.HTTPConnection("127.0.0.1", self.srv.port, timeout=5)
+            try:
+                first, second = self._after(conn, method, path, data, headers)
+            finally:
+                conn.close()
+            self.assertEqual(first[0], status, (method, path))
+            self.assertEqual(second[0], 200, (method, path, second))
+            self.assertEqual(second[1]["protocol"], "aware", (method, path))
+
+    def test_CORE_HTTP_001_pipelined_request_after_an_unread_body_is_never_answered_with_a_bogus_error(self):
+        import socket
+        for first in (b"POST /v1/info HTTP/1.1\r\nHost: t\r\nContent-Length: 5\r\n\r\nhello",
+                      b"GET /v1/info HTTP/1.1\r\nHost: t\r\nContent-Length: 5\r\n\r\nhello"):
+            with socket.create_connection(("127.0.0.1", self.srv.port), timeout=5) as s:
+                s.sendall(first + b"GET /v1/users HTTP/1.1\r\nHost: t\r\n\r\n")
+                buf = b""
+                while True:
+                    chunk = s.recv(65536)
+                    if not chunk:
+                        break
+                    buf += chunk
+            statuses = [int(line.split()[1]) for line in buf.decode("latin-1").split("\r\n") if line.startswith("HTTP/1.1 ")]
+            self.assertIn(statuses, ([405], [200], [405, 200], [200, 200]), first)
+
+    def test_CORE_HTTP_001_transfer_encoding_with_content_length_is_malformed_and_closes(self):
+        status, headers, raw = raw_exchange(self.srv.port, post("/v1/session", {
+            **JSON, "Content-Length": str(len(SESSION)), "Transfer-Encoding": "chunked"}, SESSION))
+        self.assertEqual((status, json.loads(raw)["error"]["code"]), (400, "malformed_request"))
+        self.assertEqual(headers.get("connection"), "close")
+
+    def test_CORE_HTTP_001_conflicting_content_length_values_are_malformed_and_close(self):
+        req = (b"POST /v1/session HTTP/1.1\r\nHost: t\r\nContent-Type: application/json\r\n"
+               b"Content-Length: %d\r\nContent-Length: %d\r\n\r\n" % (len(SESSION), len(SESSION) + 1)) + SESSION
+        status, headers, raw = raw_exchange(self.srv.port, req)
+        self.assertEqual((status, json.loads(raw)["error"]["code"]), (400, "malformed_request"))
+        self.assertEqual(headers.get("connection"), "close")
+        self.assertEqual(self.c.users().json, {"users": []})
+
+    def test_CORE_HTTP_003_a_non_breaking_space_around_the_media_type_is_not_whitespace(self):
+        r = self.c.call("POST", "/v1/session", raw=SESSION, headers={"Content-Type": "application/json\xa0"})
+        self.assertEqual((r.status, r.code), (415, "unsupported_media_type"))
+
+
 class BodyParsing(ServerTestCase, unittest.TestCase):
     def test_CORE_HTTP_001_CORE_SRV_030_body_must_be_one_utf8_json_object(self):
         bad = [b"", b" ", b"{", b"{}}", b"{} {}", b"[]", b"null", b"5", b'"x"', b"true", b"{'name':'a'}", b'{"name":"a",}',

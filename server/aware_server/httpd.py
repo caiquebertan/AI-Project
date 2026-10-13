@@ -15,7 +15,7 @@ from .constants import BODY_MAX_BYTES, CORS_MAX_AGE_S
 from .state import ServerState
 
 JSON_TYPE = "application/json; charset=utf-8"
-CONTENT_TYPE_RE = re.compile(r"\s*application/json\s*(?:;\s*charset\s*=\s*\"?utf-8\"?\s*)?", re.IGNORECASE)
+CONTENT_TYPE_RE = re.compile(r"[ \t]*application/json[ \t]*(?:;[ \t]*charset[ \t]*=[ \t]*\"?utf-8\"?[ \t]*)?", re.IGNORECASE)
 MAILBOX_RE = re.compile(r"/v1/mailboxes/([^/]*)/messages")
 DRAIN_MAX_BYTES = 1 << 20
 DRAIN_TIMEOUT_S = 0.5
@@ -42,6 +42,7 @@ class Handler(BaseHTTPRequestHandler):
     # ----------------------------------------------------------- dispatch
     def _serve(self, method: str) -> None:
         start = time.monotonic()
+        self._body_read = False
         try:
             status, body = self._route(method)
         except ApiError as exc:
@@ -50,8 +51,16 @@ class Handler(BaseHTTPRequestHandler):
         except Exception:  # a server bug must still answer with the error body (CORE-ERR-001)
             traceback.print_exc(file=sys.stderr)
             status, body = 500, error_body("internal_error", "internal server error")
+        if not self._body_read and self._declares_body():
+            # Unread body bytes would be parsed as the next request line: do not reuse the connection.
+            self.close_connection = True
         self._log(method, status, start)
         self._send(status, body, method)
+
+    def _declares_body(self) -> bool:
+        if self.headers.get("Transfer-Encoding") is not None:
+            return True
+        return any(v.strip() != "0" for v in self.headers.get_all("Content-Length", []))
 
     def _log(self, method: str, status: int, start: float) -> None:
         """CORE-SRV-007, written before the answer goes out so a client that has its answer can rely on the line."""
@@ -60,8 +69,7 @@ class Handler(BaseHTTPRequestHandler):
         sys.stderr.flush()
 
     def _route(self, method: str):
-        path = self.path.partition("?")[0]
-        query = self.path.partition("?")[2]
+        path, _, query = self.path.partition("?")
         if method == "OPTIONS" and (path == "/v1" or path.startswith("/v1/")):
             return 204, None
         route = match_route(path)
@@ -86,7 +94,12 @@ class Handler(BaseHTTPRequestHandler):
         """CORE-SRV-011: Content-Type (415), then Content-Length (400 / 413 without reading), then the body."""
         if CONTENT_TYPE_RE.fullmatch(self.headers.get("Content-Type", "")) is None:
             raise ApiError(415, "unsupported_media_type", "Content-Type must be application/json", close=True)
-        length = self.headers.get("Content-Length")
+        lengths = {v.strip() for v in self.headers.get_all("Content-Length", [])}
+        if self.headers.get("Transfer-Encoding") is not None and lengths:
+            raise ApiError(400, "malformed_request", "Transfer-Encoding together with Content-Length", close=True)
+        if len(lengths) > 1:
+            raise ApiError(400, "malformed_request", "conflicting Content-Length values", close=True)
+        length = lengths.pop() if lengths else None
         if length is None:
             raise ApiError(400, "malformed_request", "Content-Length is required", close=True)
         if re.fullmatch(r"[0-9]{1,18}", length.strip()) is None:
@@ -94,6 +107,7 @@ class Handler(BaseHTTPRequestHandler):
         n = int(length)
         if n > BODY_MAX_BYTES:
             raise ApiError(413, "payload_too_large", f"body is larger than {BODY_MAX_BYTES} bytes", close=True)
+        self._body_read = True
         raw = self.rfile.read(n)
         if len(raw) != n:
             raise ApiError(400, "malformed_request", "body ended before Content-Length bytes", close=True)
@@ -147,8 +161,6 @@ class Handler(BaseHTTPRequestHandler):
         if code == 501:  # a method http.server does not know
             known = match_route(self.path.partition("?")[0]) is not None
             status, err = (405, "method_not_allowed") if known else (404, "not_found")
-        elif code == 408:
-            status, err = 408, "malformed_request"
         else:
             status, err = 400, "malformed_request"
         self.close_connection = True
@@ -172,6 +184,7 @@ class AwareServer(ThreadingHTTPServer):
     """One thread per connection (CORE-SRV-003)."""
 
     daemon_threads = True
+    request_queue_size = 128  # the default of 5 resets bursts of concurrent connects before a handler runs
 
 
 def make_server(host: str, port: int, state: ServerState) -> AwareServer:

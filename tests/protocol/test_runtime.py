@@ -115,6 +115,54 @@ class ConcurrencyAndCors(ServerTestCase, unittest.TestCase):
         self.assertEqual(len({r.json["accepted_at"] for r in rs}), 1)
         self.assertEqual(len(self.c.poll("bob").json["messages"]), 1)
 
+    def test_CORE_SRV_004_concurrent_sends_of_one_id_with_different_fields_accept_exactly_one(self):
+        self.register("alice", "bob")
+        with ThreadPoolExecutor(max_workers=10) as pool:
+            rs = list(pool.map(lambda i: self.c.send(send_body(7, payload={"text": f"variant {i % 4}"})), range(20)))
+        self.assertEqual(sum(r.status == 201 for r in rs), 1)
+        self.assertTrue(all((r.status, r.code) in ((201, None), (200, None), (409, "id_conflict")) for r in rs))
+        winner = next(r for r in rs if r.status == 201)
+        stored = self.c.poll("bob").json["messages"]
+        self.assertEqual([m["seq"] for m in stored], [winner.json["seq"]])
+        for r in rs:                      # every 200 repeats the stored envelope, every other variant conflicts
+            self.assertIn(r.status, (200, 201, 409))
+        self.assertEqual(self.c.send(send_body(8)).json["seq"], 2)
+
+    def test_CORE_SRV_004_CORE_POLL_006_polls_alongside_sends_never_show_a_gap_that_is_filled_later(self):
+        self.register("alice", "bob")
+        n = 80
+        done = []
+
+        def sender(i):
+            r = self.c.send(send_body(i + 1))
+            done.append(r.status)
+
+        def poller(_):
+            after, seen = 0, []
+            for _ in range(25):
+                page = self.c.poll("bob", after=after).json
+                seen += [m["seq"] for m in page["messages"]]
+                after = page["next_cursor"]
+            return seen, after
+
+        with ThreadPoolExecutor(max_workers=12) as pool:
+            polls = [pool.submit(poller, i) for i in range(4)]
+            sends = [pool.submit(sender, i) for i in range(n)]
+            for f in sends:
+                f.result()
+            results = [f.result() for f in polls]
+        self.assertEqual(done.count(201), n)
+        final = [m["seq"] for m in self.c.poll("bob").json["messages"]]
+        self.assertEqual(final, list(range(1, n + 1)))
+        for seen, _ in results:           # strictly ascending, and a prefix of the final mailbox: no gap filled later
+            self.assertEqual(seen, final[:len(seen)])
+
+    def test_CORE_SRV_005_options_outside_v1_is_404(self):
+        for path in ("/", "/nope", "/v10/info", "/v1x"):
+            r = self.c.call("OPTIONS", path, check=False)
+            self.assertEqual(r.status, 404, path)
+            self.assertEqual(r.code, "not_found", path)
+
     def test_CORE_SRV_005_every_response_carries_allow_origin_including_errors(self):
         for method, path, body in (("GET", "/v1/info", None), ("GET", "/v1/users", None), ("GET", "/nope", None),
                                    ("PUT", "/v1/info", None), ("POST", "/v1/session", {"x": 1}),

@@ -114,7 +114,7 @@ class AcceptTests(ServerTestCase, unittest.TestCase):
         for payload in ([], [1], "text", 5, None, True, 1.5):
             r = self.c.send(send_body(1, payload=payload, type="x"))
             self.assertEqual(r.status, 400, payload)
-            self.assertIn(r.code, ("invalid_payload", "malformed_request"), payload)  # see spec-issues.md S-3
+            self.assertIn(r.code, ("invalid_payload", "malformed_request"), payload)  # see spec-issues.md S-1
         self.assertEqual(self.c.send(send_body(1, payload={}, type="x")).status, 201)
 
     def test_CORE_ENV_001_CORE_HTTP_004_missing_unknown_and_mistyped_fields_are_malformed(self):
@@ -132,11 +132,58 @@ class AcceptTests(ServerTestCase, unittest.TestCase):
         self.assertEqual(self.c.send(send_body(1, to="bob")).json["seq"], 1)
         self.assertEqual(self.c.send(send_body(2, to="alice")).json["seq"], 2)
         self.assertEqual(self.c.send(send_body(1, to="bob")).json["seq"], 1)          # duplicate: no value used
-        for bad in (send_body(3, sender="ghost"), send_body(4, payload={"text": " "}), dict(send_body(5), x=1),
-                    dict(send_body(1, to="alice"))):                                    # 403, 400, 400, 409
-            self.assertGreaterEqual(self.c.send(bad).status, 400)
+        rejected = ((send_body(3, sender="ghost"), (403, "unknown_sender")),
+                    (send_body(4, payload={"text": " "}), (400, "invalid_payload")),
+                    (dict(send_body(5), x=1), (400, "malformed_request")),
+                    (dict(send_body(1, to="alice")), (409, "id_conflict")))
+        for bad, expected in rejected:
+            r = self.c.send(bad)
+            self.assertEqual((r.status, r.code), expected, bad)
         self.assertEqual(self.c.send(send_body(6, to="zed")).json["seq"], 3)
         self.assertEqual(self.c.send(send_body(7, to="bob")).json["seq"], 4)
+
+    def test_CORE_SEQ_001_CORE_SRV_040_nesting_around_the_parser_limit_never_gives_5xx_or_consumes_a_seq(self):
+        """Depth 491/492/493 were the window where parsing worked and storing failed (review P2 round 1, B1)."""
+        expected_next = 1
+        depths = sorted({1, 2, 50, 300, *range(485, 500), 700, 5000, 20000})
+        for depth in depths:
+            r = self.c.call("POST", f"/v1/messages?epoch={self.srv.epoch}", raw=self.deep_envelope(depth, depth), headers=harness.JSON)
+            self.assertLess(r.status, 500, (depth, r.status))
+            if r.status == 201:
+                self.assertEqual(r.json["seq"], expected_next, depth)
+                expected_next += 1
+            else:
+                self.assertEqual((r.status, r.code), (400, "malformed_request"), depth)
+        self.assertGreater(expected_next, 1)                                     # some depth was stored
+        nxt = self.c.send(send_body(9000, type="x", payload={"a": 1}))
+        self.assertEqual((nxt.status, nxt.json["seq"]), (201, expected_next))    # no value was lost to a failure
+        stored = self.c.poll("bob", check=False).json["messages"]   # the schema checker itself recurses, so no check here
+        self.assertEqual([m["seq"] for m in stored], list(range(1, expected_next + 1)))
+
+    def test_CORE_SEQ_001_the_exact_boundary_depths_491_492_493_are_each_stored_or_rejected_cleanly(self):
+        expected_next = 1
+        for depth in (491, 492, 493):
+            r = self.c.call("POST", f"/v1/messages?epoch={self.srv.epoch}", raw=self.deep_envelope(depth, depth), headers=harness.JSON)
+            self.assertIn((r.status, r.code), ((201, None), (400, "malformed_request")), depth)
+            expected_next += r.status == 201
+            self.assertEqual(self.c.send(send_body(8000 + depth, type="x", payload={})).json["seq"], expected_next, depth)
+            expected_next += 1
+
+    def test_CORE_ERR_002_a_payload_too_deep_for_the_parser_is_malformed_before_epoch_and_name_checks(self):
+        raw = self.deep_envelope(1, 20000)  # parses in no interpreter stack, fits the body limit
+        r = self.c.call("POST", "/v1/messages?epoch=0000000000000000", raw=raw, headers=harness.JSON)
+        self.assertEqual((r.status, r.code), (400, "malformed_request"))
+        bad_from = raw.replace(b'"from": "alice"', b'"from": "bad name"')
+        self.assertNotEqual(bad_from, raw)
+        r = self.c.call("POST", f"/v1/messages?epoch={self.srv.epoch}", raw=bad_from, headers=harness.JSON)
+        self.assertEqual((r.status, r.code), (400, "malformed_request"))
+        self.assertEqual(self.c.send(send_body(2, type="x", payload={})).json["seq"], 1)
+
+    def deep_envelope(self, n: int, depth: int) -> bytes:
+        """A send body whose payload is {"a": [[...]]} nested `depth` levels deep, built as text."""
+        head = json.dumps(dict(send_body(n, type="x", payload=0), payload=0))
+        payload = '{"a": ' + "[" * depth + "]" * depth + "}"
+        return head.replace('"payload": 0', '"payload": ' + payload).encode()
 
     def test_CORE_SRV_036_every_accepted_envelope_is_kept_and_polling_never_removes_it(self):
         for i in range(1, 251):

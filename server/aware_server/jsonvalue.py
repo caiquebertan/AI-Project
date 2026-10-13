@@ -34,23 +34,52 @@ def parse(text: str):
         raise ValueError("number out of range") from exc
 
 
+def quote(value) -> str:
+    """JSON text of a string (ASCII only)."""
+    return json.dumps(value, ensure_ascii=True)
+
+
 def dumps(value) -> str:
-    """Compact JSON text of a parsed value; numbers verbatim, ASCII only."""
-    if value is None:
-        return "null"
-    if value is True:
-        return "true"
-    if value is False:
-        return "false"
-    if isinstance(value, Num):
-        return value.raw
-    if isinstance(value, str):
-        return json.dumps(value, ensure_ascii=True)
-    if isinstance(value, list):
-        return "[" + ",".join(dumps(v) for v in value) + "]"
-    if isinstance(value, dict):
-        return "{" + ",".join(json.dumps(k, ensure_ascii=True) + ":" + dumps(v) for k, v in value.items()) + "}"
-    raise TypeError(f"not a JSON value: {type(value).__name__}")
+    """Compact JSON text of a parsed value; numbers verbatim, ASCII only.
+
+    Iterative, so the nesting it can write is not limited by the interpreter's stack:
+    whatever `parse` accepted can always be stored and returned (CORE-SRV-035).
+    """
+    out: list[str] = []
+    stack = [value]
+    while stack:
+        v = stack.pop()
+        if isinstance(v, tuple):  # a literal piece queued by a container (a tuple is no JSON value)
+            out.append(v[0])
+        elif v is None:
+            out.append("null")
+        elif v is True:
+            out.append("true")
+        elif v is False:
+            out.append("false")
+        elif isinstance(v, Num):
+            out.append(v.raw)
+        elif isinstance(v, str):
+            out.append(quote(v))
+        elif isinstance(v, list):
+            stack.append(("]",))
+            for i in range(len(v) - 1, -1, -1):
+                stack.append(v[i])
+                if i:
+                    stack.append((",",))
+            out.append("[")
+        elif isinstance(v, dict):
+            stack.append(("}",))
+            items = list(v.items())
+            for i in range(len(items) - 1, -1, -1):
+                stack.append(items[i][1])
+                stack.append((quote(items[i][0]) + ":",))
+                if i:
+                    stack.append((",",))
+            out.append("{")
+        else:
+            raise TypeError(f"not a JSON value: {type(v).__name__}")
+    return "".join(out)
 
 
 def equal(a, b) -> bool:

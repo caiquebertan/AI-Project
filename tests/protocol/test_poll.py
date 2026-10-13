@@ -1,6 +1,8 @@
 """E4 poll: CORE-POLL-001..007, CORE-EPOCH-002, CORE-SRV-015/016, cursor semantics and seq ordering."""
+import json
 import time
 import unittest
+from urllib.parse import quote
 
 import harness
 from harness import ServerTestCase, send_body, uid
@@ -70,17 +72,45 @@ class PollTests(ServerTestCase, unittest.TestCase):
     def test_CORE_POLL_001_after_and_limit_must_be_canonical_decimal_integers(self):
         base = f"/v1/mailboxes/bob/messages?epoch={self.srv.epoch}"
         for query in ("&after=abc", "&after=-1", "&after=01", "&after=1.5", "&after=", "&after=1e3", "&after=%2B1",
-                      "&after=12345678901234567", "&after=%201", "&after=%0A1", "&after=%EF%BC%91",
+                      "&after=12345678901234567", "&after=1000000000000000", "&after=9999999999999999", "&after=9007199254740991",
+                      "&after=%201", "&after=%0A1", "&after=%EF%BC%91",
                       "", "&limit=5",
                       "&after=0&limit=0", "&after=0&limit=00", "&after=0&limit=-5", "&after=0&limit=x", "&after=0&limit=",
-                      "&after=0&limit=1.0", "&after=0&limit=012", "&after=0&limit=12345678901234567"):
+                      "&after=0&limit=1.0", "&after=0&limit=012", "&after=0&limit=12345678901234567", "&after=0&limit=1000000000000000"):
             r = self.c.call("GET", base + query)
             self.assertEqual((r.status, r.code), (400, "malformed_request"), query)
-        for query in ("&after=0", "&after=7", "&after=0&limit=1", "&after=0&limit=100", "&after=1234567890123456&limit=3"):
+        for query in ("&after=0", "&after=7", "&after=0&limit=1", "&after=0&limit=100", "&after=123456789012345&limit=3", "&after=999999999999999"):
             self.assertEqual(self.c.call("GET", base + query).status, 200, query)
-        # 16 digits above 2**53-1 match the pattern; the echoed cursor then breaks the schema (spec-issues S-3)
-        r = self.c.call("GET", base + "&after=9999999999999999", check=False)
-        self.assertEqual((r.status, r.json["next_cursor"]), (200, 9999999999999999))
+        # 15 digits (decision 0018): the largest accepted after is echoed as next_cursor and still validates
+        r = self.c.call("GET", base + "&after=999999999999999")
+        self.assertEqual(r.json["next_cursor"], 999999999999999)
+
+    def test_CORE_POLL_001_every_case_of_the_schema_case_files_is_judged_as_the_spec_says(self):
+        cases = harness.SCHEMA_DIR / "cases"
+        param = json.loads((cases / "cursor-param.json").read_text(encoding="utf-8"))
+        base = f"/v1/mailboxes/bob/messages?epoch={self.srv.epoch}"
+        for value in param["valid"]:
+            for name in ("after", "limit"):
+                r = self.c.call("GET", base + (f"&{name}={value}" if name == "after" else f"&after=0&limit={value}"))
+                self.assertEqual(r.status, 200 if not (name == "limit" and value == "0") else 400, (name, value))
+        for value in param["invalid"]:
+            for query in (f"&after={quote(value)}", f"&after=0&limit={quote(value)}"):
+                r = self.c.call("GET", base + query)
+                self.assertEqual((r.status, r.code), (400, "malformed_request"), query)
+        cursor = json.loads((cases / "cursor.json").read_text(encoding="utf-8"))
+        for value in cursor["valid"]:  # as a cursor value: accepted as after and echoed as next_cursor
+            self.assertEqual(self.c.call("GET", base + f"&after={value}").json["next_cursor"], value)
+
+    def test_CORE_HTTP_006_a_repeated_epoch_after_or_limit_is_malformed_and_unknown_parameters_are_ignored(self):
+        base = f"/v1/mailboxes/bob/messages?epoch={self.srv.epoch}&after=0"
+        for extra in (f"&epoch={self.srv.epoch}", "&after=0", "&limit=1&limit=1"):
+            r = self.c.call("GET", base + extra)
+            self.assertEqual((r.status, r.code), (400, "malformed_request"), extra)
+        for extra in ("&x=1&x=2", "&wait=1&wait=2"):
+            self.assertEqual(self.c.call("GET", base + extra).status, 200, extra)
+        self.register("alice")
+        r = self.c.call("POST", f"/v1/messages?epoch={self.srv.epoch}&epoch={self.srv.epoch}", send_body(1))
+        self.assertEqual((r.status, r.code), (400, "malformed_request"))
 
     def test_CORE_POLL_005_CORE_SRV_016_answers_at_once_wait_is_ignored_and_nothing_is_held(self):
         for extra in ("", "&wait=30", "&wait=0", "&wait=abc"):

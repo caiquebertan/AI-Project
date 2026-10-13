@@ -113,8 +113,7 @@ class AcceptTests(ServerTestCase, unittest.TestCase):
     def test_CORE_ENV_005_payload_must_be_a_json_object(self):
         for payload in ([], [1], "text", 5, None, True, 1.5):
             r = self.c.send(send_body(1, payload=payload, type="x"))
-            self.assertEqual(r.status, 400, payload)
-            self.assertIn(r.code, ("invalid_payload", "malformed_request"), payload)  # see spec-issues.md S-1
+            self.assertEqual((r.status, r.code), (400, "invalid_payload"), payload)  # decision 0018, S-1
         self.assertEqual(self.c.send(send_body(1, payload={}, type="x")).status, 201)
 
     def test_CORE_ENV_001_CORE_HTTP_004_missing_unknown_and_mistyped_fields_are_malformed(self):
@@ -178,6 +177,16 @@ class AcceptTests(ServerTestCase, unittest.TestCase):
         r = self.c.call("POST", f"/v1/messages?epoch={self.srv.epoch}", raw=bad_from, headers=harness.JSON)
         self.assertEqual((r.status, r.code), (400, "malformed_request"))
         self.assertEqual(self.c.send(send_body(2, type="x", payload={})).json["seq"], 1)
+
+    def test_CORE_HTTP_001_64_levels_of_nesting_are_accepted_and_the_last_repeated_member_wins(self):
+        """Decision 0018, S-10."""
+        r = self.c.call("POST", f"/v1/messages?epoch={self.srv.epoch}", raw=self.deep_envelope(1, 64), headers=harness.JSON)
+        self.assertEqual(r.status, 201)
+        head = json.dumps(dict(send_body(2, type="x", payload=0)))
+        raw = head.replace('"payload": 0', '"payload": {"a": 1, "a": 2}').encode()
+        self.assertEqual(self.c.call("POST", f"/v1/messages?epoch={self.srv.epoch}", raw=raw, headers=harness.JSON).status, 201)
+        got = self.c.poll("bob", check=False).json["messages"]
+        self.assertEqual(got[1]["payload"], {"a": 2})
 
     def deep_envelope(self, n: int, depth: int) -> bytes:
         """A send body whose payload is {"a": [[...]]} nested `depth` levels deep, built as text."""

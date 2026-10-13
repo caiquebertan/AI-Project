@@ -14,6 +14,8 @@
 - **CORE-SRV-006** — When ready to accept connections, the server MUST print exactly one line `aware-server listening on http://<host>:<port> epoch=<epoch>` to standard output and flush it (test harnesses wait for this line and read the actual port from it).
 - **CORE-SRV-007** — The server SHOULD log one line per request to standard error: method, path without query, status, duration in ms.
 
+Request visibility for tests (non-normative): tests that must prove a client made **no** request (CORE-CONN-004) count requests with a per-client proxy in front of the server (decision 0010, PLAT-HOOK-012), not through the server. The server therefore has no test-only endpoint, and CORE-SRV-007 stays a debugging aid (`SHOULD`).
+
 ## 2. Epoch and transport
 
 - **CORE-SRV-010** — At start the server MUST create the epoch (CORE-EPOCH-001), an empty user registry, an empty id index, no mailboxes, and the `seq` counter at `0`.

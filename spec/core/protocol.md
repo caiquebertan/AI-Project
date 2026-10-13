@@ -59,6 +59,7 @@ The epoch identifies one lifetime of the in-memory server. `seq` values and mail
 - **CORE-EPOCH-003** — A client MUST persist the epoch from its last successful session together with its cursor.
 - **CORE-EPOCH-004** — When a session response carries an epoch different from the stored one (or there is none stored), the client MUST perform an epoch reset before any other request: delete all locally stored messages that have a `seq` (states `sent` and `received`), set the cursor to `0`, store the new epoch. Identity and outbox (`pending` messages) MUST be kept.
 - **CORE-EPOCH-005** — On `409 epoch_mismatch` a client MUST end the current cycle and start a new one at once (session first, no backoff); a second consecutive `409 epoch_mismatch` MUST be handled as retryable (class R, §12).
+- **CORE-EPOCH-006** — An epoch reset MUST keep `failed` messages unchanged (they have no `seq`), with their enqueue order (CORE-OUTBOX-006); they are not re-sent (CORE-OUTBOX-005).
 
 ## 5. Envelope
 
@@ -79,6 +80,8 @@ Send form (E3 body): `{"id", "from", "to", "type", "payload", "created_at"}`. De
 - **CORE-TEXT-003** — The UTF-8 encoding of `text` MUST be at most `TEXT_MAX_BYTES` (4096) bytes, and `text` MUST NOT contain U+0000 or unpaired surrogates.
 - **CORE-TEXT-004** — Clients MUST validate CORE-TEXT-002 and CORE-TEXT-003 before putting a message in the outbox and MUST NOT enqueue an invalid text.
 - **CORE-TEXT-005** — `text` MUST be transmitted, stored and displayed exactly as composed (no trimming, case change or Unicode normalization by client or server).
+
+Ownership note (non-normative): what the user sees when the client refuses a text under CORE-TEXT-003 because of forbidden characters (U+0000, unpaired surrogates) is client behavior, owned by [`client-behavior.md`](client-behavior.md) (PM). No such text is defined yet and no acceptance criterion covers it until the operator decides (TL G0 packet, "Changes after PM review"); the refusal itself (CORE-TEXT-004) applies regardless.
 
 ## 7. Send and ack (E3)
 
@@ -164,6 +167,7 @@ The client's network activity is decided by these rules alone, so every client p
 - **CORE-OUTBOX-003** — Flushing MUST send outbox entries in insertion order, one at a time: the next E3 MUST NOT start before the previous one ended with an ack or a non-retryable error.
 - **CORE-OUTBOX-004** — An entry MUST leave the outbox only when acknowledged (→ `sent`) or rejected with a class P error (→ `failed`); on a class R error it stays at the head and the cycle restarts (CORE-CONN-008).
 - **CORE-OUTBOX-005** — A `failed` message MUST NOT be retried automatically and MUST NOT block later entries.
+- **CORE-OUTBOX-006** — The local enqueue order (CORE-SEQ-002) MUST be a number assigned once when the message enters the outbox, strictly greater than every number assigned before for that identity, persisted with the message, and kept after the message leaves the outbox as `failed`; it is never reused or reassigned.
 
 ## 11. Capabilities and extensions
 

@@ -14,7 +14,7 @@ If `{{conventions_path}}` does not exist, stop immediately and print `GENERATE F
 ## 1. Read, in this order
 1. `{{spec_index}}`: the spec index, version, and which extensions are enabled.
 2. Every file under {{spec_dirs}}: core behavior, protocol and schema, scenarios, and each enabled extension. Extensions add behavior; they never change core behavior.
-3. `{{platform_spec}}`: rules for this platform only.
+3. `{{platform_spec}}`: rules for this platform only. Also the platform inputs shared by every app: {{platform_shared}}.
 4. `{{conventions_path}}`: code shape, module layout, libraries, naming, threading, test requirements for this platform.
 5. `{{templates_dir}}`: build infrastructure and module skeletons to copy verbatim.
 The spec is the only source of behavior. Do not read existing code under `{{app_dir}}/`, `docs/plans/` or other apps for behavior.

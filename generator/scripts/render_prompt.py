@@ -10,7 +10,7 @@ Generator prompt (variables come from generator/config/generator.json):
 
 `return_codes` and (with --stage) `outcomes` have defaults. Any placeholder
 left unfilled is an error, so a prompt never reaches an agent half-rendered.
---generate fails with "generator not yet configured for <app>" until the
+--generate lists the shared platform inputs (generate.platform_shared). --generate fails with "generator not yet configured for <app>" until the
 app's conventions file exists (P3).
 """
 from __future__ import annotations
@@ -58,6 +58,7 @@ def generate_vars(app: str, module: str, root: Path, cfg: dict) -> dict:
         "generator_commit": lib.git_head(root), "model_id": cfg["generate_model"],
         "build_cmd": a["build"], "test_cmd": a["test"], "self_repair_max": cfg["self_repair_max"],
         "spec_index": gen["spec_index"], "spec_dirs": ", ".join(f"`{d}`" for d in gen["spec_dirs"]),
+        "platform_shared": ", ".join(f"`{f}`" for f in gen["platform_shared"]),
         "platform_spec": a["platform_spec"], "conventions_path": a["conventions"],
         "templates_dir": gen["templates_dir"].format(app=app), "plan_out": gen["plan_out"].format(app=app),
         "manifest_schema": gen["manifest_schema"],

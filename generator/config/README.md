@@ -13,7 +13,7 @@
 | `count_lines` | `count_lines.py`, `snapshot_diff.py` | Files excluded from `changed_lines` (§6.2) |
 | `headers` | `check_headers.py`, generator prompt | Manifest name, GENERATED header text, which extensions need it |
 | `trace` | `check_trace.py` | Traceability file, spec-id pattern, scope pattern; `coverage_apps`, `default_apps`, `file_apps` say which apps must cover a rule (by spec file name; an `[apps: a, b]` marker on a rule overrides) |
-| `generate` | `render_prompt.py --generate` | Paths filled into `generator/prompts/generate.md` |
+| `generate` | `render_prompt.py --generate` | Paths filled into `generator/prompts/generate.md`. `platform_shared` lists the platform inputs every app reads (hooks, snapshot schema), in addition to the app's own `platform_spec`. |
 | `regen` | `regen_check.py` | Generate command template (`{app}`, `{model}`), worktree and report dirs |
 | `commits` | `lint_commits.py` | Author pattern and trailer rules from §8 |
 | `prompt_lint` | `lint_prompts.py` | Feature-noun denylist for E-EVOL-1 (review at P0) |

@@ -101,6 +101,24 @@ class GeneratePrompt(unittest.TestCase):
         self.assertIn(CONFIG["headers"]["marker"] + " from spec 1.2.3", res.stdout)
 
 
+    def render_with_version(self, version_line):
+        tmp, repo = make_repo()
+        self.addCleanup(tmp.cleanup)
+        (repo / "spec").mkdir()
+        (repo / "spec" / "README.md").write_text(version_line + "\n")
+        commit_file(repo, CONFIG["apps"]["web"]["conventions"], "# conventions\n")
+        return run_script("render_prompt.py", "--generate", "web", "--root", repo, "--print")
+
+    def test_shared_platform_inputs_are_listed(self):
+        res = self.render_with_version("**Version:** 1.2.3")
+        self.assertGreater(len(CONFIG["generate"]["platform_shared"]), 1)
+        for path in CONFIG["generate"]["platform_shared"]:
+            self.assertTrue((SCRIPTS.parents[1] / path).exists(), path)
+            self.assertIn(f"`{path}`", res.stdout)
+        self.assertIn("test-hooks.md", res.stdout)
+        self.assertIn("client-snapshot.schema.json", res.stdout)
+
+
 class ManifestRoundTrip(unittest.TestCase):
     def test_written_manifest_passes_check(self):
         tmp, repo = make_repo()

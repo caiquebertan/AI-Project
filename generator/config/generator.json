@@ -167,6 +167,10 @@
       "spec/scenarios/",
       "spec/extensions/"
     ],
+    "platform_shared": [
+      "spec/platform/test-hooks.md",
+      "spec/platform/client-snapshot.schema.json"
+    ],
     "templates_dir": "generator/templates/{app}/",
     "plan_out": ".work/generate/{app}/plan.md",
     "manifest_schema": "generator/schemas/manifest.schema.json"

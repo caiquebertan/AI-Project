@@ -37,6 +37,7 @@ Templates with `{{var}}` placeholders only. Feature knowledge lives in `spec/`, 
 |---|---|
 | `{{app}}`, `{{app_dir}}`, `{{module_scope}}` | `apps.<app>.dir`, `--module` |
 | `{{spec_index}}`, `{{spec_dirs}}`, `{{spec_version}}` | `generate.spec_index`, `generate.spec_dirs`, version line of the spec index |
+| `{{platform_shared}}` | `generate.platform_shared` (platform files shared by all apps) |
 | `{{platform_spec}}`, `{{conventions_path}}`, `{{templates_dir}}` | `apps.<app>.platform_spec`, `apps.<app>.conventions`, `generate.templates_dir` |
 | `{{build_cmd}}`, `{{test_cmd}}`, `{{self_repair_max}}` | `apps.<app>.build`, `apps.<app>.test`, `self_repair_max` |
 | `{{model_id}}`, `{{generator_commit}}` | `generate_model`, `git rev-parse HEAD` |

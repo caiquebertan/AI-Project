@@ -1,8 +1,8 @@
 # Scenario: Alice and Bob, offline and reconnect
 
-- **Status:** draft for G0 (spec 0.1.0-draft). Owner: PM. Source: the brief's "Required behavior" scenario, steps 1 to 7 (`SC-1`..`SC-7`), plus an extra step 8 (`SC-8`) beyond the brief.
+- **Status:** G0 draft with the MVP cuts of decisions 0013 and 0014 applied. Owner: PM. Source: the brief's "Required behavior" scenario, steps 1 to 7 (`SC-1`..`SC-7`), plus an extra step 8 (`SC-8`) beyond the brief.
 - **Rules exercised:** [`../core/client-behavior.md`](../core/client-behavior.md) and the protocol rules it cites. The wire-level trace of the same steps is [`../core/protocol.md` Appendix A](../core/protocol.md#appendix-a--worked-trace-of-the-alicebob-scenario-normative-example); server mailbox columns below are copied from it and are normative for tests.
-- **Rule:** both clients MUST produce the same observable states at every step, for every pairing in section 3. Other scenarios: [`additional-scenarios.md`](additional-scenarios.md).
+- **Rule:** both clients MUST produce the same observable states at every step, for every required pairing in section 3. Other scenarios: [`additional-scenarios.md`](additional-scenarios.md).
 
 ## 1. Fixed test data and set-up
 
@@ -19,7 +19,7 @@ Message ids are random in real clients (CORE-ENV-002); tests identify a message 
 
 **Step 0 completion** (the point at which step 1 may start): on both clients the connection indicator is `Online`, the conversation list is empty (`No conversations yet.`), no unsent messages, and the server has accepted no message (counter 0).
 
-**Reading the tables.** "View" is the ordered message list of the conversation between the two users, top to bottom, as `label (state, server order)`, where state is the machine value (`pending`, `sent`, `received`) behind the label (CORE-VISIBLE-005 / section 8.1 of the behavior spec) and server order is the number the server gave (`-` for unsent). "Unsent" counts the user's `pending` messages. "Cursor" is the client's stored position in its own mailbox (CORE-CURSOR-001). Server mailbox contents are `[server order: label]`. The time shown on messages is not part of the tables (it depends on the clock and time zone of the run). Tests read the view from the screen and the numbers from the state snapshot (PLAT-HOOK-006..008) and wait on the completion condition instead of a fixed delay.
+**Reading the tables.** "View" is the ordered message list of the conversation between the two users, top to bottom, as `label (state, server order)`, where state is the machine value (`pending`, `sent`, `received`) behind the label (CORE-VISIBLE-005 / section 8.1 of the behavior spec; there is no other state) and server order is the number the server gave (`-` for unsent). "Unsent" counts the user's `pending` messages. "Cursor" is the client's stored position in its own mailbox (CORE-CURSOR-001). Server mailbox contents are `[server order: label]`. The time shown on messages is not part of the tables (it depends on the clock and time zone of the run). Tests read the state snapshot (PLAT-HOOK-006..008: web `window.__AWARE__` through Playwright, Android through the JVM driver commands, PLAT-ANDROID-032) and, for web, also the screen; they wait on the completion condition instead of a fixed delay. A change reaches the other client within about one polling interval plus request time (CORE-CONN-007), so every completion condition below is awaited, never assumed.
 
 ## 2. Steps
 
@@ -60,7 +60,7 @@ Between sending and completion Alice's view shows A1 (pending, -) (CORE-SEND-005
 
 - **Action.** On Alice's client the user switches `Offline mode` on, then sends A2 in the conversation with `bob`.
 - **Rules.** CORE-OFFLINE-001, CORE-OFFLINE-002, CORE-OFFLINE-003, CORE-SEND-010, CORE-ORDER-002; wire: CORE-CONN-004, CORE-OUTBOX-001, CORE-OUTBOX-002.
-- **Completion condition.** Alice's indicator is `Offline` AND A2 is shown as `pending` AND Alice's unsent count is 1. From the moment the switch is on, Alice's client makes no further request to the server.
+- **Completion condition.** Alice's indicator is `Offline` AND A2 is shown as `pending` AND Alice's unsent count is 1. From the moment the switch is on, Alice's client starts no new request to the server (CORE-CONN-004); a request already running may finish and its result is applied. Externally this is checked with the driver's request count for Android (PLAT-ANDROID-033) and with the browser test framework's request events for web (PLAT-WEB-024), taken after any running request has ended.
 
 | | Expected after SC-3 |
 |---|---|
@@ -90,7 +90,7 @@ Between sending and completion Alice's view shows A1 (pending, -) (CORE-SEND-005
 
 - **Action.** On Alice's client the user switches `Offline mode` off.
 - **Rules.** CORE-OFFLINE-005, CORE-FLUSH-001, CORE-FLUSH-002, CORE-FLUSH-004, CORE-FLUSH-006, CORE-ORDER-003; wire: CORE-CONN-005, CORE-CONN-006, CORE-OUTBOX-003, CORE-OUTBOX-004.
-- **Completion condition.** Alice's indicator is `Online` AND A2 is shown as `sent` with server order 3 AND Alice's unsent count is 0. Alice's indicator passes through `Connecting` first. Bob's client is offline and shows nothing new.
+- **Completion condition.** Alice's indicator is `Online` AND A2 is shown as `sent` with server order 3 AND Alice's unsent count is 0. Alice's indicator passes through `Connecting` first and shows `Online` once her session and then a poll have succeeded (CORE-CONN-003); A2 is delivered in the same round, so `Online` may be visible for a moment before A2 turns `Sent`, and the condition is met only when all three parts hold. Bob's client is offline and shows nothing new.
 
 | | Expected after SC-5 |
 |---|---|
@@ -153,16 +153,16 @@ The two views list the same four messages, in the same order, by the same texts 
 
 ## 3. Client pairings
 
-The scenario MUST pass, with identical expected states, for each pairing (Alice's client + Bob's client), against the same server:
+The scenario MUST pass, with identical expected states, for each of these two pairings against the same server (decision 0013, cut 6):
 
-| Pairing | Alice | Bob |
-|---|---|---|
-| P-1 | Android | Web |
-| P-2 | Web | Android |
-| P-3 | Android | Android |
-| P-4 | Web | Web |
+| Pairing | Alice | Bob | How it is driven |
+|---|---|---|---|
+| web↔web | web client | web client | both through the UI (Playwright), reading the screen and the state snapshot (PLAT-WEB-012, PLAT-WEB-024) |
+| Android↔web | Android JVM driver (`:tools:driver`) | web client through the UI | Alice by driver commands and snapshot lines (PLAT-ANDROID-031, PLAT-ANDROID-032, PLAT-ANDROID-033), Bob as above |
 
-Identical means: every row of every table above holds for every pairing, comparing messages by author, text, state, server order and position; the time shown on each `Sent` or `Received` message (CORE-VISIBLE-009) is left out of the comparison unless a test fixes both the server's accepted times and the device time zone and clock (as in SX-6); the only permitted differences are layout, colors and fonts. Where a platform's emulator is not available, the sandbox gate runs the Android side through its unit-test suite and the protocol-level replay of Appendix A (PLAT-ANDROID-019); see the packet for the interop question.
+Other pairings (web as Alice with the driver as Bob, driver with driver) are optional; where they are run they must give the same states. The Android client's screens are not part of the external scenario: no emulator is required, so what Alice's Android side shows on screen is checked by the Robolectric tests of the Android project against the same rules (PLAT-ANDROID-022), and Appendix A is replayed against its protocol code (PLAT-ANDROID-019). In the Android↔web pairing Alice's "user actions" in the steps are the driver commands `send`, `offline` and `online`, and "Alice shows" means Alice's snapshot.
+
+Identical means: every row of every table above holds for each pairing, comparing messages by author, text, state, server order and position; the time shown on each `Sent` or `Received` message (CORE-VISIBLE-009) is left out of the comparison unless a test fixes both the server's accepted times and the device time zone and clock (as in SX-6); the only permitted differences are layout, colors and fonts.
 
 ## 4. Acceptance criteria
 
@@ -170,10 +170,10 @@ Given/When/Then; each cites the step ids and rules it checks. Test ids per scope
 
 - **AC-F4-1** — Given two freshly logged-in, online clients as `alice` and `bob`, When Alice sends A1 to `Bob`, Then Alice shows A1 as `Sent` and Bob shows A1 as `Received` with an entry `alice` in his list, and both stay `Online`. (SC-1; CORE-SEND-001, CORE-SEND-008, CORE-RECEIVE-001, CORE-VISIBLE-002)
 - **AC-F4-2** — Given SC-1 is complete, When Bob opens the conversation with `alice` and sends B1, Then Bob shows A1 `Received`, B1 `Sent`, and Alice shows A1 `Sent`, B1 `Received`, in that order on both. (SC-2; CORE-VISIBLE-004, CORE-ORDER-001, CORE-ORDER-005)
-- **AC-F4-3** — Given SC-2 is complete, When Alice switches `Offline mode` on and sends A2, Then Alice's indicator shows `Offline`, A2 is shown last as `Pending`, the server has received nothing from Alice since the switch, and Bob's screen is unchanged. (SC-3; CORE-OFFLINE-002, CORE-OFFLINE-003)
+- **AC-F4-3** — Given SC-2 is complete, When Alice switches `Offline mode` on and sends A2, Then Alice's indicator shows `Offline`, A2 is shown last as `Pending`, Alice's client has started no new request to the server since the switch (a request already running may finish), and Bob's screen is unchanged. (SC-3; CORE-OFFLINE-002, CORE-OFFLINE-003)
 - **AC-F4-4** — Given SC-3 is complete, When Bob switches `Offline mode` on and sends B2, Then Bob's indicator shows `Offline`, B2 is shown last as `Pending`, and nothing else changes on either screen. (SC-4; CORE-OFFLINE-002, CORE-OFFLINE-003)
-- **AC-F4-5** — Given SC-4 is complete, When Alice switches `Offline mode` off, Then her indicator goes through `Connecting` to `Online`, A2 turns `Sent`, her list order stays A1, B1, A2, and Bob's screen does not change. (SC-5; CORE-OFFLINE-005, CORE-FLUSH-001, CORE-FLUSH-004)
+- **AC-F4-5** — Given SC-4 is complete, When Alice switches `Offline mode` off, Then her indicator goes through `Connecting` to `Online` (once her session and then a poll have succeeded), A2 turns `Sent`, her list order stays A1, B1, A2, and Bob's screen does not change. (SC-5; CORE-OFFLINE-005, CORE-FLUSH-001, CORE-FLUSH-004)
 - **AC-F4-6** — Given SC-5 is complete, When Alice switches `Offline mode` on, Then her indicator shows `Offline` and her messages are unchanged. (SC-6; CORE-OFFLINE-001)
 - **AC-F4-7** — Given SC-6 is complete, When Bob switches `Offline mode` off, Then A2 appears as `Received` above his `Pending` B2, B2 turns `Sent` after it, Bob sees A1, B1, A2, B2 in that order with no unsent message left, and Alice's screen does not show B2. (SC-7; CORE-RECEIVE-002, CORE-FLUSH-003, CORE-FLUSH-004, CORE-ORDER-002)
 - **AC-F4-8** — Given SC-7 is complete, When Alice switches `Offline mode` off, Then B2 appears as `Received` last in her conversation and Alice and Bob see the same four messages in the same order. (SC-8; CORE-RECEIVE-002, CORE-ORDER-005)
-- **AC-F4-9** — Given the steps SC-1 to SC-8, When they are run for each pairing P-1 to P-4, Then the screens show the same states, order and texts at every step. (section 3; CORE-ORDER-005)
+- **AC-F4-9** — Given the steps SC-1 to SC-8, When they are run for the two required pairings (web with web through the UI; the Android JVM driver as Alice with the web client as Bob), Then every step shows the same states, order and texts in both pairings (web: screen and snapshot; Android: the driver's snapshot). (section 3; CORE-ORDER-005)

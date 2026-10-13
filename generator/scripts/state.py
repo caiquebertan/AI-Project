@@ -201,7 +201,7 @@ class Machine:
         cur = self.s["current_feature"]
         if cur is None or self.s["features"][cur]["status"] != "active":
             self.s["current_feature"] = fid
-        self.record(f, "start_feature", None, "-", "S0", None, {})
+        self.record(f, "start_feature", None, "-", "S0", f"chain={chain} apps={','.join(apps)}", {})
         return f
 
     def transition(self, fid: str | None, event: str, app: str | None = None, detail: str | None = None,

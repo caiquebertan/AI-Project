@@ -10,6 +10,8 @@ Arguments: `$ARGUMENTS` — an app name from `generator/config/generator.json` (
 
 There are no human gates: do not ask questions, do not wait for approval. Write only inside `clients/<app>/`.
 
+Step 0, once, before any app: run `python3 generator/scripts/setup_env.py --check`. If it exits non-zero, stop: print `GENERATE FAILED: build environment incomplete. Run python3 generator/scripts/setup_env.py (dry run: shows what is missing and the install commands), then python3 generator/scripts/setup_env.py --install, and retry.` and end with `RETURN: ENV_FAILURE`. Never install anything from this command.
+
 For each app (for `all`: every app in the config, one after another):
 
 1. Render the base prompt from config:

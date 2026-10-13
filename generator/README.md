@@ -38,6 +38,7 @@ Sub-agents: [`../.claude/agents/`](../.claude/agents/). Commands: [`../.claude/c
 | `lint_commits.py` | §8, E-PIPE-3 | Trailer rules for commits with an `Agent` trailer (operator is author of all commits, decision 0015; one final trailer block is canonical, split blocks tolerated, `--strict-trailers` rejects them; `Feature` optional at gates, F-id or P-id), no commit touching `spec/` and `clients/` |
 | `lint_prompts.py` | E-EVOL-1 | Feature-noun denylist over generator prompts |
 | `preflight.py` | §5.3 | Toolchain versions; `--strict` to gate |
+| `setup_env.py` | OM-0014, ENVIRONMENT | Missing/old toolchain pieces and the install command per OS (brew, apt, winget). Dry run by default; `--install` asks per command (`--yes` skips, not for sudo); `--check` is the quiet gate `/generate` runs first. Never edits shell profiles |
 
 All scripts share exit codes: `0` ok, `1` check failed, `2` usage, `3` stale snapshot, `4` illegal transition.
 

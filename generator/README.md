@@ -35,7 +35,7 @@ Sub-agents: [`../.claude/agents/`](../.claude/agents/). Commands: [`../.claude/c
 | `check_trace.py` | S6, E-PM-1/3, E-QA-1 | AC met/unmet from JUnit XML + Playwright JSON; the exit status depends on the AC rows only. Spec-id coverage per app is reported as informational (`--strict-coverage` makes it fail the run again): a rule is a defined bold id (not a citation); client rules need a passing test per app, `server-behavior.md` rules one from the server report. Tag reports `--junit android=<p> --junit web=<p> --junit server=<p> --playwright web=<p>`; untagged paths count for all apps. Uncovered is listed as `(spec id, app)` pairs; `protocol.md` rules default to all three apps unless a rule carries `[apps: ...]` |
 | `check_headers.py` | E-DEV-1 | Manifest vs tree, GENERATED headers; `--write-manifest` for `/generate` |
 | `regen_check.py` | P7 (S6b if `regen.per_feature`), E-PIPE-1, E-BOUND-1 | Fresh worktree/clone → delete → generate → build → test → boundary, per app (`--app all`: android then web, combined result); `--dry-run` |
-| `lint_commits.py` | §8, E-PIPE-3 | Author + trailer rules (one final trailer block is canonical, split blocks tolerated, `--strict-trailers` rejects them; `Feature` optional at gates, F-id or P-id), no commit touching `spec/` and `clients/` |
+| `lint_commits.py` | §8, E-PIPE-3 | Trailer rules for commits with an `Agent` trailer (operator is author of all commits, decision 0015; one final trailer block is canonical, split blocks tolerated, `--strict-trailers` rejects them; `Feature` optional at gates, F-id or P-id), no commit touching `spec/` and `clients/` |
 | `lint_prompts.py` | E-EVOL-1 | Feature-noun denylist over generator prompts |
 | `preflight.py` | §5.3 | Toolchain versions; `--strict` to gate |
 

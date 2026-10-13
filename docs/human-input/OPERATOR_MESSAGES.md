@@ -147,3 +147,15 @@ Make sure we have this blocker disclaimer on our project. The operator should ha
 
 for the PM plan, on P6, I want to save the time in UTC, and each client gets the local device timezone and shows to the user in their local time;
 ````
+
+---
+
+## OM-0011 · 2026-10-13 17:00 — Times in UTC end to end, all cuts accepted, backlog and spec approved
+
+**AI note:** _Triggered: strict-UTC time rules (server validation, no hardcoded zone); the ten proposed MVP cuts applied (decision 0013); backlog and spec approval recorded; final plan (`docs/PLAN.md`)._
+
+````text
+server will expect times to be sent in UTC as well, and we won't have any hardcoded local timezone. Each client will implement their function to get the local time based on UTC server time, therefore clients will send the message time in UTC to the server too;
+
+I accept all the proposed cuts, backlog and specs are approved too; Fix this part about the message timezone, and present to me the final plan
+````

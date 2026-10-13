@@ -10,7 +10,8 @@ Generator prompt (variables come from generator/config/generator.json):
 
 `return_codes` and (with --stage) `outcomes` have defaults. Any placeholder
 left unfilled is an error, so a prompt never reaches an agent half-rendered.
---generate fails with "generator not yet configured for <app>" until the
+--generate lists the shared platform inputs (generate.platform_shared) and warns on stderr
+when the spec version is a draft (it still renders). --generate fails with "generator not yet configured for <app>" until the
 app's conventions file exists (P3).
 """
 from __future__ import annotations
@@ -45,6 +46,15 @@ def spec_version(root: Path, gen: dict) -> str:
     return m.group(1) if m else "0.0.0"
 
 
+def is_draft(version: str, gen: dict) -> bool:
+    return re.search(gen["draft_suffix_regex"] + r"$", version) is not None
+
+
+def draft_warning(app: str, version: str) -> str:
+    return (f"render_prompt: WARNING: spec {version} is a draft; generating {app} from it anyway "
+            "(the stamped version keeps the draft suffix).")
+
+
 def generate_vars(app: str, module: str, root: Path, cfg: dict) -> dict:
     if app not in cfg["apps"]:
         raise RenderError(f"unknown app '{app}' (config apps: {', '.join(cfg['apps'])})")
@@ -55,9 +65,11 @@ def generate_vars(app: str, module: str, root: Path, cfg: dict) -> dict:
     version = spec_version(root, gen)
     return {
         "app": app, "app_dir": a["dir"], "module_scope": module, "spec_version": version,
+        "spec_is_draft": "yes" if is_draft(version, gen) else "no",
         "generator_commit": lib.git_head(root), "model_id": cfg["generate_model"],
         "build_cmd": a["build"], "test_cmd": a["test"], "self_repair_max": cfg["self_repair_max"],
         "spec_index": gen["spec_index"], "spec_dirs": ", ".join(f"`{d}`" for d in gen["spec_dirs"]),
+        "platform_shared": ", ".join(f"`{f}`" for f in gen["platform_shared"]),
         "platform_spec": a["platform_spec"], "conventions_path": a["conventions"],
         "templates_dir": gen["templates_dir"].format(app=app), "plan_out": gen["plan_out"].format(app=app),
         "manifest_schema": gen["manifest_schema"],
@@ -114,6 +126,8 @@ def main(argv=None) -> int:
         text = render(template_path.read_text(encoding="utf-8"), variables)
     except RenderError as exc:
         lib.die(f"render_prompt: {exc}", lib.EXIT_FAIL)
+    if args.generate and variables["spec_is_draft"] == "yes":
+        print(draft_warning(args.generate, variables["spec_version"]), file=sys.stderr)
     digest = lib.sha256_bytes(text.encode("utf-8"))
     if args.out:
         Path(args.out).parent.mkdir(parents=True, exist_ok=True)

@@ -32,8 +32,48 @@ class CheckTrace(unittest.TestCase):
         self.assertIn("skipped", status["AC-F2-2"][1])
         self.assertIn("bad scope", status["AC-F2-3"][1])
         cov = out["spec_coverage"]
-        self.assertEqual(cov["total"], 3)                     # CORE-003 is SHOULD, not counted
-        self.assertEqual(cov["missing"], ["CORE-010"])
+        # MUST definitions only: CORE-003 is SHOULD, CORE-099 is a reference, CORE-04 is mistyped.
+        self.assertEqual(cov["total"], 6)
+        self.assertEqual(cov["missing"], ["CORE-010", "CORE-011", "CORE-SRV-001", "CORE-SRV-002"])
+        self.assertEqual(cov["covered"], ["CORE-001", "CORE-002"])   # untagged reports count for every app
+
+    def test_rules_are_definitions_not_references(self):
+        rules = check_trace.spec_rules(FIXTURES / "trace" / "spec", CONFIG["trace"])
+        ids = [r["id"] for r in rules]
+        self.assertEqual(ids, ["CORE-001", "CORE-002", "CORE-010", "CORE-011", "CORE-SRV-001", "CORE-SRV-002"])
+        self.assertNotIn("CORE-099", ids)
+        self.assertNotIn("CORE-003", ids)
+        self.assertIn("CORE-003", check_trace.defined_ids(FIXTURES / "trace" / "spec", CONFIG["trace"]["spec_id_regex"]))
+
+    def test_apps_per_rule(self):
+        rules = {r["id"]: r["apps"] for r in check_trace.spec_rules(FIXTURES / "trace" / "spec", CONFIG["trace"])}
+        self.assertEqual(rules["CORE-001"], ["android", "web", "server"])   # default
+        self.assertEqual(rules["CORE-SRV-001"], ["server"])                 # server-behavior.md
+        self.assertEqual(rules["CORE-SRV-002"], ["server", "web"])          # [apps: ...] marker wins
+
+    def test_per_app_coverage_with_tagged_reports(self):
+        rules = [{"id": "CORE-A-001", "apps": ["android", "web"]}, {"id": "CORE-SRV-001", "apps": ["server"]},
+                 {"id": "CORE-P-001", "apps": ["android", "web", "server"]}]
+
+        def t(name, app=None):
+            return {"name": name, "status": "passed", "apps": None if app is None else [app]}
+
+        tests = [t("CORE-A-001", "android"), t("CORE-SRV-001", "web"), t("CORE-P-001", "android"),
+                 t("CORE-P-001", "web"), t("CORE-P-001", "server")]
+        cov = check_trace.spec_coverage(rules, tests)
+        self.assertEqual(cov["uncovered"], [["CORE-A-001", "web"], ["CORE-SRV-001", "server"]])
+        self.assertEqual((cov["pairs_total"], cov["pairs_covered"]), (6, 4))
+        self.assertEqual(cov["covered"], ["CORE-P-001"])
+        # an untagged passing test covers every app
+        self.assertEqual(check_trace.spec_coverage(rules, [t("CORE-A-001 CORE-SRV-001 CORE-P-001")])["uncovered"], [])
+
+    def test_cli_tagged_reports(self):
+        res = run_script("check_trace.py", "--trace", FIXTURES / "trace" / "TRACEABILITY.md",
+                         "--spec-dir", FIXTURES / "trace" / "spec", "--junit", f"server={FIXTURES / 'trace' / 'junit.xml'}",
+                         "--json")
+        cov = json.loads(res.stdout)["spec_coverage"]
+        self.assertIn(["CORE-001", "android"], cov["uncovered"])   # only the server saw CORE-001
+        self.assertNotIn(["CORE-001", "server"], cov["uncovered"])
 
     def test_feature_filter_and_write(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -55,9 +95,15 @@ class CheckTrace(unittest.TestCase):
             self.assertEqual(res.returncode, 0, res.stderr)
             self.assertIn("ACs: 0/0 met", res.stdout)
 
-    def test_repo_template_parses_to_zero_rows(self):
-        text = (SCRIPTS.parents[1] / "docs" / "product" / "TRACEABILITY.md").read_text()
-        self.assertEqual(check_trace.parse_trace(text), [])
+    def test_repo_traceability_parses_and_refers_to_defined_spec_ids(self):
+        root = SCRIPTS.parents[1]
+        cfg = CONFIG["trace"]
+        rows = check_trace.parse_trace((root / cfg["file"]).read_text())
+        self.assertTrue(rows, "TRACEABILITY.md has no rows")
+        defined = check_trace.defined_ids(root / cfg["spec_dir"], cfg["spec_id_regex"])
+        for row in rows:
+            self.assertRegex(row["scope"], cfg["scope_regex"], f"line {row['line']}")
+            self.assertIn(row["spec"], defined, f"line {row['line']}: {row['spec']} is not defined in spec/")
 
 
 class CheckHeaders(unittest.TestCase):
@@ -183,14 +229,35 @@ class LintCommits(unittest.TestCase):
         self.assertTrue(any("regen(<app>)" in p for p in problems))
         self.assertTrue(any("Boundary is not generated" in p for p in problems))
 
+    def lint_one(self, msg, name="Aware Agent (PM/test-model)", path="spec/x.md", strict=False):
+        env = {**AGENT, "GIT_AUTHOR_NAME": name}
+        sha = commit_file(self.repo, path, msg, msg, env=env)
+        commit = lint_commits.load_commits(self.repo, f"{sha}~1..{sha}", "Aware")[0]
+        return lint_commits.lint(commit, CONFIG["commits"], strict)
+
     def test_gate_and_feature_stage_rules(self):
         msg = GOOD.replace("Stage: P0", "Stage: G0").replace("Agent: DEV", "Agent: PM")
-        env = {**AGENT, "GIT_AUTHOR_NAME": "Aware Agent (PM/test-model)"}
-        sha = commit_file(self.repo, "spec/x.md", "x", msg, env=env)
-        problems = lint_commits.lint(lint_commits.load_commits(self.repo, f"{sha}~1..{sha}", "Aware")[0],
-                                     CONFIG["commits"])
-        self.assertIn("missing trailer Feature (stage G0)", problems)
-        self.assertIn("gate stage G0 needs Approved-By: operator", problems)
+        self.assertEqual(self.lint_one(msg), ["gate stage G0 needs Approved-By: operator"])
+        stage = GOOD.replace("Stage: P0", "Stage: S1").replace("Agent: DEV", "Agent: PM")
+        self.assertIn("missing trailer Feature (stage S1)", self.lint_one(stage, path="spec/y.md"))
+
+    def test_phase_level_gate_needs_no_feature(self):
+        gate = (GOOD.replace("Stage: P0", "Stage: G1\nApproved-By: operator").replace("Agent: DEV", "Agent: PM"))
+        self.assertEqual(self.lint_one(gate), [])
+        for feature in ("F3", "P2"):
+            self.assertEqual(self.lint_one(gate.replace("Refs:", f"Feature: {feature}\nRefs:"), path="spec/z.md"), [])
+        self.assertIn("Feature 'X9' is neither a feature id nor a phase id",
+                      self.lint_one(gate.replace("Refs:", "Feature: X9\nRefs:"), path="spec/w.md"))
+
+    def test_trailer_blocks_single_canonical_split_tolerated(self):
+        single = GOOD.replace("\n\nCo-Authored-By", "\nCo-Authored-By")
+        self.assertEqual(lint_commits.trailer_blocks(single), 1)
+        self.assertEqual(lint_commits.trailer_blocks(GOOD), 2)
+        self.assertEqual(self.lint_one(GOOD, name="Aware Agent (DEV/test-model)", path="generator/s.txt"), [])
+        strict = self.lint_one(GOOD, name="Aware Agent (DEV/test-model)", path="generator/t.txt", strict=True)
+        self.assertEqual(strict, ["trailers are split over several paragraphs (use one final block)"])
+        self.assertEqual(self.lint_one(single, name="Aware Agent (DEV/test-model)", path="generator/u.txt",
+                                       strict=True), [])
 
     def test_human_commits_skip_trailer_rules(self):
         commit_file(self.repo, "docs/x.md", "x", "docs: human note")

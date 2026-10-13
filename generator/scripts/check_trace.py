@@ -8,13 +8,22 @@ appears in its full name (class + name, or suite path + title + tags).
 
   * AC status: met when every listed test id matches at least one test and
     all matching tests passed; otherwise unmet with a reason.
-  * Spec coverage: every spec id defined on a MUST line under spec/ needs at
-    least one passing test carrying it.
+  * Spec coverage: a rule is a spec id DEFINED on a MUST line under spec/, i.e. a bold id
+    opening a list item or table row (`- **CORE-X-001** ... MUST ...`); ids merely cited
+    in a rule or scenario do not count. Each rule applies to a set of apps (android, web,
+    server) and needs a passing test carrying its id for each of them. The apps come from an
+    optional `[apps: android, web]` marker on the definition line, else from the file
+    (config trace.file_apps, matched on the file name: client-behavior.md = both clients,
+    server-behavior.md = server, spec/platform/android.md = android, ..., default
+    trace.default_apps = android, web, server; protocol.md therefore needs all three).
+    Reports are tagged with `--junit APP=path`, `--playwright APP=path`; an untagged path
+    counts for every app. Uncovered rules are reported as (spec id, app) pairs.
 
 Exit 0 when every considered AC is met (or there are none), 1 otherwise.
 
 Examples:
-  check_trace.py --junit clients/android/app/build/test-results --playwright tests/web-e2e/report.json
+  check_trace.py --junit android=clients/android/app/build/test-results --junit server=server/report.xml \\
+      --playwright web=tests/web-e2e/report.json
   check_trace.py --feature F1 --write --acceptance docs/runs/F1/acceptance.md
 """
 from __future__ import annotations
@@ -62,6 +71,25 @@ def _files(paths: list[str], suffix: str) -> list[Path]:
     for p in map(Path, paths or []):
         out += sorted(p.rglob(f"*{suffix}")) if p.is_dir() else [p]
     return out
+
+
+def split_tag(value: str, apps: list[str]) -> tuple[str | None, str]:
+    """`web=path` -> ("web", "path"); untagged or unknown prefix -> (None, value)."""
+    tag, sep, rest = value.partition("=")
+    return (tag, rest) if sep and tag in apps else (None, value)
+
+
+def load_tests(junit: list[str], playwright: list[str], apps: list[str]) -> list[dict]:
+    """Parse tagged/untagged report arguments; each test gets `apps` (None = counts for all)."""
+    tests = []
+    for values, suffix, parse in ((junit, ".xml", parse_junit), (playwright, ".json", parse_playwright)):
+        for value in values:
+            tag, path = split_tag(value, apps)
+            for f in _files([path], suffix):
+                for t in parse(f):
+                    t["apps"] = None if tag is None else [tag]
+                    tests.append(t)
+    return tests
 
 
 def parse_junit(path: Path) -> list[dict]:
@@ -125,21 +153,58 @@ def evaluate_rows(rows: list[dict], tests: list[dict], scope_re: str) -> None:
         row["reason"] = "; ".join(problems)
 
 
-def spec_ids(spec_dir: Path, id_re: str, must: str) -> list[str]:
-    ids = []
+APPS_MARKER = re.compile(r"\[apps:\s*([a-z0-9,\s-]+)\]")
+KEYWORD = re.compile(r"\b(?:MUST|SHOULD|MAY)\b")
+
+
+def definition_re(id_re: str) -> re.Pattern:
+    """A rule is defined where its bold id opens a list item or a table row."""
+    return re.compile(rf"^\s*(?:[-*]\s+|\|\s*)\*\*({id_re})\*\*")
+
+
+def spec_rules(spec_dir: Path, cfg: dict) -> list[dict]:
+    """Defined rule ids with the apps each applies to. Only definitions carrying
+    cfg['must_keyword'] are rules; see defined_ids for every definition."""
+    defn, rules, seen = definition_re(cfg["spec_id_regex"]), [], set()
     if spec_dir.is_dir():
         for path in sorted(spec_dir.rglob("*.md")):
             for line in path.read_text(encoding="utf-8").splitlines():
-                if must in line:
-                    ids += [m for m in re.findall(id_re, line) if m not in ids]
+                m = defn.match(line)
+                if not m or cfg["must_keyword"] not in line or m.group(1) in seen:
+                    continue
+                marker = APPS_MARKER.search(line)
+                apps = [a.strip() for a in marker.group(1).split(",") if a.strip()] if marker else \
+                    cfg["file_apps"].get(path.name, cfg["default_apps"])
+                seen.add(m.group(1))
+                rules.append({"id": m.group(1), "file": path.name, "apps": apps})
+    return rules
+
+
+def defined_ids(spec_dir: Path, id_re: str) -> set[str]:
+    """Every id defined under spec_dir, whatever its keyword."""
+    defn, ids = definition_re(id_re), set()
+    for path in sorted(spec_dir.rglob("*.md")) if spec_dir.is_dir() else []:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            m = defn.match(line)
+            if m:
+                ids.add(m.group(1))
     return ids
 
 
-def spec_coverage(ids: list[str], tests: list[dict]) -> dict:
-    covered = [i for i in ids if any(t["status"] == "passed" and carries(t["name"], i) for t in tests)]
-    missing = [i for i in ids if i not in covered]
+def spec_coverage(rules: list[dict], tests: list[dict]) -> dict:
+    def passed(rule_id: str, app: str) -> bool:
+        return any(t["status"] == "passed" and (t.get("apps") is None or app in t["apps"])
+                   and carries(t["name"], rule_id) for t in tests)
+
+    pairs = [(r["id"], app) for r in rules for app in r["apps"]]
+    uncovered = [(i, a) for i, a in pairs if not passed(i, a)]
+    bad_ids = {i for i, _ in uncovered}
+    ids = [r["id"] for r in rules]
+    covered = [i for i in ids if i not in bad_ids]
     pct = 100.0 if not ids else round(100.0 * len(covered) / len(ids), 1)
-    return {"total": len(ids), "covered": covered, "missing": missing, "percent": pct}
+    return {"total": len(ids), "covered": covered, "missing": [i for i in ids if i in bad_ids], "percent": pct,
+            "pairs_total": len(pairs), "pairs_covered": len(pairs) - len(uncovered),
+            "uncovered": [list(p) for p in uncovered]}
 
 
 def acceptance_md(feature: str | None, rows: list[dict], cov: dict) -> str:
@@ -149,7 +214,7 @@ def acceptance_md(feature: str | None, rows: list[dict], cov: dict) -> str:
     lines += [f"| {r['ac']} | {r['spec']} | {r['scope']} | {r['test']} | {r['status']} | {r['reason']} |" for r in rows]
     lines += ["", f"Spec-id coverage (E-QA-1): {len(cov['covered'])}/{cov['total']} ({cov['percent']}%)"]
     if cov["missing"]:
-        lines.append("Uncovered: " + ", ".join(cov["missing"]))
+        lines.append("Uncovered (spec id, app): " + ", ".join(f"({i}, {a})" for i, a in cov["uncovered"]))
     return "\n".join(lines) + "\n"
 
 
@@ -159,8 +224,9 @@ def main(argv=None) -> int:
     p.add_argument("--trace", help="traceability file (default from config)")
     p.add_argument("--spec-dir", help="spec directory (default from config)")
     p.add_argument("--feature", help="only rows under this `## <feature>` heading")
-    p.add_argument("--junit", action="append", default=[], help="JUnit XML file or directory (repeatable)")
-    p.add_argument("--playwright", action="append", default=[], help="Playwright JSON report (repeatable)")
+    p.add_argument("--junit", action="append", default=[],
+                   help="JUnit XML file or directory, optionally APP=path with APP android|web|server (repeatable)")
+    p.add_argument("--playwright", action="append", default=[], help="Playwright JSON report, optionally APP=path (repeatable)")
     p.add_argument("--write", action="store_true", help="write the status column back to the trace file")
     p.add_argument("--acceptance", help="write acceptance.md here")
     p.add_argument("--strict-spec", action="store_true", help="also fail when spec-id coverage < 100%%")
@@ -171,13 +237,11 @@ def main(argv=None) -> int:
     trace_path = Path(args.trace) if args.trace else root / cfg["file"]
     text = trace_path.read_text(encoding="utf-8") if trace_path.exists() else ""
 
-    tests = [t for f in _files(args.junit, ".xml") for t in parse_junit(f)]
-    tests += [t for f in _files(args.playwright, ".json") for t in parse_playwright(f)]
+    tests = load_tests(args.junit, args.playwright, cfg["coverage_apps"])
     all_rows = parse_trace(text)
     rows = [r for r in all_rows if args.feature is None or r["feature"] == args.feature]
     evaluate_rows(rows, tests, cfg["scope_regex"])
-    cov = spec_coverage(spec_ids(Path(args.spec_dir) if args.spec_dir else root / cfg["spec_dir"],
-                                 cfg["spec_id_regex"], cfg["must_keyword"]), tests)
+    cov = spec_coverage(spec_rules(Path(args.spec_dir) if args.spec_dir else root / cfg["spec_dir"], cfg), tests)
 
     if args.write and text:
         trace_path.write_text(write_status(text, rows), encoding="utf-8")
@@ -194,7 +258,8 @@ def main(argv=None) -> int:
         for r in unmet:
             print(f"  UNMET {r['ac'] or '(no AC id)'} [{r['scope']}]: {r['reason']}")
         if cov["missing"]:
-            print("  uncovered spec ids: " + ", ".join(cov["missing"]))
+            print(f"  uncovered (spec id, app) pairs: {len(cov['uncovered'])}/{cov['pairs_total']}: "
+                  + ", ".join(f"({i}, {a})" for i, a in cov["uncovered"]))
     failed = bool(unmet) or (args.strict_spec and cov["missing"])
     return lib.EXIT_FAIL if failed else lib.EXIT_OK
 

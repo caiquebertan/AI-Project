@@ -6,7 +6,7 @@
   "required": ["app", "spec_version", "generator_commit", "model_id", "generated_at", "files"],
   "properties": {
     "app": {"type": "string"},
-    "spec_version": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$"},
+    "spec_version": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$"},
     "generator_commit": {"type": "string", "pattern": "^[0-9a-f]{7,40}$"},
     "model_id": {"type": "string"},
     "generated_at": {"type": "string"},

@@ -101,6 +101,41 @@ class GeneratePrompt(unittest.TestCase):
         self.assertIn(CONFIG["headers"]["marker"] + " from spec 1.2.3", res.stdout)
 
 
+    def render_with_version(self, version_line):
+        tmp, repo = make_repo()
+        self.addCleanup(tmp.cleanup)
+        (repo / "spec").mkdir()
+        (repo / "spec" / "README.md").write_text(version_line + "\n")
+        commit_file(repo, CONFIG["apps"]["web"]["conventions"], "# conventions\n")
+        return run_script("render_prompt.py", "--generate", "web", "--root", repo, "--print")
+
+    def test_shared_platform_inputs_are_listed(self):
+        res = self.render_with_version("**Version:** 1.2.3")
+        self.assertGreater(len(CONFIG["generate"]["platform_shared"]), 1)
+        for path in CONFIG["generate"]["platform_shared"]:
+            self.assertTrue((SCRIPTS.parents[1] / path).exists(), path)
+            self.assertIn(f"`{path}`", res.stdout)
+        self.assertIn("test-hooks.md", res.stdout)
+        self.assertIn("client-snapshot.schema.json", res.stdout)
+
+    def test_draft_version_is_stamped_in_full_and_warned(self):
+        res = self.render_with_version("**Version:** 0.1.0-draft (test)")
+        self.assertEqual(res.returncode, 0, res.stderr)
+        self.assertIn("Spec version: `0.1.0-draft` (draft: yes)", res.stdout)
+        self.assertIn(CONFIG["headers"]["marker"] + " from spec 0.1.0-draft", res.stdout)
+        self.assertIn("WARNING: spec 0.1.0-draft is a draft", res.stderr)
+        final = self.render_with_version("**Version:** 1.0.0")
+        self.assertIn("(draft: no)", final.stdout)
+        self.assertNotIn("WARNING", final.stderr)
+
+    def test_draft_version_passes_manifest_schema_pattern(self):
+        import re
+        pattern = lib.read_json(lib.SCHEMA_DIR / "manifest.schema.json")["properties"]["spec_version"]["pattern"]
+        self.assertTrue(re.match(pattern, "0.1.0-draft"))
+        self.assertTrue(re.match(pattern, "0.1.0"))
+        self.assertFalse(re.match(pattern, "0.1"))
+
+
 class ManifestRoundTrip(unittest.TestCase):
     def test_written_manifest_passes_check(self):
         tmp, repo = make_repo()

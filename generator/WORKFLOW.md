@@ -1,7 +1,8 @@
-# Agent pipeline workflow (AI-readable) — v0.2
+# Agent pipeline workflow (AI-readable) — v0.2.1
 
 > **Sources:** operator instructions in [`docs/human-input/OPERATOR_MESSAGES.md`](../docs/human-input/OPERATOR_MESSAGES.md) (12:51 workflow; 13:24 and 13:29 decisions), decisions in [`docs/decisions/0002-workflow-gap-answers.md`](../docs/decisions/0002-workflow-gap-answers.md), gap analysis in [`docs/planning/workflow-gap-analysis.md`](../docs/planning/workflow-gap-analysis.md).
 > **Precedence:** brief > operator's words > this file. If they conflict, stop and ask the operator (or log `BLOCKED` in autonomous mode).
+> **v0.2.1:** §8 requires all commit trailers in one final block.
 > **Changes from v0.1:** generator is the development step (two entry points); spec stage S0 + gate G0; S1 becomes Trace; S2 only for generator/architecture changes; S6 automated; new S6b regen-check; return codes, counters, abort paths; commit-addressed diff rule; worktrees for parallel work; run log; executable evals.
 
 ---
@@ -131,7 +132,7 @@ Caps, the §2 reviewer threshold (400 changed lines) and the §6 split threshold
 ## 8. Prompts, logging, commits
 - **Prompts:** templates in `generator/prompts/<role>.md` with variables only (feature, app, input paths, output path, boundaries, exit criteria, return codes). ORC fills variables; the rendered prompt's sha256 goes in the run log. Generator prompts must not name features (E-EVOL-1).
 - **Run log:** one JSON line per transition in `docs/runs/<feature>/run.jsonl` (ts, feature, app, stage, event, agent, model, model_id, model_reason, counters, base/head sha, changed_lines, spec_version, prompt_sha256, inputs, outputs, result, findings, return_code, duration, tokens, gate, decided_by, operator_msg_ref, parallel_with).
-- **Commits:** branch `feat/<id>`, one commit per stage output, merge `--no-ff`, no squash. Generated output in its own commit: `regen(<app>): spec X.Y.Z @ gen <sha>`. No commit touches both `spec/` and `clients/`. Agent commits use author `Aware Agent (<ROLE>/<model>) <agent@aware.local>`, operator as committer. Trailers: `Area`, `Boundary: generated|maintained`, `Authored-By-Role: human|agent`, `Agent`, `Model`, `Stage`, `Feature`, `Approved-By: operator` (gates), `Refs: OM-nnnn`.
+- **Commits:** branch `feat/<id>`, one commit per stage output, merge `--no-ff`, no squash. Generated output in its own commit: `regen(<app>): spec X.Y.Z @ gen <sha>`. No commit touches both `spec/` and `clients/`. Agent commits use author `Aware Agent (<ROLE>/<model>) <agent@aware.local>`, operator as committer. Trailers: `Area`, `Boundary: generated|maintained`, `Authored-By-Role: human|agent`, `Agent`, `Model`, `Stage`, `Feature`, `Approved-By: operator` (gates), `Refs: OM-nnnn`. All trailers go in a single final block with no blank line inside it, because git reads only the last paragraph as trailers.
 - **Operator log:** ORC appends verbatim with an `OM-nnnn` id; AI notes prefixed `AI note:`; operator confirms in the commit (`Approved-By: operator`).
 
 ## 9. Autonomous mode (`/pipeline --autonomous`)

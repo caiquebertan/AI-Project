@@ -105,3 +105,13 @@ Q9: for the generated flow, there will be no human gate, it will read the specs,
 ````text
 We can move with your recommendation
 ````
+
+---
+
+## OM-0007 · 2026-10-13 13:34 — Go for Phase 0
+
+**AI note:** _Triggered: Opus agent builds Phase 0 (harness) per `generator/WORKFLOW.md` §4._
+
+````text
+Go
+````

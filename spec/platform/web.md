@@ -43,12 +43,14 @@
 
 ## 6. Test hooks
 
-- **PLAT-WEB-012** — Every hook of PLAT-HOOK-001 MUST be a `data-testid` attribute; machine values (PLAT-HOOK-004) MUST be `data-state` (and `data-seq`, empty string when none) on the same element; `offline-toggle` MUST be an `<input type="checkbox">` whose `checked` is `offline_toggle`. Every build MUST define `window.__AWARE__ = { snapshot(): ClientSnapshot, setOffline(on: boolean): void, setNetworkAvailable(on: boolean): void }` (PLAT-HOOK-006; the app is local-only, so the hook is not stripped from production builds).
+- **PLAT-WEB-012** — Every hook of PLAT-HOOK-001 MUST be a `data-testid` attribute; machine values (PLAT-HOOK-004) MUST be `data-state` (and on `message-<id>` also `data-seq`, empty string when none, and `data-from`) on the same element; `offline-toggle` MUST be an `<input type="checkbox">` whose `checked` is `offline_toggle`. Every build MUST define `window.__AWARE__ = { snapshot(): ClientSnapshot, setOffline(on: boolean): void, setNetworkAvailable(on: boolean): void, relaunch(): void }` (PLAT-HOOK-006; the app is local-only, so the hook is not stripped from production builds).
+
+- **PLAT-WEB-018** — The relaunch control (PLAT-HOOK-011) MUST be a reload of the page at the same URL (Playwright `page.reload()`, or `window.__AWARE__.relaunch()`, which MUST call `location.reload()`); the `server` query parameter is part of the URL and therefore kept. Vitest tests relaunch by discarding the engine and building a new one over the same `LocalStore` data.
 
 ## 7. Tests the generator MUST produce (inside `clients/web/`)
 
 - **PLAT-WEB-013** — Vitest unit tests for `src/core/` MUST cover every client-side `MUST` rule of `spec/core/` with at least one test each, using fakes for all ports, including an in-memory fake server implementing `spec/core/server-behavior.md` and a test that replays protocol Appendix A step by step and asserts the snapshot after each step.
 - **PLAT-WEB-014** — Vitest tests MUST check the `fetch` `Transport` (mocked `fetch`) for each endpoint E1–E5 and each CORE-ERR-003 class; a test MUST parse every file in `spec/core/schema/examples/` into the wire types and re-serialize it to an equal JSON value; a test MUST assert the constants equal `spec/core/schema/constants.json`.
-- **PLAT-WEB-015** — Component tests (Vitest + `@testing-library/react`, `jsdom`) MUST check every hook of PLAT-HOOK-001 with its PLAT-WEB-012 attributes and the screens' flows in `client-behavior.md` against fake ports.
+- **PLAT-WEB-015** — Component tests (Vitest + `@testing-library/react`, `jsdom`) MUST check every hook of PLAT-HOOK-001 with its PLAT-WEB-012 attributes and the screens' flows in `client-behavior.md` against fake ports; visible texts are asserted exactly as listed in `client-behavior.md` §8.1 (this file defines no texts).
 - **PLAT-WEB-016** — Every test title MUST start with the spec id it covers (e.g. `it('CORE-OUTBOX-003 sends entries one at a time in order', …)`); `npm test` MUST run `vitest run` with both the default reporter and the `junit` reporter writing `test-results/junit.xml`.
 - **PLAT-WEB-017** — The gate MUST be `npm ci && npm run build && npm test`, where `build` runs `tsc --noEmit` then `vite build`. Browser end-to-end tests (Playwright) live outside the client in `tests/web-e2e/` (QA) and MUST NOT be generated into `clients/web/`.

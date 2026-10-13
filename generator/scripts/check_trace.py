@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Acceptance and spec-coverage check (S6; evals E-PM-1, E-PM-3, E-QA-1).
+"""Acceptance check (S6; evals E-PM-1, E-PM-3) plus informational spec coverage (E-QA-1).
 
 Reads docs/product/TRACEABILITY.md (columns: BR/SC id | spec id | AC id |
 scope | test id | status; rows grouped under `## <feature>` headings) and
@@ -8,7 +8,7 @@ appears in its full name (class + name, or suite path + title + tags).
 
   * AC status: met when every listed test id matches at least one test and
     all matching tests passed; otherwise unmet with a reason.
-  * Spec coverage: a rule is a spec id DEFINED on a MUST line under spec/, i.e. a bold id
+  * Spec coverage (informational, never gates): a rule is a spec id DEFINED on a MUST line under spec/, i.e. a bold id
     opening a list item or table row (`- **CORE-X-001** ... MUST ...`); ids merely cited
     in a rule or scenario do not count. Each rule applies to a set of apps (android, web,
     server) and needs a passing test carrying its id for each of them. The apps come from an
@@ -19,7 +19,10 @@ appears in its full name (class + name, or suite path + title + tags).
     Reports are tagged with `--junit APP=path`, `--playwright APP=path`; an untagged path
     counts for every app. Uncovered rules are reported as (spec id, app) pairs.
 
-Exit 0 when every considered AC is met (or there are none), 1 otherwise.
+Exit status depends only on the AC rows (OM-0011): 0 when every considered AC is met (or there
+are none), 1 otherwise. The per-rule coverage report is printed under an "informational" heading
+and never changes the exit code, unless --strict-coverage is given: then uncovered (rule, app)
+pairs also exit 1 (the former behavior, for anyone who wants every MUST tested).
 
 Examples:
   check_trace.py --junit android=clients/android/app/build/test-results --junit server=server/report.xml \\
@@ -212,10 +215,20 @@ def acceptance_md(feature: str | None, rows: list[dict], cov: dict) -> str:
              "Rendered by `generator/scripts/check_trace.py` (S6).", "",
              "| AC id | Spec id | Scope | Test id | Status | Reason |", "|---|---|---|---|---|---|"]
     lines += [f"| {r['ac']} | {r['spec']} | {r['scope']} | {r['test']} | {r['status']} | {r['reason']} |" for r in rows]
-    lines += ["", f"Spec-id coverage (E-QA-1): {len(cov['covered'])}/{cov['total']} ({cov['percent']}%)"]
+    lines += ["", f"Spec-id coverage (E-QA-1, informational, not gated): "
+              f"{len(cov['covered'])}/{cov['total']} ({cov['percent']}%)"]
     if cov["missing"]:
         lines.append("Uncovered (spec id, app): " + ", ".join(f"({i}, {a})" for i, a in cov["uncovered"]))
     return "\n".join(lines) + "\n"
+
+
+def print_coverage(cov: dict, gated: bool) -> None:
+    """Per-rule coverage block; informational unless --strict-coverage gates on it."""
+    kind = "gated by --strict-coverage" if gated else "informational, does not affect the exit status"
+    print(f"Spec coverage ({kind}): {len(cov['covered'])}/{cov['total']} rules ({cov['percent']}%)")
+    if cov["missing"]:
+        print(f"  uncovered (spec id, app) pairs: {len(cov['uncovered'])}/{cov['pairs_total']}: "
+              + ", ".join(f"({i}, {a})" for i, a in cov["uncovered"]))
 
 
 def main(argv=None) -> int:
@@ -229,7 +242,8 @@ def main(argv=None) -> int:
     p.add_argument("--playwright", action="append", default=[], help="Playwright JSON report, optionally APP=path (repeatable)")
     p.add_argument("--write", action="store_true", help="write the status column back to the trace file")
     p.add_argument("--acceptance", help="write acceptance.md here")
-    p.add_argument("--strict-spec", action="store_true", help="also fail when spec-id coverage < 100%%")
+    p.add_argument("--strict-coverage", "--strict-spec", dest="strict_coverage", action="store_true",
+                   help="also fail when any MUST rule lacks a passing test (default: coverage is informational)")
     p.add_argument("--json", action="store_true")
     args = p.parse_args(argv)
     cfg = lib.load_config()["trace"]
@@ -253,14 +267,11 @@ def main(argv=None) -> int:
         print(json.dumps({"rows": [{k: r[k] for k in ("ac", "spec", "scope", "test", "status", "reason")}
                                    for r in rows], "tests": len(tests), "spec_coverage": cov}, indent=2))
     else:
-        print(f"ACs: {len(rows) - len(unmet)}/{len(rows)} met; tests parsed: {len(tests)}; "
-              f"spec-id coverage: {len(cov['covered'])}/{cov['total']} ({cov['percent']}%)")
+        print(f"ACs: {len(rows) - len(unmet)}/{len(rows)} met; tests parsed: {len(tests)}")
         for r in unmet:
             print(f"  UNMET {r['ac'] or '(no AC id)'} [{r['scope']}]: {r['reason']}")
-        if cov["missing"]:
-            print(f"  uncovered (spec id, app) pairs: {len(cov['uncovered'])}/{cov['pairs_total']}: "
-                  + ", ".join(f"({i}, {a})" for i, a in cov["uncovered"]))
-    failed = bool(unmet) or (args.strict_spec and cov["missing"])
+        print_coverage(cov, args.strict_coverage)
+    failed = bool(unmet) or (args.strict_coverage and bool(cov["missing"]))
     return lib.EXIT_FAIL if failed else lib.EXIT_OK
 
 

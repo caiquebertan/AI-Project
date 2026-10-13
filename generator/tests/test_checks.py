@@ -89,6 +89,28 @@ class CheckTrace(unittest.TestCase):
             self.assertIn("| SC-3 | CORE-010 | AC-F2-1 | core | T-F2-1 | pending |", text)  # F2 untouched
             self.assertIn("| AC-F1-3 |", acc.read_text())
 
+    def test_coverage_is_informational_unless_strict(self):
+        """OM-0011: exit status follows the AC rows only; --strict-coverage restores the coverage gate."""
+        with tempfile.TemporaryDirectory() as tmp:
+            trace = Path(tmp) / "T.md"
+            trace.write_text("## F1\n| BR/SC id | Spec id | AC id | Scope | Test id | Status |\n|---|---|---|---|---|---|\n"
+                             "| BR-1 | CORE-001 | AC-F1-1 | core | T-F1-1 | pending |\n")
+            args = ("check_trace.py", "--trace", trace, "--spec-dir", FIXTURES / "trace" / "spec",
+                    "--junit", FIXTURES / "trace" / "junit.xml")
+            res = run_script(*args)
+            self.assertEqual(res.returncode, lib.EXIT_OK, res.stderr)   # all ACs met, rules uncovered
+            self.assertIn("ACs: 1/1 met", res.stdout)
+            self.assertIn("informational", res.stdout)
+            self.assertIn("uncovered (spec id, app) pairs", res.stdout)
+            strict = run_script(*args, "--strict-coverage")
+            self.assertEqual(strict.returncode, lib.EXIT_FAIL)
+            self.assertIn("gated by --strict-coverage", strict.stdout)
+            self.assertEqual(run_script(*args, "--strict-spec").returncode, lib.EXIT_FAIL)   # old spelling
+
+    def test_unmet_ac_still_fails_without_strict(self):
+        res = self.run_trace()
+        self.assertEqual(res.returncode, lib.EXIT_FAIL)
+
     def test_empty_input(self):
         with tempfile.TemporaryDirectory() as tmp:
             res = run_script("check_trace.py", "--root", tmp)

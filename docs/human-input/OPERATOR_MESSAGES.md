@@ -115,3 +115,13 @@ We can move with your recommendation
 ````text
 Go
 ````
+
+---
+
+## OM-0008 · 2026-10-13 14:11 — Phase 0 approved, own signing key, launch Phase 1
+
+**AI note:** _Triggered: Phase 0 gate approved (decision 0003); signing plan recorded; Phase 1 started._
+
+````text
+lets use my own key, and phase 0 is approved, you can launch the Agent for Phase 1
+````

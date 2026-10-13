@@ -227,3 +227,13 @@ approve 0018, and you can run REV on sonnet for second round
 ````text
 since none of them are actual blockers, you can just fix this little loose header handling, simple chain, just launch an sonnet dev agente and no need for rev or stress tests, simple code change... and write down loose tests as know gap and we can close P2. we are already spending too much here
 ````
+
+---
+
+## OM-0018 · 2026-10-13 19:14 — Pause until the operator restarts
+
+**AI note:** _Triggered: no new work started. State at pause: P0, P1, P2 done; next is the P3 generator implementation (decisions 0016, 0017). No agents are running._
+
+````text
+lets pause, I'll need a new fresh session of tokens for this, I let you know when you can start
+````

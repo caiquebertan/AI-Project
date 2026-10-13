@@ -18,7 +18,9 @@ Instructions for any coding agent (Claude Code, Codex) working in this repo. `CL
 - Keep the server small; invest in protocol clarity and generation reliability.
 - One commit per stage output; generated output in its own `regen(<app>)` commit; never one commit touching both `spec/` and `clients/`. Commit conventions: `generator/WORKFLOW.md` §8.
 - End every agent task with one return code: `OK`, `SPEC_ISSUE`, `PLAN_DEVIATION`, `STALE_DIFF`, `ENV_FAILURE`, `BLOCKED`. Never fill a spec gap in code; return `SPEC_ISSUE`.
-- Read the diff snapshot ORC gives you; check it isn't stale before starting.
+- Read the diff snapshot ORC gives you; check it isn't stale before starting (`python3 generator/scripts/check_snapshot.py --meta <diff.meta.json>`).
+- Sub-agents end their reply with `OUTCOME: <event>` and a final `RETURN: <code>` line (formats in `.claude/agents/`). ORC routes them only through `generator/scripts/state.py`.
+- Harness self-test: `python3 -m unittest discover -s generator/tests`; prompt genericity: `python3 generator/scripts/lint_prompts.py`.
 
 ## Roles (orchestration)
 The main orchestrator (ORC) is the technical manager and the operator's single point of contact: it keeps the plan and state, launches PM, Tech Lead, Developer, Reviewer and QA agents from prompt templates, and reviews results against the spec. Two entry points: `/pipeline` (gated delivery) and `/generate` (headless generator). Roles, gates, loops and limits: `generator/WORKFLOW.md`. Agent definitions: `.claude/agents/`.

@@ -61,7 +61,7 @@ Every launch is logged with `model`, `model_id`, `reason` (§8).
 
 | Phase | Steps | Gate | Exit |
 |---|---|---|---|
-| **P0 Harness** | Agent role files `.claude/agents/{pm,tl,dev,rev,qa}.md`; prompt templates `generator/prompts/`; scripts `generator/scripts/` (`snapshot-diff`, `count-lines`, `run-log`, `check-headers`, `check-trace`, `regen-check`, `lint-commits`, `preflight`); `/pipeline` + `/generate` commands, `generator/RUN.md` fallback; `STATE.json` + run-log schemas; README/AGENTS updates | OP reviews harness | Dry run of `/pipeline` on a stub feature passes E-WF-1 |
+| **P0 Harness** | Agent role files `.claude/agents/{pm,tech-lead,developer,reviewer,qa}.md`; prompt templates `generator/prompts/`; scripts `generator/scripts/` (`snapshot-diff`, `count-lines`, `run-log`, `check-headers`, `check-trace`, `regen-check`, `lint-commits`, `preflight`); `/pipeline` + `/generate` commands, `generator/RUN.md` fallback; `STATE.json` + run-log schemas; README/AGENTS updates | OP reviews harness | Dry run of `/pipeline` on a stub feature passes E-WF-1 |
 | **P1 Backlog + core spec** | PM backlog (F1 identity, F2 send/receive, F3 offline queue/flush, F4 interop, F5 reactions extension) + TRACEABILITY skeleton; decision records (transport = HTTP + polling/long-poll with per-recipient cursor; message identity; ordering; delivery/dedupe; generic-relay `type`+payload; app-controlled offline); `spec/core/*` with `CORE-xxx` ids, `schema/`, Alice/Bob expected states, test hooks (test tags / `data-testid`, JVM-testable Android core module) | OP approves backlog once; **G0** spec v0.1.0 | `check-trace`: every BR/SC has a spec id |
 | **P2 Server** (light chain) | TL-lite plan → DEV server + `tests/protocol` → REV | G1-light | E-PROTO-1 green |
 | **P3 Generator v1** | TL generator design (templates for build infra and module skeletons, conventions per platform, generation order, self-repair bound, manifest) → DEV implements → first `/generate android` + `/generate web` (parallel worktrees) | **G1** | Both clients build + in-project tests pass |
@@ -110,6 +110,8 @@ ORC routes non-`OK` codes per the table above and never lets an agent continue p
 | `gen_self_repair` (per `/generate` run) | 3 | `/generate` fails → G2 |
 | `regen_check` | 2 | G2 |
 | Budget: wall time, tokens (soft / hard) | set per feature at S1 | soft → note in retro; hard → G2 |
+
+Caps, the §2 reviewer threshold (400 changed lines) and the §6 split threshold (2000) live only in `generator/config/generator.json` (`limits`); `generator/scripts/state.py` enforces the caps (exceeding one routes to G2).
 
 ### 5.3 Abort and failure
 `BLOCKED` = feature parked with reason; ORC continues independent features. `ABORTED` = branch kept, STATE + partial retro written. Rollback = reset feature branch to the last green stage commit. `ENV_FAILURE` is retried at most once, then G2. `preflight` checks JDK, Android SDK, Node, Python versions before P3.

@@ -1,16 +1,42 @@
 # Generator and agentic harness
 
-Full design: [`WORKFLOW.md`](WORKFLOW.md) (v0.2).
+Full design: [`WORKFLOW.md`](WORKFLOW.md) (v0.2). Manual / CI usage: [`RUN.md`](RUN.md).
 
-| Entry point | Tool | Purpose |
+| Entry point | Tool | Purpose | Status |
+|---|---|---|---|
+| `/generate <android\|web\|all> [--module <m>]` | Claude Code | **The generator.** Spec → `clients/<app>/`. Headless, no gates. What graders run. | procedure ✔ (P0); stops with "generator not yet configured" until conventions/templates exist ☐ P3 |
+| `/pipeline [feature] [--autonomous]` | Claude Code | Gated delivery pipeline (PM, TL, DEV, REV, QA) that evolves spec and generator and calls `/generate`. | ✔ (P0) |
+
+## What exists now (Phase 0 harness)
+
+| Path | What | Status |
 |---|---|---|
-| `/generate <android\|web\|all>` | Claude Code | **The generator.** Spec → `clients/<app>/`. Headless, no gates. What graders run. ☐ |
-| `/pipeline [feature] [--autonomous]` | Claude Code | Gated delivery pipeline (PM, TL, DEV, REV, QA) that evolves spec and generator and calls `/generate`. ☐ |
+| `prompts/` | Role templates (`pm`, `tech-lead`, `developer`, `reviewer`, `qa`) and `generate.md`, the generator's base prompt. Variables only, listed in `prompts/README.md`. | ✔ |
+| `config/generator.json` | Single source of caps, thresholds, app paths, commands, lint rules ([`config/README.md`](config/README.md)) | ✔ (model ids, build/test commands `TBD-at-P3`) |
+| `schemas/` | `state.schema.json` (`.work/STATE.json`), `run-event.schema.json` (run log lines), `manifest.schema.json` (`clients/<app>/.generated`, proposed; confirmed at P3) | ✔ |
+| `scripts/` | Stdlib-only Python, each with `--help`; shared code in `awarelib.py` | ✔ |
+| `tests/` | `python3 -m unittest discover -s generator/tests` (E-WF-1 dry run, E-WF-2 resume, script unit tests) | ✔ |
+| `conventions/` | Per-platform code-shape rules incl. in-project test requirements | ☐ P3 |
+| `templates/` | Build infra and module skeletons copied verbatim | ☐ P3 |
 
-Planned layout (built in Phase 0 / Phase 3):
-- `prompts/` — role prompt templates (variables only, no feature names)
-- `conventions/` — per-platform code-shape rules the generator follows (incl. test requirements)
-- `templates/` — copied build infra and module skeletons (Gradle wrapper, Vite config, …)
-- `config/` — pinned model IDs, self-repair limit
-- `scripts/` — snapshot-diff, count-lines, run-log, check-headers, check-trace, regen-check, lint-commits, preflight
-- `RUN.md` — manual fallback for running without slash commands
+Sub-agents: [`../.claude/agents/`](../.claude/agents/). Commands: [`../.claude/commands/`](../.claude/commands/).
+
+## Scripts
+
+| Script | WORKFLOW | Does |
+|---|---|---|
+| `state.py` | §5, §5.1, §5.2, §9 | The state machine: `init`, `start-feature`, `transition --event`, `status`, `render`, `select`, `set-mode`, `model` (§2 model rules). Refuses illegal transitions; checkpoints STATE.json and logs every transition. |
+| `snapshot_diff.py` | §6.1, §6.4 | Commit-addressed `diff.patch` + `diff.meta.json`; per-file patches above the split threshold |
+| `count_lines.py` | §6.2 | `changed_lines` without lockfiles, wrapper, binaries, manifests |
+| `check_snapshot.py` | §6.3 | Agent self-check; prints `STALE_DIFF`, exit 3 |
+| `render_prompt.py` | §8 | Fills `{{var}}` templates, refuses unfilled ones, prints sha256; `--generate <app>` for the generator |
+| `run_log.py` | §8 | Append / show / validate `docs/runs/<feature>/run.jsonl` |
+| `render_retro.py` | §10 | Retro tables from the run log; `--update-index` for `docs/runs/INDEX.md` |
+| `check_trace.py` | S6, E-PM-1/3, E-QA-1 | AC met/unmet from JUnit XML + Playwright JSON; spec-id coverage |
+| `check_headers.py` | E-DEV-1 | Manifest vs tree, GENERATED headers; `--write-manifest` for `/generate` |
+| `regen_check.py` | S6b, E-PIPE-1, E-BOUND-1 | Fresh worktree/clone → delete → generate → build → test → boundary; `--dry-run` |
+| `lint_commits.py` | §8, E-PIPE-3 | Author + trailer rules, no commit touching `spec/` and `clients/` |
+| `lint_prompts.py` | E-EVOL-1 | Feature-noun denylist over generator prompts |
+| `preflight.py` | §5.3 | Toolchain versions; `--strict` to gate |
+
+All scripts share exit codes: `0` ok, `1` check failed, `2` usage, `3` stale snapshot, `4` illegal transition.

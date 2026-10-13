@@ -217,3 +217,13 @@ defaults approved for g1
 ````text
 approve 0018, and you can run REV on sonnet for second round
 ````
+
+---
+
+## OM-0017 · 2026-10-13 19:12 — Close P2 now; loose tests become a known gap
+
+**AI note:** _Triggered: decision 0019 (P2 closed without review round 3 and without a new stress run; gaps in `docs/runs/P2/known-gaps.md`). Context: the loose header handling the operator mentions was already fixed in fix pass 2 (merged at d1fa5ce); no further dev work was needed. Round 3 (Opus) was stopped before it reported._
+
+````text
+since none of them are actual blockers, you can just fix this little loose header handling, simple chain, just launch an sonnet dev agente and no need for rev or stress tests, simple code change... and write down loose tests as know gap and we can close P2. we are already spending too much here
+````

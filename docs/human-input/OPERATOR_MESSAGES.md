@@ -5,11 +5,11 @@ This file records messages written **only by the human operator** (Caique Bertan
 Rules:
 - Messages are pasted **verbatim** — typos, wording and formatting are not corrected.
 - Each entry has a date (America/Sao_Paulo time). Lines starting with **AI note:** are written by the AI orchestrator; everything inside the `text` block is the operator's own words.
-- Append new entries at the bottom; never edit past entries.
+- Append new entries at the bottom; never edit past message bodies. Each entry has a stable id `OM-nnnn` that commits and retros can reference (ids were added to the first five entries on 2026-10-13; bodies untouched).
 
 ---
 
-## 2026-10-13 12:08 — Initial repo shell
+## OM-0001 · 2026-10-13 12:08 — Initial repo shell
 
 **AI note:** _Triggered: initial folder structure, brief transcription, project context update._
 
@@ -19,7 +19,7 @@ can you structure a shell of our folder to this folder I pointed out? Bring the 
 
 ---
 
-## 2026-10-13 12:11 — Git setup
+## OM-0002 · 2026-10-13 12:11 — Git setup
 
 **AI note:** _Triggered: `git init`, initial commit._
 
@@ -29,7 +29,7 @@ create the git setup so we can start splitting the commits as well. And you can 
 
 ---
 
-## 2026-10-13 12:51 — Agent pipeline workflow definition
+## OM-0003 · 2026-10-13 12:51 — Agent pipeline workflow definition
 
 **AI note:** _Triggered: `generator/WORKFLOW.md` (AI-readable translation of the instruction below), this log, `docs/retros/`, and the Opus gap-analysis agent run (`docs/planning/workflow-gap-analysis.md`)._
 
@@ -71,7 +71,7 @@ For all the loop, at all steps, always have a tmp file of the diff we're working
 
 ---
 
-## 2026-10-13 13:19 — Questions on gap-analysis Q19 and Q21
+## OM-0004 · 2026-10-13 13:19 — Questions on gap-analysis Q19 and Q21
 
 **AI note:** _Triggered: explanation of Android verification options (Q19) and evolution demo options (Q21)._
 
@@ -83,7 +83,7 @@ Q21: I need more details as well
 
 ---
 
-## 2026-10-13 13:24 — Decisions on gap-analysis questions
+## OM-0005 · 2026-10-13 13:24 — Decisions on gap-analysis questions
 
 **AI note:** _Triggered: `docs/decisions/0002-workflow-gap-answers.md`, web stack decision accepted; pipeline-vs-generator relationship (Q1) sent back to the operator for confirmation._
 
@@ -94,4 +94,14 @@ You can take all the recommendations, including Q19 and Q21, note these comments
 
 Q8: option c, for external we can have the checks for the ACs, and in the projects we have the testing to the code, unit and ui;
 Q9: for the generated flow, there will be no human gate, it will read the specs, build the plan and execute;
+````
+
+---
+
+## OM-0006 · 2026-10-13 13:29 — Q1 confirmed: generator as the development step
+
+**AI note:** _Triggered: Q1 resolved in decision 0002; `generator/WORKFLOW.md` v0.2; README/AGENTS aligned._
+
+````text
+We can move with your recommendation
 ````

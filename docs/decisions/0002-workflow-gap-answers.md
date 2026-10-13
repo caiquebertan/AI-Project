@@ -1,11 +1,11 @@
 # 0002 — Operator answers to workflow gap-analysis questions
-- Status: accepted, except Q1 (pending operator confirmation)
+- Status: accepted (Q1 confirmed 2026-10-13 13:29, OM-0006)
 - Date: 2026-10-13
 - Source: questions in `docs/planning/workflow-gap-analysis.md` §5; operator reply verbatim in `docs/human-input/OPERATOR_MESSAGES.md` (13:24). The operator accepted every recommendation unless noted.
 
 | Q | Topic | Decision |
 |---|---|---|
-| 1 | Pipeline vs generator | **PENDING.** Operator proposed using the pipeline to build the apps, with a generator flow reading a single spec written alongside. ORC raised the reproducibility risk; awaiting confirmation. |
+| 1 | Pipeline vs generator | **The generator is the pipeline's development step.** The pipeline (gated) evolves `spec/` and `generator/`; client code comes only from `/generate`, which is headless and is the same command graders run. The spec is written one feature ahead of the code. No hand edits to `clients/*`. Operator's original idea (pipeline builds apps, generator built afterwards from a spec written alongside) was rejected for reproducibility risk (OM-0005, OM-0006). |
 | 2 | Spec owner | PM drafts behavior and scenarios, TL drafts protocol and platform; operator approves at G0. Core protocol decisions recorded as decision records. |
 | 3 | Main human gate | G0 on spec deltas; G1 only for architecture or generator design changes |
 | 4 | Chain weight | Full chain for the first feature per app and for architecture/generator changes; light chain otherwise |

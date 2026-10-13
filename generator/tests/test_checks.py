@@ -33,16 +33,47 @@ class CheckTrace(unittest.TestCase):
         self.assertIn("bad scope", status["AC-F2-3"][1])
         cov = out["spec_coverage"]
         # MUST definitions only: CORE-003 is SHOULD, CORE-099 is a reference, CORE-04 is mistyped.
-        self.assertEqual(cov["total"], 4)
-        self.assertEqual(cov["missing"], ["CORE-010", "CORE-011"])
+        self.assertEqual(cov["total"], 6)
+        self.assertEqual(cov["missing"], ["CORE-010", "CORE-011", "CORE-SRV-001", "CORE-SRV-002"])
+        self.assertEqual(cov["covered"], ["CORE-001", "CORE-002"])   # untagged reports count for every app
 
     def test_rules_are_definitions_not_references(self):
         rules = check_trace.spec_rules(FIXTURES / "trace" / "spec", CONFIG["trace"])
         ids = [r["id"] for r in rules]
-        self.assertEqual(ids, ["CORE-001", "CORE-002", "CORE-010", "CORE-011"])
+        self.assertEqual(ids, ["CORE-001", "CORE-002", "CORE-010", "CORE-011", "CORE-SRV-001", "CORE-SRV-002"])
         self.assertNotIn("CORE-099", ids)
         self.assertNotIn("CORE-003", ids)
         self.assertIn("CORE-003", check_trace.defined_ids(FIXTURES / "trace" / "spec", CONFIG["trace"]["spec_id_regex"]))
+
+    def test_apps_per_rule(self):
+        rules = {r["id"]: r["apps"] for r in check_trace.spec_rules(FIXTURES / "trace" / "spec", CONFIG["trace"])}
+        self.assertEqual(rules["CORE-001"], ["android", "web", "server"])   # default
+        self.assertEqual(rules["CORE-SRV-001"], ["server"])                 # server-behavior.md
+        self.assertEqual(rules["CORE-SRV-002"], ["server", "web"])          # [apps: ...] marker wins
+
+    def test_per_app_coverage_with_tagged_reports(self):
+        rules = [{"id": "CORE-A-001", "apps": ["android", "web"]}, {"id": "CORE-SRV-001", "apps": ["server"]},
+                 {"id": "CORE-P-001", "apps": ["android", "web", "server"]}]
+
+        def t(name, app=None):
+            return {"name": name, "status": "passed", "apps": None if app is None else [app]}
+
+        tests = [t("CORE-A-001", "android"), t("CORE-SRV-001", "web"), t("CORE-P-001", "android"),
+                 t("CORE-P-001", "web"), t("CORE-P-001", "server")]
+        cov = check_trace.spec_coverage(rules, tests)
+        self.assertEqual(cov["uncovered"], [["CORE-A-001", "web"], ["CORE-SRV-001", "server"]])
+        self.assertEqual((cov["pairs_total"], cov["pairs_covered"]), (6, 4))
+        self.assertEqual(cov["covered"], ["CORE-P-001"])
+        # an untagged passing test covers every app
+        self.assertEqual(check_trace.spec_coverage(rules, [t("CORE-A-001 CORE-SRV-001 CORE-P-001")])["uncovered"], [])
+
+    def test_cli_tagged_reports(self):
+        res = run_script("check_trace.py", "--trace", FIXTURES / "trace" / "TRACEABILITY.md",
+                         "--spec-dir", FIXTURES / "trace" / "spec", "--junit", f"server={FIXTURES / 'trace' / 'junit.xml'}",
+                         "--json")
+        cov = json.loads(res.stdout)["spec_coverage"]
+        self.assertIn(["CORE-001", "android"], cov["uncovered"])   # only the server saw CORE-001
+        self.assertNotIn(["CORE-001", "server"], cov["uncovered"])
 
     def test_feature_filter_and_write(self):
         with tempfile.TemporaryDirectory() as tmp:

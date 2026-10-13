@@ -32,7 +32,7 @@ Sub-agents: [`../.claude/agents/`](../.claude/agents/). Commands: [`../.claude/c
 | `render_prompt.py` | §8 | Fills `{{var}}` templates, refuses unfilled ones, prints sha256; `--generate <app>` for the generator |
 | `run_log.py` | §8 | Append / show / validate `docs/runs/<feature>/run.jsonl` |
 | `render_retro.py` | §10 | Retro tables from the run log; `--update-index` for `docs/runs/INDEX.md` |
-| `check_trace.py` | S6, E-PM-1/3, E-QA-1 | AC met/unmet from JUnit XML + Playwright JSON; spec-id coverage |
+| `check_trace.py` | S6, E-PM-1/3, E-QA-1 | AC met/unmet from JUnit XML + Playwright JSON; spec-id coverage per app: a rule is a defined bold id (not a citation); client rules need a passing test per app, `server-behavior.md` rules one from the server report. Tag reports `--junit android=<p> --junit web=<p> --junit server=<p> --playwright web=<p>`; untagged paths count for all apps. Uncovered is listed as `(spec id, app)` pairs; `protocol.md` rules default to all three apps unless a rule carries `[apps: ...]` |
 | `check_headers.py` | E-DEV-1 | Manifest vs tree, GENERATED headers; `--write-manifest` for `/generate` |
 | `regen_check.py` | S6b, E-PIPE-1, E-BOUND-1 | Fresh worktree/clone → delete → generate → build → test → boundary; `--dry-run` |
 | `lint_commits.py` | §8, E-PIPE-3 | Author + trailer rules, no commit touching `spec/` and `clients/` |

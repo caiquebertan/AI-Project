@@ -12,7 +12,7 @@
 | `limits.caps.*` | `state.py` | Counter caps from §5.2; exceeding one routes to G2 |
 | `count_lines` | `count_lines.py`, `snapshot_diff.py` | Files excluded from `changed_lines` (§6.2) |
 | `headers` | `check_headers.py`, generator prompt | Manifest name, GENERATED header text, which extensions need it |
-| `trace` | `check_trace.py` | Traceability file, spec-id pattern, scope pattern |
+| `trace` | `check_trace.py` | Traceability file, spec-id pattern, scope pattern; `coverage_apps`, `default_apps`, `file_apps` say which apps must cover a rule (by spec file name; an `[apps: a, b]` marker on a rule overrides) |
 | `generate` | `render_prompt.py --generate` | Paths filled into `generator/prompts/generate.md` |
 | `regen` | `regen_check.py` | Generate command template (`{app}`, `{model}`), worktree and report dirs |
 | `commits` | `lint_commits.py` | Author pattern and trailer rules from §8 |

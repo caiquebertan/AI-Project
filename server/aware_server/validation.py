@@ -10,7 +10,7 @@ ID_RE = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9
 TYPE_RE = re.compile(r"[a-z][a-z0-9_.-]{0,63}")
 CAPABILITY_RE = re.compile(r"[a-z][a-z0-9-]{0,31}")
 EPOCH_RE = re.compile(r"[0-9a-f]{16}")
-CURSOR_RE = re.compile(r"0|[1-9][0-9]{0,15}")
+CURSOR_RE = re.compile(r"0|[1-9][0-9]{0,14}")
 TIMESTAMP_RE = re.compile(
     r"([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})\.[0-9]{3}Z")
 MAX_CAPABILITIES = 32

@@ -1,0 +1,28 @@
+{
+  "$comment": "The after and limit query parameters as received (CORE-POLL-001). The server answers every invalid value with 400 malformed_request; limit 0 matches the pattern but is rejected by CORE-POLL-001 separately. Checked by generator/scripts/check_schema_examples.py.",
+  "valid": [
+    "0",
+    "1",
+    "7",
+    "100",
+    "123456789012345",
+    "999999999999999"
+  ],
+  "invalid": [
+    "",
+    "-1",
+    "01",
+    "00",
+    "+1",
+    "1.5",
+    "1e3",
+    " 1",
+    "1 ",
+    "abc",
+    "1000000000000000",
+    "1234567890123456",
+    "9999999999999999",
+    "9007199254740991",
+    "12345678901234567"
+  ]
+}

@@ -49,16 +49,23 @@
     "seq": {
       "type": "integer",
       "minimum": 1,
-      "maximum": 9007199254740991
+      "maximum": 999999999999999,
+      "description": "Server sequence number (CORE-SEQ-001); at most 15 digits like a cursor (CORE-POLL-001)."
     },
     "cursor": {
       "type": "integer",
       "minimum": 0,
-      "maximum": 9007199254740991
+      "maximum": 999999999999999,
+      "description": "Cursor as a JSON number (CORE-POLL-004); same bound as the after query parameter (CORE-POLL-001). Cases: cases/cursor.json."
     },
     "payload": {
       "type": "object",
       "description": "Opaque for non-core types; core types validated by core_types in index.json (CORE-ENV-005)."
+    },
+    "cursor_param": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]{0,14})$",
+      "description": "Query parameters after and limit as text (CORE-POLL-001): canonical decimal, at most 15 digits. Cases: cases/cursor-param.json."
     }
   }
 }

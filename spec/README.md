@@ -1,6 +1,6 @@
 # Specification
 
-**Version:** 0.1.0 — approved by the operator at G0 (OM-0011, decision 0013) and tagged `spec-v0.1.0` by ORC after the cuts were merged and verified. Bump on every behavioral change (semver: major = wire-incompatible, minor = new rules or extensions, patch = clarification).
+**Version:** 0.1.1 (patch: clarification) — P2 spec questions S-1..S-13 answered in decision 0018 (proposed, needs operator G0 approval); no rule id added, withdrawn or renumbered. Base 0.1.0 approved by the operator at G0 (OM-0011, decision 0013) and tagged `spec-v0.1.0` by ORC after the cuts were merged and verified. Bump on every behavioral change (semver: major = wire-incompatible, minor = new rules or extensions, patch = clarification).
 
 The spec is the single source of truth for behavior: questions are answered here, never from client or server code. It is platform-neutral in `core/` and `scenarios/`; platform rules live only in `platform/`; new capabilities go in `extensions/`.
 

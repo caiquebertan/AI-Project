@@ -15,6 +15,12 @@ F1 — Identity and login.
 
 Test ids for `AC-F1-<n>`: core (external checks in `tests/`) `T-F1-<n>`, android in-project `T-F1-<100+n>`, web in-project `T-F1-<200+n>`.
 
+## F1
+
+F1 — Identity and login.
+
+Test ids for `AC-F1-<n>`: core (external checks in `tests/`) `T-F1-<n>`, android in-project `T-F1-<100+n>`, web in-project `T-F1-<200+n>`.
+
 | BR/SC id | Spec id | AC id | Scope | Test id | Status |
 |---|---|---|---|---|---|
 | BR-1 | CORE-LOGIN-001 | AC-F1-1 | core | T-F1-1 | pending |
@@ -98,7 +104,6 @@ Test ids for `AC-F2-<n>`: core (external checks in `tests/`) `T-F2-<n>`, android
 | BR-2 | CORE-SEND-011 | AC-F2-11 | platform:android | T-F2-111 | pending |
 | BR-2 | CORE-SEND-011 | AC-F2-11 | platform:web | T-F2-211 | pending |
 | BR-2 | CORE-SEND-007 | AC-F2-12 | core | T-F2-12 | pending |
-| BR-4 | CORE-ORDER-004 | AC-F2-12 | core | T-F2-12 | pending |
 | BR-4 | CORE-VISIBLE-005 | AC-F2-12 | core | T-F2-12 | pending |
 | BR-4 | CORE-VISIBLE-006 | AC-F2-12 | core | T-F2-12 | pending |
 | BR-2 | CORE-SEND-007 | AC-F2-12 | platform:android | T-F2-112 | pending |
@@ -122,6 +127,34 @@ Test ids for `AC-F2-<n>`: core (external checks in `tests/`) `T-F2-<n>`, android
 | BR-4 | CORE-RECEIVE-005 | AC-F2-16 | core | T-F2-16 | pending |
 | BR-4 | CORE-RECEIVE-005 | AC-F2-16 | platform:android | T-F2-116 | pending |
 | BR-4 | CORE-RECEIVE-005 | AC-F2-16 | platform:web | T-F2-216 | pending |
+| BR-4 | CORE-VISIBLE-009 | AC-F2-17 | core | T-F2-17 | pending |
+| BR-4 | CORE-VISIBLE-010 | AC-F2-17 | core | T-F2-17 | pending |
+| BR-4 | CORE-VISIBLE-011 | AC-F2-17 | core | T-F2-17 | pending |
+| BR-4 | CORE-VISIBLE-009 | AC-F2-17 | platform:android | T-F2-117 | pending |
+| BR-4 | CORE-VISIBLE-009 | AC-F2-17 | platform:web | T-F2-217 | pending |
+| BR-4 | CORE-VISIBLE-010 | AC-F2-18 | core | T-F2-18 | pending |
+| BR-4 | CORE-VISIBLE-010 | AC-F2-18 | platform:android | T-F2-118 | pending |
+| BR-4 | CORE-VISIBLE-010 | AC-F2-18 | platform:web | T-F2-218 | pending |
+| BR-4 | CORE-VISIBLE-010 | AC-F2-19 | core | T-F2-19 | pending |
+| BR-4 | CORE-VISIBLE-010 | AC-F2-19 | platform:android | T-F2-119 | pending |
+| BR-4 | CORE-VISIBLE-010 | AC-F2-19 | platform:web | T-F2-219 | pending |
+| BR-4 | CORE-VISIBLE-009 | AC-F2-20 | core | T-F2-20 | pending |
+| BR-2 | CORE-SEND-008 | AC-F2-20 | core | T-F2-20 | pending |
+| BR-4 | CORE-VISIBLE-009 | AC-F2-20 | platform:android | T-F2-120 | pending |
+| BR-4 | CORE-VISIBLE-009 | AC-F2-20 | platform:web | T-F2-220 | pending |
+| BR-4 | CORE-VISIBLE-009 | AC-F2-21 | core | T-F2-21 | pending |
+| BR-4 | CORE-VISIBLE-010 | AC-F2-21 | core | T-F2-21 | pending |
+| BR-4 | CORE-VISIBLE-011 | AC-F2-21 | core | T-F2-21 | pending |
+| BR-4 | CORE-VISIBLE-012 | AC-F2-21 | core | T-F2-21 | pending |
+| BR-4 | CORE-VISIBLE-009 | AC-F2-21 | platform:android | T-F2-121 | pending |
+| BR-4 | CORE-VISIBLE-009 | AC-F2-21 | platform:web | T-F2-221 | pending |
+| BR-4 | CORE-VISIBLE-011 | AC-F2-22 | core | T-F2-22 | pending |
+| BR-4 | CORE-VISIBLE-011 | AC-F2-22 | platform:android | T-F2-122 | pending |
+| BR-4 | CORE-VISIBLE-011 | AC-F2-22 | platform:web | T-F2-222 | pending |
+| BR-4 | CORE-VISIBLE-012 | AC-F2-23 | core | T-F2-23 | pending |
+| BR-4 | CORE-ORDER-004 | AC-F2-23 | core | T-F2-23 | pending |
+| BR-4 | CORE-VISIBLE-012 | AC-F2-23 | platform:android | T-F2-123 | pending |
+| BR-4 | CORE-VISIBLE-012 | AC-F2-23 | platform:web | T-F2-223 | pending |
 
 ## F3
 

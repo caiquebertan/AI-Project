@@ -1,6 +1,6 @@
 # Additional scenarios
 
-- **Status:** draft for G0 (spec 0.1.0-draft). Owner: PM. They pin behavior the brief's scenario ([`alice-bob-offline.md`](alice-bob-offline.md)) does not reach. Ids `SX-1`..`SX-5` (extra, not brief steps).
+- **Status:** draft for G0 (spec 0.1.0-draft). Owner: PM. They pin behavior the brief's scenario ([`alice-bob-offline.md`](alice-bob-offline.md)) does not reach. Ids `SX-1`..`SX-6` (extra, not brief steps).
 - **Rules exercised:** [`../core/client-behavior.md`](../core/client-behavior.md) and the protocol rules it cites.
 - **Pairings.** Each scenario runs once per client (Android, Web) as the client under test. Where a second user appears (`bob`), it runs for the same pairings as in the main scenario, section 3, but no more than the pairings P-1 and P-2 are required.
 - **Method.** "The test" means the external test harness. It may talk to the server directly using the protocol (as a stand-in for a user or to stop and start the server), and reads each client's state snapshot (PLAT-HOOK-006..008). It waits on conditions, not on fixed delays. Messages are identified by text.
@@ -53,6 +53,18 @@ Pins CORE-RECEIVE-005 (the groundwork for extensions).
 2. **Inject.** The test sends from `alice` to `bob` one message of the kind `demo.unknown` with an arbitrary payload. Expected: server order 1; completion: Bob's stored position in his mailbox is 1 (snapshot cursor). On Bob's screen: nothing changes, the list is still empty (`No conversations yet.`), no error is shown. (CORE-RECEIVE-005; wire: CORE-EXT-002)
 3. **Follow-up.** The test sends from `alice` to `bob` the text message `After the unknown one`. Expected: it appears on Bob's screen as `Received` in a new conversation `alice`, server order 2; the conversation contains only this message. (CORE-RECEIVE-001, CORE-RECEIVE-005, CORE-ORDER-006)
 
+## SX-6: Message times in the viewer's local time
+
+Pins CORE-VISIBLE-009..012 (operator decision OM-0010). Uses fixed instants, so the test fixes the server's accepted times, the clock and the time zone of each client (in-project tests with fake ports; an external run reads the accepted times from the clients' state snapshot and computes the expected text by the same rule).
+
+Fixed data: `alice` and `bob` online, one conversation. Message M1 from Alice, accepted at `2026-10-13T15:00:01.010Z` (server order 1). Message M2 from Bob, accepted at `2026-10-13T15:20:59.999Z` (order 2). Alice's device is in UTC-03:00, Bob's in UTC+09:00.
+
+1. **Same day.** The current time is `2026-10-13T15:30:00.000Z` on both devices. Alice's device shows local date 2026-10-13; Bob's shows 2026-10-14 00:30. Expected: on Alice's screen M1 `12:00`, M2 `12:20`. On Bob's screen M1 `00:00`, M2 `00:20` (his current local date is 2026-10-14, the same local date as both messages, so no date). Same two messages, same order, different local times. (CORE-VISIBLE-009..011)
+2. **Different date.** The current time becomes `2026-10-14T15:30:00.000Z` (Alice's local date 2026-10-14, Bob's 2026-10-15). Expected: Alice M1 `2026-10-13 12:00`, M2 `2026-10-13 12:20`; Bob M1 `2026-10-14 00:00`, M2 `2026-10-14 00:20`. (CORE-VISIBLE-010)
+3. **Pending has no time.** Alice goes offline and sends M3. Expected: M3 `Pending`, no time. Alice goes online, the server accepts M3 at `2026-10-14T15:31:07.500Z` (order 3). Expected: Alice shows M3 `Sent` with `12:31` (her local date of M3 and her current local date are both 2026-10-14). Bob (UTC+09:00) shows M3 `Received` with `00:31` (both dates are 2026-10-15). (CORE-VISIBLE-009, CORE-VISIBLE-010, CORE-FLUSH-004)
+4. **Time-zone change.** Alice's device zone changes to UTC+09:00 and the screen is displayed again, with no relaunch. Expected: M1 `2026-10-14 00:00`, M2 `2026-10-14 00:20`, M3 `00:31`. The order of M1, M2, M3 does not change. (CORE-VISIBLE-011, CORE-VISIBLE-012)
+5. **Seconds.** M2 (accepted at `15:20:59.999Z`) shows `:20`, not `:21`: seconds and milliseconds are dropped. (CORE-VISIBLE-010)
+
 ## Acceptance criteria
 
 - **AC-F3-13** — Given no server is running, When a new user logs in as `Carol`, sends a message to `Dave`, relaunches the client and the server then starts, Then the user is logged in without the login screen after the relaunch, the message stays `Pending` until the server is available, and then it turns `Sent` by itself, once. (SX-1; CORE-LOGIN-002, CORE-OFFLINE-004, CORE-FLUSH-005)
@@ -60,3 +72,4 @@ Pins CORE-RECEIVE-005 (the groundwork for extensions).
 - **AC-F3-15** — Given online users with history, When the server is restarted and they reconnect, Then their `Sent` and `Received` messages disappear, messages sent while the server was down are delivered, and the recipient sees only those. (SX-3; CORE-VISIBLE-008)
 - **AC-F2-15** — Given the login screen or a conversation, When the user enters invalid names or texts, a valid name in capitals, texts at the size limit, or a note to oneself, Then the screens show exactly the outcomes in SX-4. (SX-4; CORE-LOGIN-003, CORE-LOGIN-004, CORE-SEND-002, CORE-SEND-004, CORE-SEND-006, CORE-SEND-011)
 - **AC-F2-16** — Given a message of a kind the client does not know arrives, When the client processes it, Then the screen does not change and shows no error, and the next ordinary message appears normally. (SX-5; CORE-RECEIVE-005)
+- **AC-F2-21** — Given two users in time zones UTC-03:00 and UTC+09:00 looking at the same messages, When the times are shown on both screens, Then they show the same messages in the same order with different local times, a date appears only on messages whose local date differs from the viewer's current date, a `Pending` message shows no time until it is `Sent`, and a change of time zone shows on the next display. (SX-6; CORE-VISIBLE-009, CORE-VISIBLE-010, CORE-VISIBLE-011, CORE-VISIBLE-012)

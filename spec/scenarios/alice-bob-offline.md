@@ -19,7 +19,7 @@ Message ids are random in real clients (CORE-ENV-002); tests identify a message 
 
 **Step 0 completion** (the point at which step 1 may start): on both clients the connection indicator is `Online`, the conversation list is empty (`No conversations yet.`), no unsent messages, and the server has accepted no message (counter 0).
 
-**Reading the tables.** "View" is the ordered message list of the conversation between the two users, top to bottom, as `label (state, server order)`, where state is the machine value (`pending`, `sent`, `received`) behind the label (CORE-VISIBLE-005 / section 8.1 of the behavior spec) and server order is the number the server gave (`-` for unsent). "Unsent" counts the user's `pending` messages. "Cursor" is the client's stored position in its own mailbox (CORE-CURSOR-001). Server mailbox contents are `[server order: label]`. Tests read the view from the screen and the numbers from the state snapshot (PLAT-HOOK-006..008) and wait on the completion condition instead of a fixed delay.
+**Reading the tables.** "View" is the ordered message list of the conversation between the two users, top to bottom, as `label (state, server order)`, where state is the machine value (`pending`, `sent`, `received`) behind the label (CORE-VISIBLE-005 / section 8.1 of the behavior spec) and server order is the number the server gave (`-` for unsent). "Unsent" counts the user's `pending` messages. "Cursor" is the client's stored position in its own mailbox (CORE-CURSOR-001). Server mailbox contents are `[server order: label]`. The time shown on messages is not part of the tables (it depends on the clock and time zone of the run). Tests read the view from the screen and the numbers from the state snapshot (PLAT-HOOK-006..008) and wait on the completion condition instead of a fixed delay.
 
 ## 2. Steps
 
@@ -162,7 +162,7 @@ The scenario MUST pass, with identical expected states, for each pairing (Alice'
 | P-3 | Android | Android |
 | P-4 | Web | Web |
 
-Identical means: every row of every table above holds for every pairing; the only permitted differences are layout, colors and fonts. Where a platform's emulator is not available, the sandbox gate runs the Android side through its unit-test suite and the protocol-level replay of Appendix A (PLAT-ANDROID-019); see the packet for the interop question.
+Identical means: every row of every table above holds for every pairing, comparing messages by author, text, state, server order and position; the time shown on each `Sent` or `Received` message (CORE-VISIBLE-009) is left out of the comparison unless a test fixes both the server's accepted times and the device time zone and clock (as in SX-6); the only permitted differences are layout, colors and fonts. Where a platform's emulator is not available, the sandbox gate runs the Android side through its unit-test suite and the protocol-level replay of Appendix A (PLAT-ANDROID-019); see the packet for the interop question.
 
 ## 4. Acceptance criteria
 

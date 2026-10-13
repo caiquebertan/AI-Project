@@ -72,7 +72,7 @@
 
 - **Goal.** Two people each in their own app can exchange text messages. They see their own messages and the other's, in the same order, with clear states.
 - **Apps.** Android, web. Server: as built in E2.
-- **Covers.** `CORE-SEND-001..011`, `CORE-RECEIVE-001..006`, `CORE-ORDER-001..006`, `CORE-VISIBLE-002..009`; wire: `CORE-MSG`, `CORE-POLL`, `CORE-CURSOR`, `CORE-SEQ`. ACs `AC-F2-1..16`; steps `SC-1`, `SC-2`.
+- **Covers.** `CORE-SEND-001..011`, `CORE-RECEIVE-001..006`, `CORE-ORDER-001..006`, `CORE-VISIBLE-002..012`; wire: `CORE-MSG`, `CORE-POLL`, `CORE-CURSOR`, `CORE-SEQ`. ACs `AC-F2-1..23`; scenario `SX-6`; steps `SC-1`, `SC-2`.
 - **Chain.** `light` for both apps.
 - **Depends on.** F1.
 - **Status.** planned.
@@ -86,6 +86,7 @@
 | S-F2-5 Unknown message kinds and duplicates are never shown | android, web | light | planned |
 | S-F2-6 Notes to self; text shown exactly as typed | android, web | light | planned |
 | S-F2-7 Failed look defined and shown (practically unreachable) | android, web | light | planned |
+| S-F2-8 Each confirmed or received message shows the time it reached the server, in the viewer's own time zone as `HH:mm` (with the date when it is not today); pending messages show none (operator decision OM-0010) | android, web | light | planned |
 
 ### F3: Offline queue and flush (BR-3)
 
@@ -167,10 +168,11 @@
 
 **Assumptions**
 - Operator answers match the TL recommendations (Q1 to Q7); otherwise the rules named in `client-behavior.md` section 10 change, plus affected ACs.
-- Two screens, names-only list, fixed English texts, no timestamps, switch not remembered and no restart notice are acceptable for v1 (questions in the PM packet).
+- Two screens, names-only list, fixed English texts, switch not remembered and no restart notice are acceptable for v1 (questions in the PM packet).
 - Android runs without an emulator in the sandbox (decision 0002 Q19); interop for Android depends on the answer to TL question Q5.
 
 **Risks**
+- Message times depend on the device clock and time zone: tests must fix the clock and zone (injected ports) and the server's accepted times, otherwise they are flaky around midnight and in other time zones. The server's accepted time is shown (not the sender's), so a skewed device clock cannot show a time that contradicts the order.
 - Volume of testable rules: each `MUST` needs a passing test (E-QA-1). Mitigation: PM presentation rules that are not essential are `SHOULD`; the generator must name several ids per test.
 - Timing: long waits (20 seconds idle, up to 8 seconds retry) make tests slow. Mitigation: tests wait for states; in-project tests use injected time.
 - Two interpretations of "identical": layout is free, texts and order are fixed. Visual differences must never be reported as defects; a text difference always is.

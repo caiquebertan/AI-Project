@@ -123,6 +123,8 @@ class NoTimeZoneInCode(unittest.TestCase):
         (r"%[zZ]", "strftime zone directive"),
         (r"\b(?:localtime|tzinfo|timezone|tzname|tzset|astimezone|ZoneInfo|pytz|altzone|mktime|fromtimestamp|"
          r"utcoffset|getlocale|TZ)\b", "local-time or zone API"),
+        (r"\btime\.(?:ctime|asctime)\b|\b(?:ctime|asctime)\(", "ctime/asctime format local time"),
+        (r"\bstrftime\(\s*[^,()]*\)", "strftime with no time argument formats local time"),
         (r"datetime\.(?:now|today)\(", "datetime.now()/today() reads local time unless given a zone"),
     ]
 
@@ -137,7 +139,7 @@ class NoTimeZoneInCode(unittest.TestCase):
 
     def test_CORE_SRV_037_the_denylist_catches_what_it_should(self):
         samples = ["America/Sao_Paulo", "Asia/Tokyo", "UTC-3", "GMT+9", "+09:00", "-03:00", "JST", "time.localtime()",
-                   "datetime.now()", "%Z"]
+                   "datetime.now()", "%Z", "time.ctime()", "time.asctime(t)", 'time.strftime("%H")']
         for sample in samples:
             self.assertTrue(any(re.search(p, sample) for p, _ in NoTimeZoneInCode.DENY), sample)
 

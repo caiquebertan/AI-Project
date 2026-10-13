@@ -15,6 +15,7 @@ Instructions for any coding agent (Claude Code, Codex) working in this repo. `CL
 - **Never edit the spec to match code** without recording the reason in `docs/decisions/`.
 - Do not use messaging/chat SDKs. HTTP, WebSocket, JSON and local-storage libraries are fine.
 - Everything must run locally with no cloud or third-party services.
+- **Agents cannot build or test the clients** in their sandbox (no Android SDK, no npm/Maven/Gradle access; `docs/ENVIRONMENT.md`). Never claim a client builds or passes unless a log from the operator's machine says so. Python-only work (harness, server, protocol tests) can be run and verified in the sandbox.
 - Keep the server small; invest in protocol clarity and generation reliability.
 - One commit per stage output; generated output in its own `regen(<app>)` commit; never one commit touching both `spec/` and `clients/`. Commit conventions: `generator/WORKFLOW.md` §8.
 - End every agent task with one return code: `OK`, `SPEC_ISSUE`, `PLAN_DEVIATION`, `STALE_DIFF`, `ENV_FAILURE`, `BLOCKED`. Never fill a spec gap in code; return `SPEC_ISSUE`.

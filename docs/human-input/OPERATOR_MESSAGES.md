@@ -125,3 +125,25 @@ Go
 ````text
 lets use my own key, and phase 0 is approved, you can launch the Agent for Phase 1
 ````
+
+---
+
+## OM-0009 · 2026-10-13 15:41 — Cost review of backlog, TL plan and PM plan
+
+**AI note:** _Triggered: review of BACKLOG.md and both G0 packets; environment check (agents cannot build clients); MVP trimming proposals._
+
+````text
+take a look on the three files (backlog, TL plan, PM plan) and weigh where we can be less expensive (especially in time) to deliver the MVP of this project? I also have questions for PM depending on this result
+````
+
+---
+
+## OM-0010 · 2026-10-13 15:51 — Environment requirement and P6 times in UTC
+
+**AI note:** _Triggered: `docs/ENVIRONMENT.md` + decision 0011 (build environment on the operator's machine); PM question P6 answered: show message times, stored in UTC, displayed in the device's local timezone._
+
+````text
+Make sure we have this blocker disclaimer on our project. The operator should have the proper environment to build our project. Android sdk and node are one of them. If we see it needs more, we will add.
+
+for the PM plan, on P6, I want to save the time in UTC, and each client gets the local device timezone and shows to the user in their local time;
+````

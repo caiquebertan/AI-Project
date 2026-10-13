@@ -19,6 +19,7 @@ Full workflow: [`generator/WORKFLOW.md`](generator/WORKFLOW.md).
 |---|---|---|
 | Authoritative brief | [`docs/brief/aware-test-brief.md`](docs/brief/aware-test-brief.md) | ✔ |
 | Project context | [`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md) | ✔ |
+| Build environment (required tools) | [`docs/ENVIRONMENT.md`](docs/ENVIRONMENT.md) | ✔ |
 | **Spec (source of truth)** | [`spec/`](spec/) | ☐ skeleton |
 | **Agentic harness / generator** | [`generator/`](generator/), [`.claude/`](.claude/), workflow [`generator/WORKFLOW.md`](generator/WORKFLOW.md) | workflow ✔ v0.2, harness ✔ P0, generator conventions/templates ☐ P3 |
 | Harness (Phase 0) | state machine + scripts [`generator/scripts/`](generator/scripts/), sub-agents [`.claude/agents/`](.claude/agents/), prompts [`generator/prompts/`](generator/prompts/), commands [`.claude/commands/`](.claude/commands/), fallback [`generator/RUN.md`](generator/RUN.md), self-test `python3 -m unittest discover -s generator/tests` | ✔ (pending P0 gate) |
@@ -34,6 +35,10 @@ Full workflow: [`generator/WORKFLOW.md`](generator/WORKFLOW.md).
 | Agent setup | [`AGENTS.md`](AGENTS.md), [`CLAUDE.md`](CLAUDE.md) | ✔ draft |
 | Decisions log | [`docs/decisions/`](docs/decisions/) | ✔ |
 | Next steps | [`FUTURE.md`](FUTURE.md) | ✔ |
+
+## Prerequisites (read first)
+
+Building the clients needs the toolchain and network access that agent sandboxes do not have: **Android SDK, JDK, Node.js and npm, Python 3.10+, Git and the Claude Code CLI**, with access to the npm, Maven Central, Google Maven and Gradle plugin registries. Full list, the reason, and what runs where: [`docs/ENVIRONMENT.md`](docs/ENVIRONMENT.md). Check with `python3 generator/scripts/preflight.py --strict`.
 
 ## Regeneration boundary
 

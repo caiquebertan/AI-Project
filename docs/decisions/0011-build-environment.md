@@ -1,0 +1,7 @@
+# 0011 — Build environment is the operator's machine
+- Status: accepted (operator, 2026-10-13, OM-0010)
+- Context: Checked from the agent cloud workspace and from the shell on the operator's computer: no Android SDK; npm, PyPI, Maven Central, Google Maven and the Gradle plugin portal unreachable (org policy and sandbox). Clients cannot be built or tested by agents. The graders will build on their own machine.
+- Decision: The operator provides a proper build environment (Android SDK, Node, JDK, network access, Claude Code CLI; list in `docs/ENVIRONMENT.md`). Client generation with build and test, external client tests, interop and the regeneration check run there. Agents keep doing spec, generator design, server, protocol tests and review-by-reading. If we find we need more tooling, we add it to `docs/ENVIRONMENT.md` and record it here.
+- Alternatives considered: (a) request network allowlist changes for the cloud workspace, rejected: not under our control and not what graders have; (b) generate without building, rejected: violates the "working clients" criterion; (c) vendored offline dependency cache, rejected for MVP: large, hard to keep reproducible.
+- Consequences: each client build iteration needs the operator at the keyboard, so the plan minimizes the number of generation cycles (see MVP trimming discussion). `preflight.py --strict` must pass on the operator's machine before P3. WORKFLOW v0.2.2 adds the rule.
+- Brief constraint affected: none; the brief asks for local, sandbox-reproducible results and graders need the same toolchain.

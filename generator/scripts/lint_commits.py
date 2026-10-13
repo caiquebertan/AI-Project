@@ -8,8 +8,11 @@ Checks agent-authored commits (author `Aware Agent (<ROLE>/<model>)`) for:
   * commits touching clients/ are `regen(<app>): ...` with Boundary: generated.
 Checks every commit in range for the rule that no commit touches both spec/ and clients/.
 
-Trailers are read from all trailing `Key: value` paragraphs, so a block of
-attribution trailers followed by Co-Authored-By lines is understood.
+Canonical form: ALL trailers in one final block (git reads only the last paragraph as
+trailers). Trailers split over several trailing paragraphs are still understood so existing
+commits pass; --strict-trailers reports them. Feature is required at feature stages (S0-S7b),
+optional at gates (a phase-level gate such as `Stage: G1` has none); when present it is a
+feature id (F1..) or a phase id (P0..P8).
 
 Examples:
   lint_commits.py                      # every Aware Agent commit reachable from HEAD
@@ -25,6 +28,17 @@ import awarelib as lib
 
 TRAILER_RE = re.compile(r"^([A-Za-z][A-Za-z0-9-]*): (.+)$")
 SEP_FIELD, SEP_RECORD = "\x1f", "\x1e"
+
+
+def trailer_blocks(body: str) -> int:
+    """Number of trailing paragraphs made only of `Key: value` lines (1 = canonical)."""
+    paragraphs = [p for p in re.split(r"\n\s*\n", body.strip()) if p.strip()]
+    n = 0
+    for para in reversed(paragraphs[1:]):
+        if not all(TRAILER_RE.match(ln.strip()) for ln in para.strip().splitlines()):
+            break
+        n += 1
+    return n
 
 
 def parse_trailers(body: str) -> dict[str, list[str]]:
@@ -55,7 +69,7 @@ def load_commits(cwd, rev_range: str | None, author_prefix: str) -> list[dict]:
     return commits
 
 
-def lint(commit: dict, rules: dict) -> list[str]:
+def lint(commit: dict, rules: dict, strict_trailers: bool = False) -> list[str]:
     problems = []
     touched = [d for d in rules["exclusive_dirs"] if any(f.startswith(d) for f in commit["files"])]
     if len(touched) > 1:
@@ -64,6 +78,8 @@ def lint(commit: dict, rules: dict) -> list[str]:
     if not m:
         return problems  # human commits: only the directory rule applies
     t = parse_trailers(commit["body"])
+    if strict_trailers and trailer_blocks(commit["body"]) > 1:
+        problems.append("trailers are split over several paragraphs (use one final block)")
     one = {k: v[0] for k, v in t.items()}
     for key in rules["required_trailers"]:
         if key not in t:
@@ -84,6 +100,8 @@ def lint(commit: dict, rules: dict) -> list[str]:
         problems.append(f"missing trailer Stage (required for {m['role']})")
     if stage and re.match(rules["feature_stage_regex"], stage) and "Feature" not in t:
         problems.append(f"missing trailer Feature (stage {stage})")
+    if one.get("Feature") and not re.match(rules["feature_id_regex"], one["Feature"]):
+        problems.append(f"Feature '{one['Feature']}' is neither a feature id nor a phase id")
     if stage and re.match(rules["gate_stage_regex"], stage) and one.get("Approved-By") != "operator":
         problems.append(f"gate stage {stage} needs Approved-By: operator")
     if any(f.startswith(rules["generated_dir"]) for f in commit["files"]):
@@ -98,12 +116,13 @@ def main(argv=None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--range", help="git rev range, e.g. main..HEAD (default: all Aware Agent commits)")
     p.add_argument("--cwd", default=".", help="repository to inspect")
+    p.add_argument("--strict-trailers", action="store_true", help="also fail trailers split over several paragraphs")
     args = p.parse_args(argv)
     rules = lib.load_config()["commits"]
     commits = load_commits(args.cwd, args.range, rules["agent_author_prefix"])
     bad = 0
     for c in commits:
-        problems = lint(c, rules)
+        problems = lint(c, rules, args.strict_trailers)
         if problems:
             bad += 1
             print(f"FAIL {c['sha'][:10]} {c['subject']}")

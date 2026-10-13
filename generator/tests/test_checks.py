@@ -229,14 +229,35 @@ class LintCommits(unittest.TestCase):
         self.assertTrue(any("regen(<app>)" in p for p in problems))
         self.assertTrue(any("Boundary is not generated" in p for p in problems))
 
+    def lint_one(self, msg, name="Aware Agent (PM/test-model)", path="spec/x.md", strict=False):
+        env = {**AGENT, "GIT_AUTHOR_NAME": name}
+        sha = commit_file(self.repo, path, msg, msg, env=env)
+        commit = lint_commits.load_commits(self.repo, f"{sha}~1..{sha}", "Aware")[0]
+        return lint_commits.lint(commit, CONFIG["commits"], strict)
+
     def test_gate_and_feature_stage_rules(self):
         msg = GOOD.replace("Stage: P0", "Stage: G0").replace("Agent: DEV", "Agent: PM")
-        env = {**AGENT, "GIT_AUTHOR_NAME": "Aware Agent (PM/test-model)"}
-        sha = commit_file(self.repo, "spec/x.md", "x", msg, env=env)
-        problems = lint_commits.lint(lint_commits.load_commits(self.repo, f"{sha}~1..{sha}", "Aware")[0],
-                                     CONFIG["commits"])
-        self.assertIn("missing trailer Feature (stage G0)", problems)
-        self.assertIn("gate stage G0 needs Approved-By: operator", problems)
+        self.assertEqual(self.lint_one(msg), ["gate stage G0 needs Approved-By: operator"])
+        stage = GOOD.replace("Stage: P0", "Stage: S1").replace("Agent: DEV", "Agent: PM")
+        self.assertIn("missing trailer Feature (stage S1)", self.lint_one(stage, path="spec/y.md"))
+
+    def test_phase_level_gate_needs_no_feature(self):
+        gate = (GOOD.replace("Stage: P0", "Stage: G1\nApproved-By: operator").replace("Agent: DEV", "Agent: PM"))
+        self.assertEqual(self.lint_one(gate), [])
+        for feature in ("F3", "P2"):
+            self.assertEqual(self.lint_one(gate.replace("Refs:", f"Feature: {feature}\nRefs:"), path="spec/z.md"), [])
+        self.assertIn("Feature 'X9' is neither a feature id nor a phase id",
+                      self.lint_one(gate.replace("Refs:", "Feature: X9\nRefs:"), path="spec/w.md"))
+
+    def test_trailer_blocks_single_canonical_split_tolerated(self):
+        single = GOOD.replace("\n\nCo-Authored-By", "\nCo-Authored-By")
+        self.assertEqual(lint_commits.trailer_blocks(single), 1)
+        self.assertEqual(lint_commits.trailer_blocks(GOOD), 2)
+        self.assertEqual(self.lint_one(GOOD, name="Aware Agent (DEV/test-model)", path="generator/s.txt"), [])
+        strict = self.lint_one(GOOD, name="Aware Agent (DEV/test-model)", path="generator/t.txt", strict=True)
+        self.assertEqual(strict, ["trailers are split over several paragraphs (use one final block)"])
+        self.assertEqual(self.lint_one(single, name="Aware Agent (DEV/test-model)", path="generator/u.txt",
+                                       strict=True), [])
 
     def test_human_commits_skip_trailer_rules(self):
         commit_file(self.repo, "docs/x.md", "x", "docs: human note")

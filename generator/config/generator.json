@@ -119,7 +119,7 @@
     "report_dir": ".work/regen"
   },
   "commits": {
-    "$comment": "lint_commits.py (E-PIPE-3), trailers per WORKFLOW §8.",
+    "$comment": "lint_commits.py (E-PIPE-3), trailers per WORKFLOW §8. Feature is required at feature stages (feature_stage_regex) and optional at gates; when present it is a feature id (F1..) or a phase id (P0..P8).",
     "agent_author_regex": "^Aware Agent \\((?P<role>[A-Z]+)/(?P<model>[^)]+)\\)$",
     "agent_author_prefix": "Aware Agent",
     "required_trailers": [
@@ -136,7 +136,8 @@
       "REV",
       "QA"
     ],
-    "feature_stage_regex": "^(S[0-7]b?|G[0-2])$",
+    "feature_stage_regex": "^S[0-7]b?$",
+    "feature_id_regex": "^(F\\d+|P[0-8])$",
     "gate_stage_regex": "^G[0-2]$",
     "boundary_values": [
       "generated",

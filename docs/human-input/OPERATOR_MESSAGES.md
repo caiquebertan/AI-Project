@@ -159,3 +159,13 @@ server will expect times to be sent in UTC as well, and we won't have any hardco
 
 I accept all the proposed cuts, backlog and specs are approved too; Fix this part about the message timezone, and present to me the final plan
 ````
+
+---
+
+## OM-0012 · 2026-10-13 17:23 — Commits authored by the operator; agents only in trailers; origin repo
+
+**AI note:** _Triggered: decision 0015 (supersedes the agent-author convention of decision 0003 and the committer convention); `lint_commits.py` selects agent commits by trailer; history rewritten once; origin `caiquebertan/AI-Project`. Context: this restates an earlier off-record exchange, as the AI asked._
+
+````text
+lets change that commit rule, now commits are all authored by me, agents only in trailers; I have the repo ready for you to use as origin: caiquebertan/AI-Project
+````

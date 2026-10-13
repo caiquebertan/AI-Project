@@ -1,6 +1,6 @@
 # Specification
 
-**Version:** 0.1.0-draft — awaiting operator approval at G0 (then `0.1.0` and tag `spec-v0.1.0`, set by the operator/ORC, not by an agent). Bump on every behavioral change (semver: major = wire-incompatible, minor = new rules or extensions, patch = clarification).
+**Version:** 0.1.0 — approved by the operator at G0 (OM-0011, decision 0013) and tagged `spec-v0.1.0` by ORC after the cuts were merged and verified. Bump on every behavioral change (semver: major = wire-incompatible, minor = new rules or extensions, patch = clarification).
 
 The spec is the single source of truth for behavior: questions are answered here, never from client or server code. It is platform-neutral in `core/` and `scenarios/`; platform rules live only in `platform/`; new capabilities go in `extensions/`.
 
@@ -8,18 +8,18 @@ The spec is the single source of truth for behavior: questions are answered here
 
 | Path | Purpose | Owner | Status | Rules (MUST) / ACs |
 |---|---|---|---|---|
-| [`core/protocol.md`](core/protocol.md) | Wire protocol: transport, endpoints, identity, envelope, time, send/ack, poll/cursor, epoch, order, polling cycle and outbox, capabilities, errors, constants; Appendix A Alice/Bob protocol trace and displayed times | TL | draft (G0) | counts: ORC recomputes after merge |
-| [`core/server-behavior.md`](core/server-behavior.md) | Server internals: registry, mailboxes, `seq`, immediate polls, strict timestamps, dedupe, relay, no time zone, what it does not do | TL | draft (G0) | counts: ORC recomputes after merge |
+| [`core/protocol.md`](core/protocol.md) | Wire protocol: transport, endpoints, identity, envelope, time, send/ack, poll/cursor, epoch, order, polling cycle and outbox, capabilities, errors, constants; Appendix A Alice/Bob protocol trace and displayed times | TL | draft (G0) | 90 / — |
+| [`core/server-behavior.md`](core/server-behavior.md) | Server internals: registry, mailboxes, `seq`, immediate polls, strict timestamps, dedupe, relay, no time zone, what it does not do | TL | draft (G0) | 26 / — |
 | [`core/schema/`](core/schema/) | JSON Schemas per request/response, [`index.json`](core/schema/index.json) (endpoint → schema), [`constants.json`](core/schema/constants.json), examples and value cases (`cases/`, valid and invalid values; all checked by `generator/scripts/check_schema_examples.py`) | TL | draft (G0) | — |
-| [`core/client-behavior.md`](core/client-behavior.md) | Observable client behavior: screens, login, send, offline queue, flush, receive, order, fixed texts; acceptance criteria | PM | draft (G0) | 54 (53) / 39 ACs |
+| [`core/client-behavior.md`](core/client-behavior.md) | Observable client behavior: screens, login, send, offline queue, flush, receive, order, fixed texts; acceptance criteria | PM | draft (G0) | 53 / 37 ACs |
 | [`scenarios/alice-bob-offline.md`](scenarios/alice-bob-offline.md) | The brief's 7-step scenario (SC-1..SC-7, plus SC-8 beyond the brief) with exact expected states per step | PM | draft (G0) | 9 ACs |
 | [`scenarios/additional-scenarios.md`](scenarios/additional-scenarios.md) | Extra scenarios SX-1..SX-6 (no server at login, lost ack, server restart, input edge cases, unknown type, message times and time zones) | PM | draft (G0) | 6 ACs |
-| [`platform/test-hooks.md`](platform/test-hooks.md) | Hook ids, readable values and state snapshot shared by all clients ([`client-snapshot.schema.json`](platform/client-snapshot.schema.json)), relaunch control, time hook, injected ports, tests every client generates (offline = zero requests, time-zone denylist) | TL | draft (G0) | counts: ORC recomputes after merge |
-| [`platform/android.md`](platform/android.md) | Android stack, modules, storage, networking, hooks, generated tests, JVM interop driver `:tools:driver` | TL | draft (G0) | counts: ORC recomputes after merge |
-| [`platform/web.md`](platform/web.md) | Web stack, structure, storage, configuration, hooks, generated tests, request visibility for browser tests | TL | draft (G0) | counts: ORC recomputes after merge |
+| [`platform/test-hooks.md`](platform/test-hooks.md) | Hook ids, readable values and state snapshot shared by all clients ([`client-snapshot.schema.json`](platform/client-snapshot.schema.json)), relaunch control, time hook, injected ports, tests every client generates (offline = zero requests, time-zone denylist) | TL | draft (G0) | 14 / — |
+| [`platform/android.md`](platform/android.md) | Android stack, modules, storage, networking, hooks, generated tests, JVM interop driver `:tools:driver` | TL | draft (G0) | 34 / — |
+| [`platform/web.md`](platform/web.md) | Web stack, structure, storage, configuration, hooks, generated tests, request visibility for browser tests | TL | draft (G0) | 25 / — |
 | [`extensions/`](extensions/) | Optional capabilities (reactions, attachments, groups, …); template in its README | TL + PM | template only | — |
 
-Totals: 234 rule ids (231 on `MUST` lines, counted by `check_trace.py`) and 54 acceptance criteria, counted by script on 2026-10-13 (main, after merging the PM and TL time deltas) from the `- **<id>** —` definition lines; recount after every spec change, including after merging parallel PM and TL deltas. **Stale:** the TL cuts delta (decision 0014) changed the TL rows; counts: ORC recomputes after merge. Tombstone lines (below) are not rules and are not counted.
+Totals: 242 rule ids (239 on `MUST` lines, the ones `check_trace.py` counts) and 52 acceptance criteria, counted by script on 2026-10-13 (main, after merging the TL and PM cuts) from the `- **<id>** —` definition lines; recount after every spec change, including after merging parallel PM and TL deltas. Tombstone lines (below) are not rules and are not counted.
 
 Decision records behind the core choices: `docs/decisions/0004`–`0009`, `0012` (time representation, amended by OM-0011) and `0014` (plain polling, withdrawn rules, test visibility; supersedes `0010`). MVP cuts: `0013`.
 

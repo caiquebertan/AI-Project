@@ -17,6 +17,7 @@ Contents: 1 Words used · 2 Screens · 3 Login · 4 Conversations and sending ·
 | user / peer | The person using this client / the other person in a conversation. Names are the canonical lowercase names of CORE-NAME-002. |
 | conversation | All text messages exchanged between the user and one peer, in both directions (CORE-SEQ-005). Opening a conversation with oneself is allowed. |
 | unsent message | A message in state `pending` or `failed`, i.e. without a server order number. |
+| accepted time | The moment, in UTC, at which the server accepted a message (`accepted_at`, CORE-ENV-007). Unsent messages have none. |
 | server order | The position the server gave a message when it accepted it (CORE-SEQ-001). |
 | allowed to connect | The client may contact the server (CORE-CONN-002). Not allowed means the connection state is `offline`. |
 
@@ -52,7 +53,7 @@ After the one-time login screen, the client has two screens that share one heade
 - **CORE-SEND-004** — When the user activates `Send` with text that is blank or longer than 4096 bytes in UTF-8 (CORE-TEXT-002, CORE-TEXT-003, checked locally), the client MUST show the matching message of section 8.1 next to the composer, MUST NOT add any message, MUST keep the typed text in the composer, and MUST NOT contact the server. The message MUST disappear when the user edits the text or sends a valid one.
 - **CORE-SEND-005** — When the user activates `Send` with valid text, the client MUST at once add the message to the end of this conversation's list with the state `Pending`, clear the composer, and remove any composer message. This MUST happen in every connection state and the message always goes through the unsent queue (CORE-OUTBOX-001); there is no other way to send.
 - **CORE-SEND-006** — A message's text MUST be shown exactly as the user typed it (CORE-TEXT-005): same characters, same case, same leading, trailing and repeated spaces, same line breaks. Long text MUST wrap or scroll; it MUST NOT be cut off or abbreviated.
-- **CORE-SEND-007** — Each message in the list MUST show three things: its author's name (`alice`, `bob`), its text, and the label of its state (section 8.1). Messages written by the user and messages written by the peer MUST be visibly distinguishable beyond the author name (for example by alignment or color); how is a platform choice.
+- **CORE-SEND-007** — Each message in the list MUST show its author's name (`alice`, `bob`), its text, the label of its state (section 8.1) and, when it has one, its time (CORE-VISIBLE-009). Messages written by the user and messages written by the peer MUST be visibly distinguishable beyond the author name (for example by alignment or color); how is a platform choice.
 - **CORE-SEND-008** — A message the user wrote MUST change state in place, without leaving the list: `Pending` becomes `Sent` only when the server has acknowledged it (CORE-MSG-004); a timeout, lost connection or going offline MUST NOT mark it `Sent` or `Failed`. Becoming `Sent` may move the message (CORE-ORDER-003).
 - **CORE-SEND-009** — A message the server rejects for good (CORE-ERR-003 class P) MUST show the label `Failed`, MUST be visibly marked as an error beyond the label, MUST stay in the list in the place CORE-SEQ-002 gives it, and MUST NOT be resent automatically, edited, resent by the user or removed (CORE-OUTBOX-005). It does not hold back later messages. The client's own checks (CORE-SEND-004) make this state practically unreachable, but its look is fixed here.
 - **CORE-SEND-010** — `Send` and the composer MUST be usable in every connection state; the connection state never disables them.
@@ -101,6 +102,7 @@ Every client MUST use these texts exactly (no trailing punctuation changes, no t
 | Message state labels | `Pending`, `Sent`, `Received`, `Failed` |
 | Empty conversation list | `No conversations yet.` |
 | Empty conversation | `No messages yet.` |
+| Message time | `HH:mm`, or `YYYY-MM-DD HH:mm` when the date differs (CORE-VISIBLE-010) |
 | Controls | `Continue` (login), `Open` (new conversation), `Back`, `Send`, `Offline mode` (switch) |
 
 Mapping of machine states to labels: `pending` → `Pending`, `sent` → `Sent`, `received` → `Received`, `failed` → `Failed`; `offline` → `Offline`, `connecting` → `Connecting`, `online` → `Online` (CORE-MSG-006, CORE-CONN-003).
@@ -110,7 +112,7 @@ Mapping of machine states to labels: `pending` → `Pending`, `sent` → `Sent`,
 - **CORE-ORDER-001** — A conversation's messages MUST be listed from top to bottom in the order of CORE-SEQ-002, oldest first, newest last. A newly added message appears at the bottom.
 - **CORE-ORDER-002** — Unsent messages (`Pending`, `Failed`) MUST always be below every `Sent` and `Received` message, in the order the user sent them. Hence a message the user has just written is at the bottom even if received messages with a later server order are shown above it later.
 - **CORE-ORDER-003** — When a `Pending` message becomes `Sent`, the list MUST immediately show it at the position of its server order (CORE-SEQ-004). It MAY move up past messages that were received while it was pending, and every other message keeps its relative order.
-- **CORE-ORDER-004** — No time of day, date or clock value MUST be shown or used for order (CORE-SEQ-003).
+- **CORE-ORDER-004** — No time of day, date or clock value MUST be used for order (CORE-SEQ-003); the time shown on a message (CORE-VISIBLE-009) is informational only, and an order that disagrees with the shown times stays as it is.
 - **CORE-ORDER-005** — Once every message of a conversation is acknowledged and delivered, both users MUST see the same messages in the same order, whichever client each of them uses (CORE-SEQ-005). The labels differ by viewpoint (the author sees `Sent`, the other user `Received`).
 - **CORE-ORDER-006** — A conversation MUST list only text messages between the user and that peer (CORE-SEQ-005); nothing else.
 
@@ -121,13 +123,17 @@ Mapping of machine states to labels: `pending` → `Pending`, `sent` → `Sent`,
 - **CORE-VISIBLE-003** — The list MUST be ordered newest conversation first. A conversation's position is that of its newest message in the order of CORE-SEQ-002 taken over all the user's messages (so a conversation whose newest message is unsent is above every conversation whose newest message is `Sent` or `Received`; among unsent ones, the one written last is first; among the rest, the highest server order is first). Order changes at once when a message arrives, is sent, or becomes `Sent`.
 - **CORE-VISIBLE-004** — Activating a list entry MUST open that conversation's screen. After a launch, the client MUST show the conversation list screen, not the conversation that was open before.
 - **CORE-VISIBLE-005** — The client MUST show exactly the fixed texts of section 8.1 for the states and conditions listed there.
-- **CORE-VISIBLE-006** — The client MUST NOT show timestamps, delivery or read receipts, typing indicators, unread counts, online status of other users, or error dialogs for network problems; network problems are only visible through the connection indicator and the `Pending` labels.
+- **CORE-VISIBLE-006** — The client MUST NOT show delivery or read receipts, typing indicators, unread counts, online status of other users, or error dialogs for network problems; network problems are only visible through the connection indicator and the `Pending` labels.
 - **CORE-VISIBLE-007** — Every change of state, order, list content or indicator MUST appear on screen by itself, without refreshing or any user action, and no element may keep showing a state that the client no longer has.
 - **CORE-VISIBLE-008** — When the server has been restarted, the client MUST discover it by itself the next time it connects and, per CORE-EPOCH-004, remove every `Sent` and `Received` message from all views; `Pending` and `Failed` messages stay, in their order, and the unsent ones are delivered as usual (CORE-FLUSH-001). A conversation with no remaining message leaves the list; an open conversation with none remaining shows `No messages yet.`. The client shows no notice, dialog or error about this in v1. The indicator may pass through `Connecting` while the server is down.
+- **CORE-VISIBLE-009** — Every message that has an accepted time (state `Sent` or `Received`) MUST show that time, the same instant for both users, next to its state label; a `Pending` or `Failed` message MUST show no time. When a `Pending` message becomes `Sent` it gains its time in the same change (CORE-FLUSH-004). The time is the server's accepted time, never the sender's clock (CORE-ENV-006, CORE-ENV-007).
+- **CORE-VISIBLE-010** — The time MUST be written as `HH:mm`: hours 00 to 23 and minutes 00 to 59, two ASCII digits each, a colon between, no seconds (the seconds are dropped, not rounded), no AM or PM, whatever the device language or region. If the calendar date of the time in the device's local time zone differs from the current local date, it MUST be written `YYYY-MM-DD HH:mm` instead (four-digit year, two-digit month and day, one space). The client composes this text itself and does not use a language- or region-dependent format.
+- **CORE-VISIBLE-011** — The time MUST be converted from UTC (CORE-TIME-001) to the device's current local time zone, and "current local date" taken from the current time, each time the time is displayed (CORE-TIME-002). A change of the device's time zone MUST show in the times the next time they are displayed, without relaunching and without any user action.
+- **CORE-VISIBLE-012** — The time MUST NOT change a message's place, a conversation's place in the list, or any state (CORE-ORDER-004).
 
 ## 9. Acceptance criteria
 
-Given/When/Then, observable by a user; each cites the rules it checks. Traceability (test ids per scope): [`docs/product/TRACEABILITY.md`](../../docs/product/TRACEABILITY.md). Scenario-level criteria (`AC-F4-*`, `AC-F2-15`, `AC-F2-16`, `AC-F3-13` to `AC-F3-15`) are in [`../scenarios/`](../scenarios/).
+Given/When/Then, observable by a user; each cites the rules it checks. Traceability (test ids per scope): [`docs/product/TRACEABILITY.md`](../../docs/product/TRACEABILITY.md). Scenario-level criteria (`AC-F4-*`, `AC-F2-15`, `AC-F2-16`, `AC-F2-21`, `AC-F3-13` to `AC-F3-15`) are in [`../scenarios/`](../scenarios/).
 
 ### F1: Identity and login (BR-1)
 
@@ -152,9 +158,15 @@ Given/When/Then, observable by a user; each cites the rules it checks. Traceabil
 - **AC-F2-9** — Given an open conversation, When a message of an unknown kind or with unusable content is delivered to the user, Then nothing changes on screen, no error is shown, and the next ordinary message still appears. (CORE-RECEIVE-005)
 - **AC-F2-10** — Given any message, When it is delivered more than once to the client, Then it is shown once. (CORE-RECEIVE-004)
 - **AC-F2-11** — Given the user is `alice`, When Alice opens a conversation with `Alice` and sends `note`, Then `note` is shown once, written by `alice`, with the label `Sent`, and the list has an entry `alice`. (CORE-SEND-011)
-- **AC-F2-12** — Given any screen after login, When a message is shown, Then it shows author, text and one of the labels `Pending`, `Sent`, `Received`, `Failed`, and no timestamp, receipt, typing or unread indicator is shown anywhere. (CORE-SEND-007, CORE-ORDER-004, CORE-VISIBLE-005, CORE-VISIBLE-006)
+- **AC-F2-12** — Given any screen after login, When a message is shown, Then it shows author, text and one of the labels `Pending`, `Sent`, `Received`, `Failed`, and no receipt, typing or unread indicator is shown anywhere. (CORE-SEND-007, CORE-VISIBLE-005, CORE-VISIBLE-006)
 - **AC-F2-13** — Given a message the server rejected for good, When it is shown, Then it reads `Failed`, is marked as an error, sits below all `Sent` and `Received` messages, is not resent and does not stop later messages from being delivered. (CORE-SEND-009, CORE-ORDER-002)
 - **AC-F2-14** — Given two users with a settled conversation, When both look at it, Then both see the same messages in the same order, on any pairing of the two clients. (CORE-ORDER-005, CORE-ORDER-006)
+- **AC-F2-17** — Given a message the server accepted at 15:00 UTC on 2026-10-13 and a device in the time zone UTC-03:00 whose current date is 2026-10-13, When the message is shown with the label `Sent` or `Received`, Then it shows the time `12:00` next to its label. (CORE-VISIBLE-009, CORE-VISIBLE-010, CORE-VISIBLE-011)
+- **AC-F2-18** — Given the same message and a device in the time zone UTC-03:00 whose current date is 2026-10-14, When the message is shown, Then it shows `2026-10-13 12:00`. (CORE-VISIBLE-010)
+- **AC-F2-19** — Given a message accepted at 15:00:59.999 UTC on a device in UTC, When it is shown, Then it shows `15:00`, with two digits for hours and minutes and no seconds, whatever the device language and region. (CORE-VISIBLE-010)
+- **AC-F2-20** — Given a `Pending` message, When it is shown, Then it shows no time; and When the server acknowledges it, Then the label becomes `Sent` and a time appears. A `Failed` message shows no time. (CORE-VISIBLE-009, CORE-SEND-008)
+- **AC-F2-22** — Given a device whose time zone changes from UTC-03:00 to UTC+09:00 while a conversation is open, When the times are displayed again, Then each time shows the new local time without relaunching. (CORE-VISIBLE-011)
+- **AC-F2-23** — Given messages whose shown times are not in the same order as their places in the list, When the list is shown, Then the places are unchanged and follow the server's order. (CORE-VISIBLE-012, CORE-ORDER-004)
 
 ### F3: Offline queue and flush (BR-3)
 
@@ -181,8 +193,8 @@ Given/When/Then, observable by a user; each cites the rules it checks. Traceabil
 | Q4 order | server acceptance order | CORE-ORDER-001 to -005, CORE-VISIBLE-003 |
 | Q7 notes to self | allowed | CORE-SEND-011 |
 
-PM choices not asked of the TL: two screens with a shared header; list shows names only; no timestamps; offline switch not remembered; no notice after a server restart; fixed English texts. They are listed as questions in the PM packet.
+PM choices not asked of the TL: two screens with a shared header; list shows names only; message times are the server's accepted time in local `HH:mm` (operator decision OM-0010, section 8.3); offline switch not remembered; no notice after a server restart; fixed English texts. They are listed as questions in the PM packet.
 
 ## 11. Out of scope in v1
 
-No logout or change of name; no passwords or accounts; no delivery or read receipts; no typing indicators; no groups; no attachments or images; no editing or deleting of messages; no search; no timestamps; no unread counts or notifications; no contact list or check that a recipient exists; no push delivery while the client is closed; no translation of the fixed texts. Extensions (for example reactions) are specified separately under [`../extensions/`](../extensions/) and add behavior without changing this file.
+No logout or change of name; no passwords or accounts; no delivery or read receipts; no typing indicators; no groups; no attachments or images; no editing or deleting of messages; no search; no sender-side or seconds-level timestamps; no unread counts or notifications; no contact list or check that a recipient exists; no push delivery while the client is closed; no translation of the fixed texts. Extensions (for example reactions) are specified separately under [`../extensions/`](../extensions/) and add behavior without changing this file.

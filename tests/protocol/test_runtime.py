@@ -9,6 +9,17 @@ import harness
 from harness import LISTEN_RE, Proc, ServerTestCase, send_body
 
 class RuntimeTests(unittest.TestCase):
+    def test_CORE_SRV_002_a_port_in_use_is_a_one_line_error_and_exit_1(self):
+        with socket.socket() as busy:
+            busy.bind(("127.0.0.1", 0))
+            busy.listen(1)
+            p = Proc("--port", str(busy.getsockname()[1]))
+            out, err = p.stop()
+        self.assertEqual((p.line, out), ("", ""))
+        self.assertEqual(p.p.returncode, 1)
+        self.assertNotIn("Traceback", err)
+        self.assertEqual(len(err.strip().splitlines()), 1, err)
+
     def test_CORE_SRV_001_no_disk_state_and_all_state_lost_on_exit(self):
         a = Proc("--port", "0")
         c = a.client()
@@ -124,8 +135,9 @@ class ConcurrencyAndCors(ServerTestCase, unittest.TestCase):
         winner = next(r for r in rs if r.status == 201)
         stored = self.c.poll("bob").json["messages"]
         self.assertEqual([m["seq"] for m in stored], [winner.json["seq"]])
-        for r in rs:                      # every 200 repeats the stored envelope, every other variant conflicts
-            self.assertIn(r.status, (200, 201, 409))
+        for r in rs:
+            if r.status != 409:           # a 200 or the 201 is the stored envelope itself
+                self.assertEqual((r.json["seq"], r.json["accepted_at"]), (winner.json["seq"], winner.json["accepted_at"]))
         self.assertEqual(self.c.send(send_body(8)).json["seq"], 2)
 
     def test_CORE_SRV_004_CORE_POLL_006_polls_alongside_sends_never_show_a_gap_that_is_filled_later(self):

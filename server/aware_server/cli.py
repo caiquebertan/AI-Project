@@ -43,7 +43,11 @@ def parse_config(argv: list[str], environ) -> tuple[str, int]:
 def main(argv: list[str] | None = None) -> int:
     host, port = parse_config(sys.argv[1:] if argv is None else argv, os.environ)
     state = ServerState()
-    server = make_server(host, port, state)
+    try:
+        server = make_server(host, port, state)
+    except OSError as exc:  # port in use, address not available, name does not resolve
+        print(f"aware-server: cannot listen on {host}:{port}: {exc.strerror or exc}", file=sys.stderr)
+        return 1
     print(f"aware-server listening on http://{host}:{server.server_address[1]} epoch={state.epoch}", flush=True)
     try:
         server.serve_forever()

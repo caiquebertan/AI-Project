@@ -17,7 +17,10 @@ def post(path: str, headers: dict, body: bytes = b"") -> bytes:
 class MediaTypeAndLength(ServerTestCase, unittest.TestCase):
     def test_CORE_SRV_011_wrong_or_missing_content_type_is_415_on_both_posts(self):
         for ctype in (None, "text/plain", "application/x-www-form-urlencoded", "application/jsonp", "application/json5",
-                      "text/json", "application/json; charset=latin-1", "application/json; charset=utf-16", "json", ""):
+                      "text/json", "application/json; charset=latin-1", "application/json; charset=utf-16", "json", "",
+                      'application/json; charset="utf-8', 'application/json; charset=utf-8"', "application/json; charset = utf-8",
+                      "application/json; charset =utf-8", "application/json; charset= utf-8", "application/json; q=1",
+                      "application/json; charset=utf-8; q=1", "application/json;", "application/json,text/plain"):
             headers = {} if ctype is None else {"Content-Type": ctype}
             for path, body in (("/v1/session", SESSION),
                                (f"/v1/messages?epoch={self.srv.epoch}", json.dumps(send_body(1)).encode())):
@@ -29,6 +32,14 @@ class MediaTypeAndLength(ServerTestCase, unittest.TestCase):
                       "Application/JSON", 'application/json; charset="utf-8"'):
             r = self.c.call("POST", "/v1/session", raw=SESSION, headers={"Content-Type": ctype})
             self.assertEqual(r.status, 200, ctype)
+
+    def test_CORE_HTTP_003_a_repeated_content_type_header_is_415(self):
+        for first, second in (("application/json", "text/plain"), ("text/plain", "application/json"),
+                              ("application/json", "application/json")):
+            status, _, body = raw_exchange(self.srv.port, (b"POST /v1/session HTTP/1.1\r\nHost: t\r\nContent-Type: %s\r\n"
+                                                           b"Content-Type: %s\r\nContent-Length: %d\r\n\r\n"
+                                                           % (first.encode(), second.encode(), len(SESSION))) + SESSION)
+            self.assertEqual((status, json.loads(body)["error"]["code"]), (415, "unsupported_media_type"), (first, second))
 
     def test_CORE_SRV_011_missing_content_length_is_400_malformed_request(self):
         for extra in ({}, {"Transfer-Encoding": "chunked"}):
@@ -124,6 +135,12 @@ class ConnectionReuse(ServerTestCase, unittest.TestCase):
         self.assertEqual((status, json.loads(raw)["error"]["code"]), (400, "malformed_request"))
         self.assertEqual(headers.get("connection"), "close")
         self.assertEqual(self.c.users().json, {"users": []})
+
+    def test_CORE_HTTP_001_a_space_before_the_colon_of_content_length_cannot_hide_a_body_on_a_reused_connection(self):
+        req = (b"POST /v1/info HTTP/1.1\r\nHost: t\r\nContent-Length : 5\r\n\r\nhello"
+               b"GET /v1/users HTTP/1.1\r\nHost: t\r\n\r\n")
+        responses = harness.exchange_all(self.srv.port, req)
+        self.assertEqual([r[0] for r in responses], [400])
 
     def test_CORE_HTTP_003_a_non_breaking_space_around_the_media_type_is_not_whitespace(self):
         r = self.c.call("POST", "/v1/session", raw=SESSION, headers={"Content-Type": "application/json\xa0"})

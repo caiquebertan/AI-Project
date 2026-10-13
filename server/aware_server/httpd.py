@@ -1,6 +1,7 @@
 """HTTP layer: routing, transport checks (CORE-SRV-011), CORS, error bodies, request log."""
 from __future__ import annotations
 
+import http.client
 import re
 import socket
 import sys
@@ -15,7 +16,11 @@ from .constants import BODY_MAX_BYTES, CORS_MAX_AGE_S
 from .state import ServerState
 
 JSON_TYPE = "application/json; charset=utf-8"
-CONTENT_TYPE_RE = re.compile(r"[ \t]*application/json[ \t]*(?:;[ \t]*charset[ \t]*=[ \t]*\"?utf-8\"?[ \t]*)?", re.IGNORECASE)
+# S-4: application/json, optionally with charset=utf-8 (value quoted or not, no blanks around "="); header value is OWS-trimmed
+CONTENT_TYPE_RE = re.compile(r"application/json(?:[ \t]*;[ \t]*charset=(?:\"utf-8\"|utf-8))?", re.IGNORECASE)
+TOKEN_RE = re.compile(r"[!#$%&'*+.^_`|~0-9A-Za-z-]+")
+BAD_VALUE_RE = re.compile(r"[\x00-\x08\x0a-\x1f\x7f]")
+MAX_HEADERS = 100
 MAILBOX_RE = re.compile(r"/v1/mailboxes/([^/]*)/messages")
 DRAIN_MAX_BYTES = 1 << 20
 DRAIN_TIMEOUT_S = 0.5
@@ -38,6 +43,41 @@ def match_route(path: str):
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
     state: ServerState  # set on the subclass made by make_server
+
+    # ----------------------------------------------------------- request parsing (S-9)
+    def parse_request(self) -> bool:
+        """Strict HTTP/1.1 request line and headers instead of http.server's lenient ones. Anything that is not
+        valid HTTP/1.1 (request line, version, header syntax, Host) is 400 malformed_request, then close."""
+        self.command, self.request_version, self.close_connection = None, "HTTP/1.1", True
+        line = self.raw_requestline.decode("iso-8859-1")
+        self.requestline = line.rstrip("\r\n")
+        parts = self.requestline.split(" ")
+        if (not line.endswith("\r\n") or len(parts) != 3 or TOKEN_RE.fullmatch(parts[0]) is None
+                or not parts[1] or BAD_VALUE_RE.search(parts[1]) or parts[2] != "HTTP/1.1"):
+            self.send_error(400, "request line is not valid HTTP/1.1")
+            return False
+        self.command, self.path = parts[0], parts[1]
+        headers = http.client.HTTPMessage()
+        while True:
+            raw = self.rfile.readline(65537).decode("iso-8859-1")
+            if raw == "\r\n":
+                break
+            name, colon, value = raw.partition(":")
+            value = value.strip(" \t\r\n")
+            if (not raw.endswith("\r\n") or not colon or TOKEN_RE.fullmatch(name) is None  # EOF, bare LF, obs-fold, no colon, "Name :"
+                    or BAD_VALUE_RE.search(value) or len(headers) >= MAX_HEADERS):
+                self.send_error(400, "header syntax is not valid HTTP/1.1")
+                return False
+            headers[name] = value
+        self.headers = headers
+        if len(headers.get_all("Host", [])) != 1:
+            self.send_error(400, "exactly one Host header is required")
+            return False
+        tokens = {t.strip().lower() for v in headers.get_all("Connection", []) for t in v.split(",")}
+        self.close_connection = "close" in tokens
+        if headers.get("Expect", "").lower() == "100-continue" and not self.handle_expect_100():
+            return False
+        return True
 
     # ----------------------------------------------------------- dispatch
     def _serve(self, method: str) -> None:
@@ -92,7 +132,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def _read_body(self) -> bytes:
         """CORE-SRV-011: Content-Type (415), then Content-Length (400 / 413 without reading), then the body."""
-        if CONTENT_TYPE_RE.fullmatch(self.headers.get("Content-Type", "")) is None:
+        types = self.headers.get_all("Content-Type", [])
+        if len(types) != 1 or CONTENT_TYPE_RE.fullmatch(types[0]) is None:
             raise ApiError(415, "unsupported_media_type", "Content-Type must be application/json", close=True)
         lengths = {v.strip() for v in self.headers.get_all("Content-Length", [])}
         if self.headers.get("Transfer-Encoding") is not None and lengths:

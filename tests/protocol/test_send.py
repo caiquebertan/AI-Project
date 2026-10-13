@@ -1,5 +1,6 @@
 """E3 send: CORE-MSG, CORE-ENV, CORE-SEQ-001, CORE-TEXT, CORE-SRV-030..036, CORE-NAME on envelopes."""
 import json
+import re
 import time
 import unittest
 
@@ -141,32 +142,59 @@ class AcceptTests(ServerTestCase, unittest.TestCase):
         self.assertEqual(self.c.send(send_body(6, to="zed")).json["seq"], 3)
         self.assertEqual(self.c.send(send_body(7, to="bob")).json["seq"], 4)
 
-    def test_CORE_SEQ_001_CORE_SRV_040_nesting_around_the_parser_limit_never_gives_5xx_or_consumes_a_seq(self):
-        """Depth 491/492/493 were the window where parsing worked and storing failed (review P2 round 1, B1)."""
-        expected_next = 1
-        depths = sorted({1, 2, 50, 300, *range(485, 500), 700, 5000, 20000})
-        for depth in depths:
-            r = self.c.call("POST", f"/v1/messages?epoch={self.srv.epoch}", raw=self.deep_envelope(depth, depth), headers=harness.JSON)
+    def _deep(self, n: int, depth: int):
+        return self.c.call("POST", f"/v1/messages?epoch={self.srv.epoch}", raw=self.deep_envelope(n, depth), headers=harness.JSON)
+
+    def test_CORE_SEQ_001_CORE_SRV_040_nesting_up_to_and_around_the_parser_limit_never_gives_5xx_or_consumes_a_seq(self):
+        """The parser's limit depends on the interpreter, so it is bisected at run time (64 is accepted by
+        S-10, 20000 levels are not parsed by any interpreter) and tested at limit-1, limit and limit+1."""
+        state = {"next_seq": 1, "n": 0}
+
+        def attempt(depth):
+            state["n"] += 1
+            r = self._deep(state["n"], depth)
             self.assertLess(r.status, 500, (depth, r.status))
             if r.status == 201:
-                self.assertEqual(r.json["seq"], expected_next, depth)
-                expected_next += 1
-            else:
-                self.assertEqual((r.status, r.code), (400, "malformed_request"), depth)
-        self.assertGreater(expected_next, 1)                                     # some depth was stored
-        nxt = self.c.send(send_body(9000, type="x", payload={"a": 1}))
-        self.assertEqual((nxt.status, nxt.json["seq"]), (201, expected_next))    # no value was lost to a failure
-        stored = self.c.poll("bob", check=False).json["messages"]   # the schema checker itself recurses, so no check here
-        self.assertEqual([m["seq"] for m in stored], list(range(1, expected_next + 1)))
+                self.assertEqual(r.json["seq"], state["next_seq"], depth)
+                state["next_seq"] += 1
+                return True
+            self.assertEqual((r.status, r.code), (400, "malformed_request"), depth)
+            return False
 
-    def test_CORE_SEQ_001_the_exact_boundary_depths_491_492_493_are_each_stored_or_rejected_cleanly(self):
-        expected_next = 1
-        for depth in (491, 492, 493):
-            r = self.c.call("POST", f"/v1/messages?epoch={self.srv.epoch}", raw=self.deep_envelope(depth, depth), headers=harness.JSON)
-            self.assertIn((r.status, r.code), ((201, None), (400, "malformed_request")), depth)
-            expected_next += r.status == 201
-            self.assertEqual(self.c.send(send_body(8000 + depth, type="x", payload={})).json["seq"], expected_next, depth)
-            expected_next += 1
+        for depth in (1, 2, 50, 64, 300, 700, 5000):
+            if depth <= 64:
+                self.assertTrue(attempt(depth), depth)
+            else:
+                attempt(depth)
+        lo, hi = 64, 20000
+        self.assertTrue(attempt(lo))
+        self.assertFalse(attempt(hi))
+        while hi - lo > 1:
+            mid = (lo + hi) // 2
+            lo, hi = (mid, hi) if attempt(mid) else (lo, mid)
+        self.assertTrue(attempt(lo), "limit - 1 side")
+        self.assertFalse(attempt(hi), "limit")
+        self.assertFalse(attempt(hi + 1), "limit + 1")
+        nxt = self.c.send(send_body(9000, type="x", payload={"a": 1}))
+        self.assertEqual((nxt.status, nxt.json["seq"]), (201, state["next_seq"]))   # no value lost to a failure
+        _, _, body = harness.raw_exchange(self.srv.port, b"GET /v1/mailboxes/bob/messages?epoch=%s&after=0 HTTP/1.1\r\nHost: t\r\n\r\n"
+                                          % self.srv.epoch.encode())  # raw: the client's own JSON parser recurses too
+        self.assertEqual([int(s) for s in re.findall(rb'"seq":([0-9]+),"from"', body)], list(range(1, state["next_seq"] + 1)))
+
+    def test_CORE_SRV_040_a_valid_number_with_any_exponent_is_stored_and_compared_by_value(self):
+        for n, text in enumerate(("1e999999999999999999999", "-1E-999999999999999999999", "0e99999999999999999999",
+                                  "1e999999999", "0.50", "5e-1"), 1):
+            raw = json.dumps(send_body(n, type="x", payload=0)).replace('"payload": 0', '"payload": {"a": %s}' % text).encode()
+            path = f"/v1/messages?epoch={self.srv.epoch}"
+            self.assertEqual(self.c.call("POST", path, raw=raw, headers=harness.JSON).status, 201, text)
+            self.assertEqual(self.c.call("POST", path, raw=raw, headers=harness.JSON).status, 200, text)
+        raw = self.c.poll("bob", check=False).raw
+        self.assertIn(b'"payload":{"a":1e999999999999999999999}', raw)    # spelling returned verbatim
+        self.assertIn(b'"payload":{"a":0.50}', raw)
+        for spelling, status in (("0.50", 201), ("5e-1", 200), ("0.5", 200), ("0.51", 409)):  # same id, equal by value
+            body = json.dumps(send_body(100, type="x", payload=0)).replace('"payload": 0', '"payload": {"a": %s}' % spelling)
+            r = self.c.call("POST", f"/v1/messages?epoch={self.srv.epoch}", raw=body.encode(), headers=harness.JSON)
+            self.assertEqual(r.status, status, spelling)
 
     def test_CORE_ERR_002_a_payload_too_deep_for_the_parser_is_malformed_before_epoch_and_name_checks(self):
         raw = self.deep_envelope(1, 20000)  # parses in no interpreter stack, fits the body limit

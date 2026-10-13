@@ -188,6 +188,36 @@ def raw_exchange(port: int, request: bytes, read_timeout: float = 5.0) -> tuple[
         return status, headers, rest[:want]
 
 
+def exchange_all(port: int, request: bytes, read_timeout: float = 5.0) -> list[tuple[int, dict, bytes]]:
+    """Send raw bytes (possibly several pipelined requests) and read until the server closes: every response."""
+    with socket.create_connection(("127.0.0.1", port), timeout=read_timeout) as s:
+        s.sendall(request)
+        buf = b""
+        while True:
+            try:
+                chunk = s.recv(65536)
+            except ConnectionResetError:
+                break
+            if not chunk:
+                break
+            buf += chunk
+    out = []
+    while buf:
+        head, sep, rest = buf.partition(b"\r\n\r\n")
+        assert sep, f"incomplete response: {buf[:80]!r}"
+        lines = head.decode("latin-1").split("\r\n")
+        headers = {k.lower(): v.strip() for k, v in (ln.split(":", 1) for ln in lines[1:])}
+        n = int(headers.get("content-length", "0"))
+        out.append((int(lines[0].split()[1]), headers, rest[:n]))
+        buf = rest[n:]
+    return out
+
+
+def error_problems(status: int, headers: dict, raw: bytes) -> list[str]:
+    """Schema and header problems of a raw error response (as `schema_problems` does for client responses)."""
+    return schema_problems("GET", "/v1/info", Response(status, headers, raw))
+
+
 class ServerTestCase:
     """Mixin: a fresh server per test, `self.c` the client."""
 

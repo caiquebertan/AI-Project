@@ -9,8 +9,12 @@ For clients/<app>/:
 A missing app dir or a placeholder (non-JSON) manifest is reported as
 "not generated yet" and passes unless --strict.
 
-Example:
+--write-manifest is the deterministic last step of /generate: it hashes the
+tree and writes the manifest, so the model never computes hashes itself.
+
+Examples:
   check_headers.py --app all
+  check_headers.py --app web --write-manifest --spec-version 0.1.0 --model-id <id>
 """
 from __future__ import annotations
 
@@ -29,6 +33,20 @@ def disk_files(app_dir: Path, manifest_name: str, ignore_dirs: list[str]) -> set
         if p.is_file() and rel.as_posix() != manifest_name and not set(rel.parts[:-1]) & set(ignore_dirs):
             out.add(rel.as_posix())
     return out
+
+
+def write_manifest(app_dir: Path, app: str, spec_version: str, model_id: str, generator_commit: str,
+                   cfg: dict) -> Path:
+    h = cfg["headers"]
+    files = [{"path": rel, "sha256": lib.sha256_file(app_dir / rel)}
+             for rel in sorted(disk_files(app_dir, h["manifest"], h["ignore_dirs"]))]
+    manifest = {"app": app, "spec_version": spec_version, "generator_commit": generator_commit,
+                "model_id": model_id, "generated_at": lib.now_iso(), "files": files}
+    errs = lib.validate(manifest, lib.load_schema("manifest.schema.json"))
+    if errs:
+        raise ValueError("; ".join(errs))
+    lib.write_json_atomic(app_dir / h["manifest"], manifest)
+    return app_dir / h["manifest"]
 
 
 def check_app(app_dir: Path, cfg: dict) -> tuple[str, list[str]]:
@@ -68,9 +86,24 @@ def main(argv=None) -> int:
     p.add_argument("--app", default="all", help="app name from config, or 'all'")
     p.add_argument("--root", help="repo root (default: harness checkout)")
     p.add_argument("--strict", action="store_true", help="fail when an app is absent or not generated yet")
+    p.add_argument("--write-manifest", action="store_true", help="hash the tree and write the manifest")
+    p.add_argument("--spec-version", help="for --write-manifest")
+    p.add_argument("--model-id", help="for --write-manifest")
     args = p.parse_args(argv)
     cfg = lib.load_config()
     root = lib.repo_root(args.root)
+    if args.write_manifest:
+        if args.app == "all" or args.app not in cfg["apps"] or not (args.spec_version and args.model_id):
+            lib.die("--write-manifest needs one configured --app, --spec-version and --model-id", lib.EXIT_USAGE)
+        app_dir = root / cfg["apps"][args.app]["dir"]
+        if not app_dir.is_dir():
+            lib.die(f"{app_dir} does not exist; nothing to describe")
+        try:
+            path = write_manifest(app_dir, args.app, args.spec_version, args.model_id, lib.git_head(root), cfg)
+        except (ValueError, RuntimeError) as exc:
+            lib.die(f"manifest not written: {exc}")
+        print(f"wrote {path}")
+        return lib.EXIT_OK
     apps = list(cfg["apps"]) if args.app == "all" else [args.app]
     failed = False
     for app in apps:

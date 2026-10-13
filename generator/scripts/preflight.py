@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Report toolchain versions before P3 / regen (WORKFLOW §5.3).
 
-Informative: always exits 0 unless --strict, which exits 1 when any tool is missing.
+Informative: always exits 0 unless --strict, which exits 1 when a required tool is missing
+(required tools: docs/ENVIRONMENT.md; gradle is optional).
 
 Example:
   preflight.py [--json] [--strict]
@@ -28,6 +29,10 @@ TOOLS = [
     ("gradle", ["gradle", "--version"], "optional: the generated project ships a wrapper"),
     ("claude", ["claude", "--version"], "/generate and /pipeline"),
 ]
+
+
+# Tools that --strict does not require (the generated Android project ships a Gradle wrapper).
+OPTIONAL = {"gradle"}
 
 
 def probe(cmd: list[str], timeout: int) -> str | None:
@@ -67,7 +72,7 @@ def main(argv=None) -> int:
     else:
         for r in rows:
             print(f"{r['tool']:<12} {r['version'] or 'MISSING':<50} {r['purpose']}")
-    missing = [r["tool"] for r in rows if not r["version"]]
+    missing = [r["tool"] for r in rows if not r["version"] and r["tool"] not in OPTIONAL]
     return lib.EXIT_FAIL if (args.strict and missing) else lib.EXIT_OK
 
 

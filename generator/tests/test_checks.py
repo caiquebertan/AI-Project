@@ -273,6 +273,11 @@ class Preflight(unittest.TestCase):
         self.assertTrue(tools["python"])
         self.assertIn("android-sdk", tools)
 
+    def test_strict_ignores_optional_gradle(self):
+        import preflight
+        self.assertIn("gradle", preflight.OPTIONAL)
+        self.assertNotIn("python", preflight.OPTIONAL)
+
 
 class HelpFlags(unittest.TestCase):
     def test_every_script_has_help(self):

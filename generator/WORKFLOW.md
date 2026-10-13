@@ -1,7 +1,8 @@
-# Agent pipeline workflow (AI-readable) — v0.2.1
+# Agent pipeline workflow (AI-readable) — v0.2.2
 
 > **Sources:** operator instructions in [`docs/human-input/OPERATOR_MESSAGES.md`](../docs/human-input/OPERATOR_MESSAGES.md) (12:51 workflow; 13:24 and 13:29 decisions), decisions in [`docs/decisions/0002-workflow-gap-answers.md`](../docs/decisions/0002-workflow-gap-answers.md), gap analysis in [`docs/planning/workflow-gap-analysis.md`](../docs/planning/workflow-gap-analysis.md).
 > **Precedence:** brief > operator's words > this file. If they conflict, stop and ask the operator (or log `BLOCKED` in autonomous mode).
+> **v0.2.2:** §5.4 environment rule (decision 0011); P3 requires `preflight --strict` on the operator's machine.
 > **v0.2.1:** §8 requires all commit trailers in one final block.
 > **Changes from v0.1:** generator is the development step (two entry points); spec stage S0 + gate G0; S1 becomes Trace; S2 only for generator/architecture changes; S6 automated; new S6b regen-check; return codes, counters, abort paths; commit-addressed diff rule; worktrees for parallel work; run log; executable evals.
 
@@ -65,7 +66,7 @@ Every launch is logged with `model`, `model_id`, `reason` (§8).
 | **P0 Harness** | Agent role files `.claude/agents/{pm,tech-lead,developer,reviewer,qa}.md`; prompt templates `generator/prompts/`; scripts `generator/scripts/` (`snapshot-diff`, `count-lines`, `run-log`, `check-headers`, `check-trace`, `regen-check`, `lint-commits`, `preflight`); `/pipeline` + `/generate` commands, `generator/RUN.md` fallback; `STATE.json` + run-log schemas; README/AGENTS updates | OP reviews harness | Dry run of `/pipeline` on a stub feature passes E-WF-1 |
 | **P1 Backlog + core spec** | PM backlog (F1 identity, F2 send/receive, F3 offline queue/flush, F4 interop, F5 reactions extension) + TRACEABILITY skeleton; decision records (transport = HTTP + polling/long-poll with per-recipient cursor; message identity; ordering; delivery/dedupe; generic-relay `type`+payload; app-controlled offline); `spec/core/*` with `CORE-xxx` ids, `schema/`, Alice/Bob expected states, test hooks (test tags / `data-testid`, JVM-testable Android core module) | OP approves backlog once; **G0** spec v0.1.0 | `check-trace`: every BR/SC has a spec id |
 | **P2 Server** (light chain) | TL-lite plan → DEV server + `tests/protocol` → REV | G1-light | E-PROTO-1 green |
-| **P3 Generator v1** | TL generator design (templates for build infra and module skeletons, conventions per platform, generation order, self-repair bound, manifest) → DEV implements → first `/generate android` + `/generate web` (parallel worktrees) | **G1** | Both clients build + in-project tests pass |
+| **P3 Generator v1** | TL generator design (templates for build infra and module skeletons, conventions per platform, generation order, self-repair bound, manifest) → DEV implements → `preflight --strict` passes on the operator's machine → first `/generate android` + `/generate web` (parallel worktrees, run by the operator locally, §5.4) | **G1** | Both clients build + in-project tests pass (run on the operator's machine, §5.4) |
 | **P4 Feature loops** | F1 → F3 via §5 | per §5 | per §5 |
 | **P5 Interop** | QA `tests/interop/` runs Alice/Bob both pairings (android↔web) against the real server | — | E-INTEROP-1 green ×3 |
 | **P6 Evolution demo** | F5 reactions as `spec/extensions/reactions.md` → `/generate` with no prompt changes | G0 | E-EVOL-1 |
@@ -116,6 +117,9 @@ Caps, the §2 reviewer threshold (400 changed lines) and the §6 split threshold
 
 ### 5.3 Abort and failure
 `BLOCKED` = feature parked with reason; ORC continues independent features. `ABORTED` = branch kept, STATE + partial retro written. Rollback = reset feature branch to the last green stage commit. `ENV_FAILURE` is retried at most once, then G2. `preflight` checks JDK, Android SDK, Node, Python versions before P3.
+
+### 5.4 Environment (decision 0011, `docs/ENVIRONMENT.md`)
+Agents in the cloud workspace cannot build or test clients (no Android SDK; npm, Maven, Google Maven and Gradle registries unreachable). Steps that need a client build (`/generate` with build and test, in-project tests, Playwright, Android core driver, S6b regen-check, interop) run on the **operator's machine** with Claude Code locally. ORC then stops, gives the operator the exact command and what to send back or commit, and logs it as an operator step (`decided_by: operator`). An agent never reports a client build or test as passing without a log from that machine. Python-only work (harness, server, protocol tests) runs in the sandbox.
 
 ## 6. Diff snapshot rule
 1. Before every handoff ORC commits (WIP commits allowed) so the diff is commit-addressed, then runs `snapshot-diff` → `diff.patch` + `diff.meta.json` `{base_sha, head_sha, worktree, porcelain_clean, patch_sha256, numstat, changed_lines, created_at, stage}`.

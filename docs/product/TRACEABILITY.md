@@ -8,12 +8,14 @@ Brief requirement → spec id → acceptance criterion → test → status (WORK
 
 | Column | Meaning | Example |
 |---|---|---|
+| BR/SC id | Brief requirement (`BR-1`..`BR-4`) or scenario step (`SC-n`) | `BR-1` |
+| Spec id | A rule id in the spec that is not withdrawn | `CORE-LOGIN-001` |
+| AC id | The acceptance criterion the row belongs to | `AC-F1-1` |
+| Scope | `core` (external checks) or `platform:<app>` (in-project tests) | `platform:web` |
+| Test id | The test that proves the criterion for that scope | `T-F1-201` |
+| Status | `pending`, then set by `check_trace.py --write` | `pending` |
 
-## F1
-
-F1 — Identity and login.
-
-Test ids for `AC-F1-<n>`: core (external checks in `tests/`) `T-F1-<n>`, android in-project `T-F1-<100+n>`, web in-project `T-F1-<200+n>`.
+A row never cites a withdrawn id, and a withdrawn acceptance criterion has no rows (decision 0014). Delivery D1 (F1+F2+F3, decision 0013) keeps its three sections below; D1 is accepted when every criterion in them is met.
 
 ## F1
 
@@ -103,15 +105,6 @@ Test ids for `AC-F2-<n>`: core (external checks in `tests/`) `T-F2-<n>`, android
 | BR-2 | CORE-SEND-011 | AC-F2-11 | core | T-F2-11 | pending |
 | BR-2 | CORE-SEND-011 | AC-F2-11 | platform:android | T-F2-111 | pending |
 | BR-2 | CORE-SEND-011 | AC-F2-11 | platform:web | T-F2-211 | pending |
-| BR-2 | CORE-SEND-007 | AC-F2-12 | core | T-F2-12 | pending |
-| BR-4 | CORE-VISIBLE-005 | AC-F2-12 | core | T-F2-12 | pending |
-| BR-4 | CORE-VISIBLE-006 | AC-F2-12 | core | T-F2-12 | pending |
-| BR-2 | CORE-SEND-007 | AC-F2-12 | platform:android | T-F2-112 | pending |
-| BR-2 | CORE-SEND-007 | AC-F2-12 | platform:web | T-F2-212 | pending |
-| BR-2 | CORE-SEND-009 | AC-F2-13 | core | T-F2-13 | pending |
-| BR-4 | CORE-ORDER-002 | AC-F2-13 | core | T-F2-13 | pending |
-| BR-2 | CORE-SEND-009 | AC-F2-13 | platform:android | T-F2-113 | pending |
-| BR-2 | CORE-SEND-009 | AC-F2-13 | platform:web | T-F2-213 | pending |
 | BR-4 | CORE-ORDER-005 | AC-F2-14 | core | T-F2-14 | pending |
 | BR-4 | CORE-ORDER-006 | AC-F2-14 | core | T-F2-14 | pending |
 | BR-4 | CORE-ORDER-005 | AC-F2-14 | platform:android | T-F2-114 | pending |
@@ -227,7 +220,7 @@ Test ids for `AC-F3-<n>`: core (external checks in `tests/`) `T-F3-<n>`, android
 
 F4 — Interoperability (Alice/Bob scenario, android and web).
 
-Core-scope tests (`tests/interop`, `tests/web-e2e`) drive both clients through the scenario; platform-scope tests replay the same steps against each app's fake server (PLAT-ANDROID-019, PLAT-WEB-013). Test ids: core `T-F4-<n>`, android `T-F4-<100+n>`, web `T-F4-<200+n>` for AC `AC-F4-<n>`.
+Core-scope tests (`tests/interop`, `tests/web-e2e`) drive the required pairings through the scenario (web with web through the UI; the Android JVM driver as Alice with the web UI as Bob); platform-scope tests replay the same steps against each app's fake server (PLAT-ANDROID-019, PLAT-WEB-013). Test ids: core `T-F4-<n>`, android `T-F4-<100+n>`, web `T-F4-<200+n>` for AC `AC-F4-<n>`.
 
 | BR/SC id | Spec id | AC id | Scope | Test id | Status |
 |---|---|---|---|---|---|

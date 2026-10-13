@@ -3,7 +3,7 @@
 - **Status:** approved by the operator at P1 (decision 0013, OM-0011), with the MVP cuts applied by the PM as below. Owner: PM. Written for spec 0.1.0 (version and tag set by ORC after the cuts merge).
 - **Acceptance and delivery rules (decision 0013).** Acceptance is gated by the acceptance criteria (ACs); coverage of spec rules by tests is reported, not gated. F1, F2 and F3 are one single core delivery, **D1**, generated and reviewed as one unit per app. F4 and F5 stay separate deliveries. **Cut order if time is short:** (1) F5 reactions (P6), only started after interop passes; (2) message-time display (S-F2-8, `CORE-VISIBLE-009..012`, `CORE-TIME-*`, SX-6, `AC-F2-17..23`), kept modular so it can be withdrawn without touching other rules. Nothing else is cut.
 - **Times.** UTC everywhere: the wire, the stored data and the tests use UTC; no time zone is hardcoded anywhere. A client shows the server's `accepted_at` converted to the device's local time (`CORE-TIME-001..003`, `CORE-VISIBLE-009..012`).
-- **Withdrawn.** The `failed` message state is withdrawn (decision 0014): `CORE-SEND-009`, `AC-F2-12`, `AC-F2-13` are tombstones. A message the server rejects for good is discarded and logged, with no user-visible state.
+- **Withdrawn.** The `failed` message state is withdrawn (decision 0014): the rule and the two acceptance criteria that described it are one-line tombstones in the behavior spec (list: `docs/planning/pm-packet-cuts.md`). A message the server rejects for good is discarded and logged, with no user-visible state.
 - **Reading guide.** Epics → features → stories. Features are vertical slices (decision 0002 Q23): each one delivers something a user can see, on both clients. Rule ids point to [`spec/core/client-behavior.md`](../../spec/core/client-behavior.md) (`CORE-LOGIN` ... `CORE-VISIBLE`) and to the TL's protocol rules; acceptance criteria (ACs) are in the spec next to those rules; test ids per scope are in [`TRACEABILITY.md`](TRACEABILITY.md).
 - **Statuses:** `done`, `drafted` (written, awaiting operator), `planned`, `blocked`, `optional` (not needed for acceptance), `withdrawn`.
 - **Chain** (WORKFLOW §5): `full` = first feature per app and any generator or architecture change (plan and gate G1 included); `light` = otherwise.
@@ -79,7 +79,7 @@ One delivery per app: F1, F2 and F3 below are generated, reviewed and accepted t
 
 - **Goal.** Two people each in their own app can exchange text messages. They see their own messages and the other's, in the same order, with clear states.
 - **Apps.** Android, web. Server: as built in E2.
-- **Covers.** `CORE-SEND-001..008`, `-010`, `-011` (`-009` withdrawn), `CORE-RECEIVE-001..006`, `CORE-ORDER-001..006`, `CORE-VISIBLE-002..012`; wire: `CORE-MSG`, `CORE-POLL`, `CORE-CURSOR`, `CORE-SEQ`. ACs `AC-F2-1..23` except `-12` and `-13` (withdrawn); scenario `SX-6`; steps `SC-1`, `SC-2`.
+- **Covers.** `CORE-SEND-001..008`, `-010`, `-011` (`-009` withdrawn), `CORE-RECEIVE-001..006`, `CORE-ORDER-001..006`, `CORE-VISIBLE-002..012`; wire: `CORE-MSG`, `CORE-POLL`, `CORE-CURSOR`, `CORE-SEQ`. ACs `AC-F2-1..11` and `AC-F2-14..23`; scenario `SX-6`; steps `SC-1`, `SC-2`.
 - **Chain.** Part of D1 (single delivery with F1 and F3).
 - **Depends on.** F1.
 - **Status.** planned.

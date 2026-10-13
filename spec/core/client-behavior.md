@@ -37,6 +37,7 @@ After the one-time login screen, the client has two screens that share one heade
 - **CORE-LOGIN-003** — If the name is invalid (including empty), the client MUST stay on the login screen, MUST show the validation message of section 8.1 next to the name field, MUST keep the typed text in the field, and MUST NOT store anything. The message MUST disappear when the user edits the field or when login succeeds.
 - **CORE-LOGIN-004** — If the name is valid, the client MUST store its lowercase form as the user's identity (CORE-NAME-004), persistently, and MUST show the conversation list screen at once, without waiting for the server. Names that differ only in letter case are the same user: entering `Alice`, `ALICE` or `alice` all log in as `alice`, and the header shows `alice`, never the casing typed.
 - **CORE-LOGIN-005** — On every later launch with a stored identity the client MUST skip the login screen and show the conversation list screen for the same user, with all stored conversations, messages and unsent messages restored (CORE-OUTBOX-002, CORE-CURSOR-001). The offline switch is not restored: it starts off at every launch (CORE-OFFLINE-001).
+- **CORE-LOGIN-006** — The client MUST NOT offer any way to log out, change the name or reset the identity from within the app (v1; section 11).
 
 ## 4. Conversations and sending
 
@@ -136,7 +137,7 @@ Given/When/Then, observable by a user; each cites the rules it checks. Traceabil
 - **AC-F1-4** — Given the login screen and no server running, When the user enters `carol` and activates `Continue`, Then the conversation list screen is shown with `carol` and the indicator `Connecting`. (CORE-LOGIN-002, CORE-LOGIN-004, CORE-OFFLINE-006)
 - **AC-F1-5** — Given a client logged in as `alice`, When the client is closed and launched again, Then no login screen is shown, the header shows `alice`, and the conversation list screen is shown with its earlier conversations. (CORE-LOGIN-005, CORE-VISIBLE-004)
 - **AC-F1-6** — Given a logged-in client, When any screen after login is shown, Then the header shows the user's name, the connection indicator and the `Offline mode` switch, which is off. (CORE-VISIBLE-001, CORE-OFFLINE-001)
-- **AC-F1-7** — Given a logged-in client, When the user looks for a way to log out or change the name, Then there is none. (section 11)
+- **AC-F1-7** — Given a logged-in client, When the user looks for a way to log out or change the name, Then there is none. (CORE-LOGIN-006)
 
 ### F2: Sending and receiving (BR-2, BR-4)
 

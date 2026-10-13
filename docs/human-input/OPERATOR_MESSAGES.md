@@ -1,0 +1,70 @@
+# Operator messages (verbatim, human-written)
+
+This file records messages written **only by the human operator** (Caique Bertan) to the AI orchestrator, so evaluators can see exactly what was human-authored versus produced by AI.
+
+Rules:
+- Messages are pasted **verbatim** — typos, wording and formatting are not corrected.
+- Each entry has a date (America/Sao_Paulo time) and a short note on what it triggered. The note is written by the AI; the message body is not.
+- Append new entries at the bottom; never edit past entries.
+
+---
+
+## 2026-10-13 12:08 — Initial repo shell
+
+_Triggered: initial folder structure, brief transcription, project context update._
+
+````text
+can you structure a shell of our folder to this folder I pointed out? Bring the files we have, update the documents if needed, so we can start to work on this
+````
+
+---
+
+## 2026-10-13 12:11 — Git setup
+
+_Triggered: `git init`, initial commit._
+
+````text
+create the git setup so we can start splitting the commits as well. And you can call this first initial commit or something like that
+````
+
+---
+
+## 2026-10-13 12:51 — Agent pipeline workflow definition
+
+_Triggered: `generator/WORKFLOW.md` (AI-readable translation of the instruction below), this log, `docs/retros/`, and the Opus gap-analysis agent run (`docs/planning/workflow-gap-analysis.md`)._
+
+````text
+I'll present to you a human written instruction of all the workflow I want to build; I want you to translate that to a more ai readable file, in a MD, so you can have clear knowledge of triggers, workflow, gaps and evals you need to know and use. After creating this document, Run an opus agent to create an scratch of steps and gaps we have in the current plan (checking against project context and initial doc). I expect this agent to have questions to write the plan, because we will have gaps and he needs to account all of them. Like moving back from a step to another one, or even if some specific flow is really necessary, and he can suggest changes to the workflow... Also, I want to have logs of each feature delivered, the gaps we found, what we can improve for the next ticket and etc, like a small retrospective;
+
+also, take this first message Im asking you, and create a document where we will add some of my raw messages to you, so the people who is going to evaluate our project knows what was written only by me. Like this whole message for example.
+
+# This is the human written instruction: 
+
+now, launch a Opus agent to build the first phase of the plan, which will be our AI structure and architecture to deliver this project. Always respecting the boundaries and instructions created from the aware assessment; So create this structure using the files and everything they asked;
+
+For this arch I want to use an agents pipeline workflow. But always with human-in-loop. Im going to point where we need to stop for human interaction;
+
+We will have you as an orchestrator/manager, Im always addressing to you and you are delegating to the other agents, your main responsability is to keep our project on track and matching all the ACs, and having proper prompts for each agent pointing to each individual instruction.
+
+## Agents
+
+We will have a PM (Sonnet) agent, responsible to make sure we have a solid project and product, it has the high surface logic of the deliverable, and is responsible to write the ACs for each app; He is going to write a non technical language of WHAT we need to deliver; We can have a single document pointing the ACs to all the apps (android. web and server)
+  
+We will also need a tech lead agent (always running on Opus) proposing a plan when is first time to implement (each individual feature). This plan needs to be approved by me (the operator) 
+We will have individual plans for android, one for the web client and one for the server; He is going to write the HOW we are going to deliver the project
+
+We will have a developer agent, that when the assignment is very objective to the tech lead plan, can be launched on Sonnet, the first implementation is going to be on Opus, and will use Opus again only if you think he is going to need to interpretate and test scenarios and options before implementing;
+This developer will only write simple unit testing to have simple and straightforward coverage;
+
+We will have a step after development, which will be Reviewer agent (Sonnet, but Opus if it's diff larger than 400 line of changes); This agent will be responsible to check from small pattern errors, like magic strings and magic numbers, to highly complex flows as race condition, running calls on wrong threads and so on; He needs to report what is blocker, what is nit and report back to you. Which will then delegate to developer to address the reviews; This flow can have several loops, let make a max of 3; If it's more than that, than it needs the Operator (me) to say how we should move on;
+
+We will have a QA Engineer agent, he will be responsible to write robust unit and ui testing (when it fits), to ensure we have a solid implementation; If he finds out we need to change anything in the implementation code, he should report to you, and you should evaluate and if it's the case ask the change to the developer (this will only trigger reviewer again if you think it's a flow change, if it's nit we dont need the reviewer in this specific loop);
+
+after QA, we will run the PM again, to double check if the ACs are valid and if the implementation is checking all of them; if it's not, you will evaluate if we can create a new task;
+
+Also you need to create this structure in a way its replicable and possible to be launched without human-in-loop; So we will have one point of start, can be a skill or a document;
+
+The plan to this structure is also going to account a plan from PM to track the apps like epics, features and stories; And we are going to use our pipeline to work on each feature at a time, and you can launch agents parallel when we have enough information to know for sure they're not going to touch the same files; 
+
+For all the loop, at all steps, always have a tmp file of the diff we're working on it, so the next agent doesn't need to get the diff again; You're responsible to make sure if we're moving to next step, the diff is up to date;
+````

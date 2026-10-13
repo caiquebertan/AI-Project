@@ -8,26 +8,26 @@ The spec is the single source of truth for behavior: questions are answered here
 
 | Path | Purpose | Owner | Status | Rules (MUST) / ACs |
 |---|---|---|---|---|
-| [`core/protocol.md`](core/protocol.md) | Wire protocol: transport, endpoints, identity, envelope, send/ack, poll/cursor, epoch, order, connection cycle and outbox, capabilities, errors, constants; Appendix A Alice/Bob protocol trace and displayed times | TL | draft (G0) | 90 (90) |
-| [`core/server-behavior.md`](core/server-behavior.md) | Server internals: registry, mailboxes, `seq`, long-poll, dedupe, relay, what it does not do | TL | draft (G0) | 28 (27) |
-| [`core/schema/`](core/schema/) | JSON Schemas per request/response, [`index.json`](core/schema/index.json) (endpoint → schema), [`constants.json`](core/schema/constants.json), examples (checked by `generator/scripts/check_schema_examples.py`) | TL | draft (G0) | — |
+| [`core/protocol.md`](core/protocol.md) | Wire protocol: transport, endpoints, identity, envelope, time, send/ack, poll/cursor, epoch, order, polling cycle and outbox, capabilities, errors, constants; Appendix A Alice/Bob protocol trace and displayed times | TL | draft (G0) | counts: ORC recomputes after merge |
+| [`core/server-behavior.md`](core/server-behavior.md) | Server internals: registry, mailboxes, `seq`, immediate polls, strict timestamps, dedupe, relay, no time zone, what it does not do | TL | draft (G0) | counts: ORC recomputes after merge |
+| [`core/schema/`](core/schema/) | JSON Schemas per request/response, [`index.json`](core/schema/index.json) (endpoint → schema), [`constants.json`](core/schema/constants.json), examples and value cases (`cases/`, valid and invalid values; all checked by `generator/scripts/check_schema_examples.py`) | TL | draft (G0) | — |
 | [`core/client-behavior.md`](core/client-behavior.md) | Observable client behavior: screens, login, send, offline queue, flush, receive, order, fixed texts; acceptance criteria | PM | draft (G0) | 54 (53) / 39 ACs |
 | [`scenarios/alice-bob-offline.md`](scenarios/alice-bob-offline.md) | The brief's 7-step scenario (SC-1..SC-7, plus SC-8 beyond the brief) with exact expected states per step | PM | draft (G0) | 9 ACs |
 | [`scenarios/additional-scenarios.md`](scenarios/additional-scenarios.md) | Extra scenarios SX-1..SX-6 (no server at login, lost ack, server restart, input edge cases, unknown type, message times and time zones) | PM | draft (G0) | 6 ACs |
-| [`platform/test-hooks.md`](platform/test-hooks.md) | Hook ids, readable values and state snapshot shared by all clients ([`client-snapshot.schema.json`](platform/client-snapshot.schema.json)), relaunch and request-visibility controls, time hook | TL | draft (G0) | 13 (13) |
-| [`platform/android.md`](platform/android.md) | Android stack, modules, storage, networking, hooks, generated tests | TL | draft (G0) | 28 (28) |
-| [`platform/web.md`](platform/web.md) | Web stack, structure, storage, configuration, hooks, generated tests | TL | draft (G0) | 21 (20) |
+| [`platform/test-hooks.md`](platform/test-hooks.md) | Hook ids, readable values and state snapshot shared by all clients ([`client-snapshot.schema.json`](platform/client-snapshot.schema.json)), relaunch control, time hook, injected ports, tests every client generates (offline = zero requests, time-zone denylist) | TL | draft (G0) | counts: ORC recomputes after merge |
+| [`platform/android.md`](platform/android.md) | Android stack, modules, storage, networking, hooks, generated tests, JVM interop driver `:tools:driver` | TL | draft (G0) | counts: ORC recomputes after merge |
+| [`platform/web.md`](platform/web.md) | Web stack, structure, storage, configuration, hooks, generated tests, request visibility for browser tests | TL | draft (G0) | counts: ORC recomputes after merge |
 | [`extensions/`](extensions/) | Optional capabilities (reactions, attachments, groups, …); template in its README | TL + PM | template only | — |
 
-Totals: 234 rule ids (231 on `MUST` lines, counted by `check_trace.py`) and 54 acceptance criteria, counted by script on 2026-10-13 (main, after merging the PM and TL time deltas) from the `- **<id>** —` definition lines; recount after every spec change, including after merging parallel PM and TL deltas.
+Totals: 234 rule ids (231 on `MUST` lines, counted by `check_trace.py`) and 54 acceptance criteria, counted by script on 2026-10-13 (main, after merging the PM and TL time deltas) from the `- **<id>** —` definition lines; recount after every spec change, including after merging parallel PM and TL deltas. **Stale:** the TL cuts delta (decision 0014) changed the TL rows; counts: ORC recomputes after merge. Tombstone lines (below) are not rules and are not counted.
 
-Decision records behind the core choices: `docs/decisions/0004`–`0010` and `0012` (time representation).
+Decision records behind the core choices: `docs/decisions/0004`–`0009`, `0012` (time representation, amended by OM-0011) and `0014` (plain polling, withdrawn rules, test visibility; supersedes `0010`). MVP cuts: `0013`.
 
 ## Rule ids
 
-- Every normative rule has an id on the **same line** as its RFC 2119 keyword (`MUST`, `MUST NOT`, `SHOULD`, `MAY`). `generator/scripts/check_trace.py` collects ids on `MUST` lines (regex in `generator/config/generator.json` → `trace.spec_id_regex`), and every such id needs at least one passing test whose name carries it (E-QA-1).
+- Every normative rule has an id on the **same line** as its RFC 2119 keyword (`MUST`, `MUST NOT`, `SHOULD`, `MAY`). `generator/scripts/check_trace.py` collects ids on `MUST` lines (regex in `generator/config/generator.json` → `trace.spec_id_regex`). **Acceptance criteria gate acceptance** (S6: every AC needs passing tests); **rule coverage is reported, not gated**: the share of those ids carried by a passing test is listed in the report and tests are still named by the ids they cover, but an uncovered id does not block a feature (operator OM-0011, decision 0013).
 - Forms: `CORE-<AREA>-NNN` (core), `PLAT-<PLATFORM>-NNN` (platform, `PLAT-HOOK` for the shared hooks), `EXT-<CAPABILITY>-NNN` (extensions; capability id uppercased without dashes, e.g. `EXT-REACTIONS-001`).
-- Ids are **never reused or renumbered**. A removed rule keeps its id, marked `(withdrawn in X.Y.Z)`.
+- Ids are **never reused or renumbered**. A withdrawn rule stays in place as one tombstone line, `- **CORE-XXX-nnn** — Withdrawn (decision NNNN).`, with no RFC 2119 keyword, so tooling does not count it as a rule; a citation of a withdrawn id is a defect to fix. A reworded rule keeps its id; the decision that changed it lists the id. Withdrawn constant names are listed under the constants table and are not reused either.
 - Area ownership (prevents PM/TL collisions):
 
 | Areas | File | Owner |

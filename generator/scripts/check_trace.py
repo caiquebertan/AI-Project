@@ -8,8 +8,9 @@ appears in its full name (class + name, or suite path + title + tags).
 
   * AC status: met when every listed test id matches at least one test and
     all matching tests passed; otherwise unmet with a reason.
-  * Spec coverage: every spec id defined on a MUST line under spec/ needs at
-    least one passing test carrying it.
+  * Spec coverage: a rule is a spec id DEFINED on a MUST line under spec/, i.e. a bold id
+    opening a list item or table row (`- **CORE-X-001** ... MUST ...`); ids merely cited
+    in a rule or scenario do not count. Each rule needs at least one passing test carrying it.
 
 Exit 0 when every considered AC is met (or there are none), 1 otherwise.
 
@@ -125,13 +126,37 @@ def evaluate_rows(rows: list[dict], tests: list[dict], scope_re: str) -> None:
         row["reason"] = "; ".join(problems)
 
 
-def spec_ids(spec_dir: Path, id_re: str, must: str) -> list[str]:
-    ids = []
+KEYWORD = re.compile(r"\b(?:MUST|SHOULD|MAY)\b")
+
+
+def definition_re(id_re: str) -> re.Pattern:
+    """A rule is defined where its bold id opens a list item or a table row."""
+    return re.compile(rf"^\s*(?:[-*]\s+|\|\s*)\*\*({id_re})\*\*")
+
+
+def spec_rules(spec_dir: Path, cfg: dict) -> list[dict]:
+    """Defined rule ids. Only definitions carrying
+    cfg['must_keyword'] are rules; see defined_ids for every definition."""
+    defn, rules, seen = definition_re(cfg["spec_id_regex"]), [], set()
     if spec_dir.is_dir():
         for path in sorted(spec_dir.rglob("*.md")):
             for line in path.read_text(encoding="utf-8").splitlines():
-                if must in line:
-                    ids += [m for m in re.findall(id_re, line) if m not in ids]
+                m = defn.match(line)
+                if not m or cfg["must_keyword"] not in line or m.group(1) in seen:
+                    continue
+                seen.add(m.group(1))
+                rules.append({"id": m.group(1), "file": path.name})
+    return rules
+
+
+def defined_ids(spec_dir: Path, id_re: str) -> set[str]:
+    """Every id defined under spec_dir, whatever its keyword."""
+    defn, ids = definition_re(id_re), set()
+    for path in sorted(spec_dir.rglob("*.md")) if spec_dir.is_dir() else []:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            m = defn.match(line)
+            if m:
+                ids.add(m.group(1))
     return ids
 
 
@@ -176,8 +201,8 @@ def main(argv=None) -> int:
     all_rows = parse_trace(text)
     rows = [r for r in all_rows if args.feature is None or r["feature"] == args.feature]
     evaluate_rows(rows, tests, cfg["scope_regex"])
-    cov = spec_coverage(spec_ids(Path(args.spec_dir) if args.spec_dir else root / cfg["spec_dir"],
-                                 cfg["spec_id_regex"], cfg["must_keyword"]), tests)
+    rules = spec_rules(Path(args.spec_dir) if args.spec_dir else root / cfg["spec_dir"], cfg)
+    cov = spec_coverage([r["id"] for r in rules], tests)
 
     if args.write and text:
         trace_path.write_text(write_status(text, rows), encoding="utf-8")

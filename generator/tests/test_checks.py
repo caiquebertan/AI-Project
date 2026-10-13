@@ -32,8 +32,17 @@ class CheckTrace(unittest.TestCase):
         self.assertIn("skipped", status["AC-F2-2"][1])
         self.assertIn("bad scope", status["AC-F2-3"][1])
         cov = out["spec_coverage"]
-        self.assertEqual(cov["total"], 3)                     # CORE-003 is SHOULD, not counted
-        self.assertEqual(cov["missing"], ["CORE-010"])
+        # MUST definitions only: CORE-003 is SHOULD, CORE-099 is a reference, CORE-04 is mistyped.
+        self.assertEqual(cov["total"], 4)
+        self.assertEqual(cov["missing"], ["CORE-010", "CORE-011"])
+
+    def test_rules_are_definitions_not_references(self):
+        rules = check_trace.spec_rules(FIXTURES / "trace" / "spec", CONFIG["trace"])
+        ids = [r["id"] for r in rules]
+        self.assertEqual(ids, ["CORE-001", "CORE-002", "CORE-010", "CORE-011"])
+        self.assertNotIn("CORE-099", ids)
+        self.assertNotIn("CORE-003", ids)
+        self.assertIn("CORE-003", check_trace.defined_ids(FIXTURES / "trace" / "spec", CONFIG["trace"]["spec_id_regex"]))
 
     def test_feature_filter_and_write(self):
         with tempfile.TemporaryDirectory() as tmp:

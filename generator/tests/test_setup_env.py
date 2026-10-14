@@ -12,7 +12,7 @@ def row(tool, version):
 
 
 GOOD = [row("python", "Python 3.12.1"), row("git", "git version 2.43"), row("node", "v22.3.0"),
-        row("npm", "10.8.1"), row("java", 'openjdk version "17.0.9"'),
+        row("npm", "10.8.1"), row("java", 'openjdk version "21.0.5"'),
         row("android-sdk", "/sdk (platforms: android-35)"), row("claude", "1.0 (Claude Code)"),
         row("playwright", "chromium-1100")]
 
@@ -46,7 +46,7 @@ class Plan(unittest.TestCase):
         self.assertEqual(items["node"]["state"], "old")
         self.assertEqual(items["java"]["state"], "missing")
         self.assertEqual(items["android-sdk"]["state"], "missing")
-        self.assertIn("sudo apt-get install -y openjdk-17-jdk", items["java"]["commands"])
+        self.assertIn("sudo apt-get install -y openjdk-21-jdk", items["java"]["commands"])
         self.assertTrue(all(i["required"] for i in items.values()))
 
     def test_python_compared_as_major_minor(self):

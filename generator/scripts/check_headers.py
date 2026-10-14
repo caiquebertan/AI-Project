@@ -10,11 +10,15 @@ A missing app dir or a placeholder (non-JSON) manifest is reported as
 "not generated yet" and passes unless --strict.
 
 --write-manifest is the deterministic last step of /generate: it hashes the
-tree and writes the manifest, so the model never computes hashes itself.
+tree and writes the manifest, so the model never computes hashes itself. Each file
+gets origin "template" (copied by apply_templates.py) or "model". With --result
+(the run record of checkpoint.py) it also records the Claude Code version, the
+self-repair attempts and the checkpoints (generator design §3.3).
 
 Examples:
   check_headers.py --app all
-  check_headers.py --app web --write-manifest --spec-version 0.1.0 --model-id <id>
+  check_headers.py --app web --write-manifest --spec-version 0.1.0 --model-id <id> \
+      [--result .work/generate/web/result.json]
 """
 from __future__ import annotations
 
@@ -35,13 +39,31 @@ def disk_files(app_dir: Path, manifest_name: str, ignore_dirs: list[str]) -> set
     return out
 
 
+def template_owned(app: str, cfg: dict) -> set[str]:
+    """Destinations apply_templates.py copies for this app (empty if the app has no templates)."""
+    try:
+        import apply_templates
+        _, spec = apply_templates.load_template(app, cfg)
+    except Exception:  # noqa: BLE001 - a missing template set only means "no template origin"
+        return set()
+    return set(apply_templates.owned_paths(spec))
+
+
 def write_manifest(app_dir: Path, app: str, spec_version: str, model_id: str, generator_commit: str,
-                   cfg: dict) -> Path:
+                   cfg: dict, result: dict | None = None) -> Path:
     h = cfg["headers"]
-    files = [{"path": rel, "sha256": lib.sha256_file(app_dir / rel)}
+    owned = template_owned(app, cfg)
+    files = [{"path": rel, "sha256": lib.sha256_file(app_dir / rel),
+              "origin": "template" if rel in owned else "model"}
              for rel in sorted(disk_files(app_dir, h["manifest"], h["ignore_dirs"]))]
     manifest = {"app": app, "spec_version": spec_version, "generator_commit": generator_commit,
-                "model_id": model_id, "generated_at": lib.now_iso(), "files": files}
+                "model_id": model_id, "generated_at": lib.now_iso()}
+    if result is not None:
+        manifest["claude_code_version"] = result.get("claude_code_version")
+        manifest["self_repair_attempts"] = int(result.get("self_repair_attempts", 0))
+        manifest["checkpoints"] = {k: {"attempts": int(v.get("attempts", 0)), "result": v.get("result")}
+                                   for k, v in result.get("checkpoints", {}).items()}
+    manifest["files"] = files
     errs = lib.validate(manifest, lib.load_schema("manifest.schema.json"))
     if errs:
         raise ValueError("; ".join(errs))
@@ -89,6 +111,7 @@ def main(argv=None) -> int:
     p.add_argument("--write-manifest", action="store_true", help="hash the tree and write the manifest")
     p.add_argument("--spec-version", help="for --write-manifest")
     p.add_argument("--model-id", help="for --write-manifest")
+    p.add_argument("--result", help="for --write-manifest: run record of checkpoint.py (result.json)")
     args = p.parse_args(argv)
     cfg = lib.load_config()
     root = lib.repo_root(args.root)
@@ -98,8 +121,14 @@ def main(argv=None) -> int:
         app_dir = root / cfg["apps"][args.app]["dir"]
         if not app_dir.is_dir():
             lib.die(f"{app_dir} does not exist; nothing to describe")
+        result = None
+        if args.result:
+            if not Path(args.result).is_file():
+                lib.die(f"--result {args.result} does not exist")
+            result = lib.read_json(args.result)
         try:
-            path = write_manifest(app_dir, args.app, args.spec_version, args.model_id, lib.git_head(root), cfg)
+            path = write_manifest(app_dir, args.app, args.spec_version, args.model_id, lib.git_head(root), cfg,
+                                  result)
         except (ValueError, RuntimeError) as exc:
             lib.die(f"manifest not written: {exc}")
         print(f"wrote {path}")

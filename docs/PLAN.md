@@ -10,10 +10,13 @@
 
 | Phase | Status | What it produced |
 |---|---|---|
-| P0 Harness | done, approved (OM-0008, decision 0003) | `generator/scripts/` (state machine, snapshot, trace, regen, lint, preflight), `.claude/agents/`, `.claude/commands/{pipeline,generate}.md`, `generator/prompts/`, `generator/RUN.md`, 82 harness self-tests |
-| P1 Backlog + core spec | done, approved (OM-0011, decision 0013) | spec **0.1.0** tagged: 242 rule ids (239 `MUST`), **52 ACs**; `spec/core/{protocol,server-behavior,client-behavior}.md`, `spec/core/schema/`, `spec/scenarios/` (SC-1..SC-8, SX-1..SX-6), `spec/platform/{android,web,test-hooks}.md`; decisions 0004–0009, 0012, 0014; `BACKLOG.md` (E0–E7, D1 = F1+F2+F3, F4, F5); `TRACEABILITY.md` (210 AC-scope rows); ten MVP cuts (0013); environment rule (0011); operator-authored commits (0015) |
+| P0 Harness | done, approved (OM-0008, decision 0003); retro `docs/retros/P0.md` | `generator/scripts/` (state machine, snapshot, trace, regen, lint, preflight), `.claude/agents/`, `.claude/commands/{pipeline,generate}.md`, `generator/prompts/`, `generator/RUN.md`, 82 harness self-tests |
+| P1 Backlog + core spec | done, approved (OM-0011, decision 0013) | spec **0.1.0** tagged: 242 rule ids (239 `MUST`), **52 ACs**; `spec/core/{protocol,server-behavior,client-behavior}.md`, `spec/core/schema/`, `spec/scenarios/` (SC-1..SC-8, SX-1..SX-6), `spec/platform/{android,web,test-hooks}.md`; decisions 0004–0009, 0012, 0014; `BACKLOG.md` (E0–E7, D1 = F1+F2+F3, F4, F5); `TRACEABILITY.md` (210 AC-scope rows); ten MVP cuts (0013); environment rule (0011); operator-authored commits (0015); retro `docs/retros/P1.md` |
+| P2 Server | done, closed with known gaps (OM-0017, decision 0019) | spec **0.1.1** (decision 0018, tag `spec-v0.1.1`); `server/`, `tests/protocol/` (138 tests green); review rounds 1 and 2 and fix passes in `docs/runs/P2/`; retro `docs/retros/P2.md` |
+| P3 Generator v1 | next (design approved at G1, decision 0017; plan defaults accepted, decision 0016) | not started |
+| P4 to P8 | planned | as §2 |
 
-**Not done yet, and never tried:** no server code, no generator conventions or templates (`generator/conventions/`, `generator/templates/` do not exist), `generate_model` and build/test commands are `TBD-at-P3`, `/generate` stops with "generator not yet configured". **No client has ever been generated, built or run.** No P0/P1 retro exists yet (`docs/retros/` holds only the template; WORKFLOW §10 asks for one per phase).
+**Not done yet, and never tried:** no generator conventions or templates (`generator/conventions/`, `generator/templates/` do not exist), `generate_model` and build/test commands are `TBD-at-P3`, `/generate` stops with "generator not yet configured". **No client has ever been generated, built or run.** Retros for P0, P1 and P2 exist in `docs/retros/`.
 
 ## 2. Remaining phases
 
@@ -34,7 +37,7 @@ Ordered as WORKFLOW §4. "Cloud" = agents in the cloud workspace (Python only). 
 - **Gates:** **G1** (plan approval on the generator design, before DEV implements). G2 on `gen_self_repair` exhaustion or `ENV_FAILURE`.
 - **Risk / effort:** **highest.** Android first (Gradle, Room, Robolectric, `:tools:driver`), web second. Expect 2–4 operator sessions, most of them Android.
 
-### P4 Core delivery D1 (F1+F2+F3), then F4 work
+### P4 Core delivery D1 (F1+F2+F3)
 - **Purpose:** accept D1 per app against its ACs; build the external checks.
 - **Where / agents:** cloud: REV (S4), QA (Opus, designs `tests/web-e2e/`, `tests/android-conformance/`, `tests/interop/` once), PM only if `check_trace` fails. **Operator:** every regeneration after a fix (`/generate <app>`), Gradle/npm tests, Playwright, the Android driver, and sending back JUnit XML / Playwright JSON for `check_trace`.
 - **Inputs:** P3 output, TRACEABILITY F1–F3. **Outputs:** `docs/runs/D1/{run.jsonl,review-n.md,qa.md,acceptance.md}`, retro `docs/retros/D1.md`.
@@ -92,8 +95,8 @@ Cloud-only (no operator time): P2 server and protocol tests, spec deltas, genera
 ## 4. Cut line and cut order (decision 0013, WORKFLOW §4.1)
 
 Phase order stays P5 → P6 → P7 → P8. If time runs short:
-1. **P6 / F5 reactions** — first; never started while interop is red.
-2. **Message-time display** — second: S-F2-8, `CORE-VISIBLE-009..012`, `CORE-TIME-*` display rules, SX-6, `AC-F2-17..23`. Note: the strict-UTC wire rules (server validates UTC `created_at`) are part of the protocol; withdrawing the *display* must not remove UTC validation on the wire (§8 item 6).
+1. **P6 / F5 reactions** — first; never started while interop is red. **[Fixed: 0003 and 0002 Q13 annotated as superseded by 0015. Commit: "docs: fix stale and contradictory text (PLAN §8)"]**
+2. **Message-time display** — second: S-F2-8, `CORE-VISIBLE-009..012`, `CORE-TIME-*` display rules, SX-6, `AC-F2-17..23`. Note: the strict-UTC wire rules (server validates UTC `created_at`) are part of the protocol; withdrawing the *display* must not remove UTC validation on the wire (§8 item 6). **[Open (resolved by decision 0016 Q7; WORKFLOW/BACKLOG S-E3-5 wording not part of this commit).]**
 
 Never cut: D1, F4 interop, P7 regeneration check, P8 packaging. Each cut is recorded in the retro and the README.
 
@@ -116,7 +119,7 @@ Also watched: spec reopens are capped at 2 after the tag; time tests must inject
 |---|---|---|---|
 | Q1 | Regen check before P7? | (a) only at P7 as in cut 8; (b) one informal run after D1, not gating, `regen_check.py --app all --clone` once | **(b)**: costs one operator session, removes the worst late surprise. Cut 8's gate stays at P7 |
 | Q2 | PM/QA acceptance for the server? | (a) as WORKFLOW §5.5: protocol tests are acceptance, ORC sends `green`/`met`; (b) add QA review of `tests/protocol` | **(a)**: no server ACs exist; server rule coverage is reported by `check_trace`, informational |
-| Q3 | Fold F4 into P5? | (a) as written: F4 "feature-level work" at the end of P4, tests at P5; (b) F4 is one delivery run entirely in P5 | **(b)**: F4 expects no new client code (BACKLOG, light chain); one delivery, one retro, removes the P4/P5 overlap (§8 item 3) |
+| Q3 | Fold F4 into P5? (accepted (b), decision 0016) | (a) as written: F4 "feature-level work" at the end of P4, tests at P5; (b) F4 is one delivery run entirely in P5 | **(b)**: F4 expects no new client code (BACKLOG, light chain); one delivery, one retro, removes the P4/P5 overlap (§8 item 3) |
 | Q4 | Send latency: start a cycle when a message is queued? | (a) keep rejected (0014); (b) add the trigger (spec reopen, both clients) | **(a)**: 1 s is fine locally; (b) adds trigger races and costs a `spec_reopen` |
 | Q5 | AC for "no receipts / typing / unread indicators" (`CORE-VISIBLE-005`, `-006`)? | (a) leave as rule-level tests, informational; (b) PM adds a new AC (new id, patch bump) | **(a)**, but bundle (b) into the first spec reopen if one happens anyway |
 | Q6 | Start P3 design while P2 runs? | (a) strictly sequential (0002 Q7); (b) TL designs the generator in parallel with P2 (different files, both cloud) | **(b)**: design does not read server code; saves wall time. DEV implementation and first generation still wait for P2 |
@@ -130,14 +133,14 @@ Also watched: spec reopens are capped at 2 after the tag; time tests must inject
 4. Reserve time for the P3 first-generation session (likely the longest one, Android first).
 5. Push the `spec-v0.1.0` tag from your Mac if it is not on origin yet (tag pushes fail from the cloud).
 
-## 8. Contradictions and stale text found (not fixed here; this branch writes only this file)
+## 8. Contradictions and stale text found
 
-1. **Decision 0003 vs 0015.** 0003's signing command says "authors stay `Aware Agent (...)`; the committer becomes the signing operator". 0015 supersedes that author convention and history is already operator-authored (89/89 commits). 0003's comment is stale; the command itself still works. 0002 Q13 (distinct agent author) is likewise superseded but not annotated.
-2. **G1 placement.** WORKFLOW P3 puts G1 on the generator design *before* DEV implements; BACKLOG S-E3-5 puts "Gate G1 and review of the first generation" *after* the first builds (S-E3-3, -4). Separately, D1 is "full chain, first generation" (S2 + G1 again) right after P3. Proposed resolution: Q7.
-3. **F4 straddles P4 and P5.** WORKFLOW P4 says "then F4 interop (feature-level work; the P5 tests exercise it)"; BACKLOG E4 lists P4, P5; P5 has no gate and its own exit. Proposed resolution: Q3.
-4. **Regen at S6b vs once at P7.** AGENTS.md "Definition of done" still requires "Clean delete-and-regenerate check passes (S6b)"; `docs/ENVIRONMENT.md` "What runs where" lists "S6b regen-check"; 0002 Q16 says "full clean regeneration at S6b". Cut 8 / WORKFLOW v0.3.0 / `regen.per_feature=false` make it once at P7.
-5. **Server chain.** 0002 Q6 says "TL-lite → DEV → REV"; cut 7 and WORKFLOW §5.5 say no TL plan. 0002 is not annotated as amended.
-6. **Time display vs UTC wire rules in the cut.** BACKLOG cut order lists all `CORE-TIME-*` under "message-time display", but `CORE-TIME-*` also carries the operator's strict-UTC wire rule (OM-0011: server expects and validates UTC). Cutting display must keep the wire rules; the PM/TL should list exactly which ids go if this cut is taken.
-7. **Stale status text.** README says "Phase 0 harness built… Spec … still to be written", spec "☐ skeleton", workflow "v0.2"; `spec/README.md` header says approved 0.1.0 but every index row says "draft (G0)"; BACKLOG E1 says "drafted (… version and tag set by ORC)" though the tag exists. To fix in one docs commit at the start of P2 or at P8.
-8. **Missing retros.** WORKFLOW §10 asks for a retro per phase; none exists for P0 or P1.
-9. **Preflight scope.** ENVIRONMENT requires registry access and Playwright browsers; `preflight.py --strict` checks neither (see §3).
+1. **Decision 0003 vs 0015.** 0003's signing command says "authors stay `Aware Agent (...)`; the committer becomes the signing operator". 0015 supersedes that author convention and history is already operator-authored (89/89 commits). 0003's comment is stale; the command itself still works. 0002 Q13 (distinct agent author) is likewise superseded but not annotated. **[Fixed: 0003 and 0002 Q13 annotated as superseded by 0015. Commit: "docs: fix stale and contradictory text (PLAN §8)"]**
+2. **G1 placement.** WORKFLOW P3 puts G1 on the generator design *before* DEV implements; BACKLOG S-E3-5 puts "Gate G1 and review of the first generation" *after* the first builds (S-E3-3, -4). Separately, D1 is "full chain, first generation" (S2 + G1 again) right after P3. Proposed resolution: Q7. **[Open (resolved by decision 0016 Q7; WORKFLOW/BACKLOG S-E3-5 wording not part of this commit).]**
+3. **F4 straddles P4 and P5.** WORKFLOW P4 says "then F4 interop (feature-level work; the P5 tests exercise it)"; BACKLOG E4 lists P4, P5; P5 has no gate and its own exit. Proposed resolution: Q3. **[Fixed in BACKLOG E4/F4 and PLAN (F4 is one run entirely in P5, decision 0016 Q3). WORKFLOW P4 wording is left to the WORKFLOW change. Commit: "docs: fix stale and contradictory text (PLAN §8)"]**
+4. **Regen at S6b vs once at P7.** AGENTS.md "Definition of done" still requires "Clean delete-and-regenerate check passes (S6b)"; `docs/ENVIRONMENT.md` "What runs where" lists "S6b regen-check"; 0002 Q16 says "full clean regeneration at S6b". Cut 8 / WORKFLOW v0.3.0 / `regen.per_feature=false` make it once at P7. **[Fixed: AGENTS.md and ENVIRONMENT.md say once at P7; 0002 Q16 annotated as amended by 0013. Commit: "docs: fix stale and contradictory text (PLAN §8)"]**
+5. **Server chain.** 0002 Q6 says "TL-lite → DEV → REV"; cut 7 and WORKFLOW §5.5 say no TL plan. 0002 is not annotated as amended. **[Fixed: 0002 Q6 annotated as superseded by 0013 cut 7. Commit: "docs: fix stale and contradictory text (PLAN §8)"]**
+6. **Time display vs UTC wire rules in the cut.** BACKLOG cut order lists all `CORE-TIME-*` under "message-time display", but `CORE-TIME-*` also carries the operator's strict-UTC wire rule (OM-0011: server expects and validates UTC). Cutting display must keep the wire rules; the PM/TL should list exactly which ids go if this cut is taken. **[Open (PM/TL to list exact ids if the cut is taken).]**
+7. **Stale status text.** README says "Phase 0 harness built… Spec … still to be written", spec "☐ skeleton", workflow "v0.2"; `spec/README.md` header says approved 0.1.0 but every index row says "draft (G0)"; BACKLOG E1 says "drafted (… version and tag set by ORC)" though the tag exists. To fix in one docs commit at the start of P2 or at P8. **[Fixed: README status, spec/README.md index rows, BACKLOG E1. Commit: "docs: fix stale and contradictory text (PLAN §8)"]**
+8. **Missing retros.** WORKFLOW §10 asks for a retro per phase; none exists for P0 or P1. **[Fixed: `docs/retros/P0.md`, `P1.md`, `P2.md`. Commit: "docs: fix stale and contradictory text (PLAN §8)"]**
+9. **Preflight scope.** ENVIRONMENT requires registry access and Playwright browsers; `preflight.py --strict` checks neither (see §3). **[Fixed: ENVIRONMENT.md states the preflight scope and mentions `setup_env.py`. Commit: "docs: fix stale and contradictory text (PLAN §8)"]**

@@ -10,17 +10,17 @@
 | 3 | Main human gate | G0 on spec deltas; G1 only for architecture or generator design changes |
 | 4 | Chain weight | Full chain for the first feature per app and for architecture/generator changes; light chain otherwise |
 | 5 | PM acceptance | Automated `check-trace` (every AC has a passing test); PM only on failure or missing test |
-| 6 | Server | Light chain: TL-lite → DEV → REV → `tests/protocol` |
+| 6 | Server | Light chain: TL-lite → DEV → REV → `tests/protocol` *(Superseded by [0013](0013-approvals-and-mvp-cuts.md) cut 7: no TL plan, no QA agent; DEV, one review, protocol tests.)* |
 | 7 | Build order | Spec → server + protocol tests → generator → clients |
 | 8 | Test location | **(c), operator comment:** external `tests/` hold the AC checks; inside each project (`clients/*`), unit and UI tests for the code. Consequence: in-project tests are regenerated, so they must be produced by the generator. |
 | 9 | Autonomous gates | Delivery pipeline: halt on G0 and G2; auto-approve G1 when its evals pass (flagged for review). **Operator comment:** the generator flow has **no human gate**: it reads the specs, builds the plan and executes. |
 | 10 | Review cap | 3 review rounds per app per feature in total, including QA-triggered re-reviews |
 | 11 | Nits | Pattern nits become generator conventions; others deferred to the retro; nits never block |
 | 12 | Commits | One commit per stage output on `feat/<id>`, merged `--no-ff`, no squash, spec versions tagged |
-| 13 | Commit identity | Agent commits use a distinct author (`Aware Agent (<ROLE>/<model>)`), operator as committer, plus trailers |
+| 13 | Commit identity | Agent commits use a distinct author (`Aware Agent (<ROLE>/<model>)`), operator as committer, plus trailers *(Superseded by [0015](0015-operator-authored-commits.md): operator is author and committer; agents only in trailers.)* |
 | 14 | Reports | Condensed `docs/runs/<feature>/` committed (run.jsonl + final reports); `.work/` stays ignored |
 | 15 | Model pinning | Exact model IDs pinned in `generator/config` and the manifest, with a documented fallback |
-| 16 | Generation granularity | Module-scoped during the loop; full clean regeneration at S6b |
+| 16 | Generation granularity | Module-scoped during the loop; full clean regeneration at S6b *(Amended by [0013](0013-approvals-and-mvp-cuts.md) cut 8 and [0016](0016-plan-defaults-accepted.md): the clean regeneration check runs once at P7, not per feature.)* |
 | 17 | Scaffolding | Build infra and module skeletons copied from templates; the LLM fills in the source |
 | 18 | Web stack | React + TypeScript + Vite (see 0001) |
 | 19 | Android verification | Hybrid: JVM suite (pure-Kotlin core/network module + Robolectric) is the gate; emulator tests optional and documented. Spec defines going offline as app-controlled (offline toggle / swappable connectivity monitor). |

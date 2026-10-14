@@ -36,9 +36,11 @@ python3 generator/scripts/preflight.py            # report
 python3 generator/scripts/preflight.py --strict   # exit 1 if a required tool is missing
 ```
 
-`--strict` must pass on the operator's machine before Phase 3 (generator) starts.
+`--strict` must pass on the operator's machine before Phase 3 (generator) starts. It checks tool presence and versions only: it does **not** check registry access (npm, Maven Central, Google Maven, Gradle plugin portal) and does **not** check that the Playwright browsers are installed. The first `/generate` is the real network check; dependency download errors there are `ENV_FAILURE`, not a generator bug. `setup_env.py` (below) adds a best-effort Playwright cache check.
 
 ## Set it up
+
+`generator/scripts/setup_env.py` exists to diagnose and install the missing tools:
 
 ```
 python3 generator/scripts/setup_env.py             # dry run: what is missing or too old, exact install commands for your OS
@@ -54,7 +56,7 @@ Supported: macOS with Homebrew, Debian/Ubuntu with apt, Windows with winget; any
 |---|---|
 | Spec, backlog, decisions, generator design, prompts, docs | agents (cloud) |
 | Server and `tests/protocol` | agents (cloud); Python only |
-| `/generate android`, `/generate web`; Gradle and npm builds; in-project unit/UI tests; Playwright; Android core driver; S6b regen-check; E-INTEROP-1 | **operator's machine**, running Claude Code locally; results committed with the run log |
+| `/generate android`, `/generate web`; Gradle and npm builds; in-project unit/UI tests; Playwright; Android core driver; E-INTEROP-1; the delete-and-regenerate check (once, at P7, decision 0013 cut 8) | **operator's machine**, running Claude Code locally; results committed with the run log |
 | Review (S4) | agents read the generated code from the repository; they do not need to build it |
 
 When a stage needs a build, the orchestrator stops and hands the operator an exact command and the files to send back (or commit). This is recorded as a normal human step in the run log (`decided_by: operator`).

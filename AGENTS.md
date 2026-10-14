@@ -30,4 +30,4 @@ The main orchestrator (ORC) is the technical manager and the operator's single p
 - Spec updated (if behavior changed) and versioned.
 - Affected clients regenerated, not hand-patched.
 - In-project tests and external AC checks (`tests/`) pass.
-- Clean delete-and-regenerate check passes (S6b).
+- Clean delete-and-regenerate check: runs once at P7 (decision 0013 cut 8, `regen.per_feature=false`), not per feature; it is not part of a single change's definition of done.

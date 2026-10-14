@@ -14,10 +14,10 @@
 | Epic | Phase | What it delivers | Status |
 |---|---|---|---|
 | E0 Harness | P0 | Agent roles, prompts, scripts, pipeline mechanics | done |
-| E1 Spec and backlog | P1 | Protocol, server behavior, client behavior, scenarios, traceability, backlog; gate G0 | drafted (cuts applied; version and tag set by ORC) |
+| E1 Spec and backlog | P1 | Protocol, server behavior, client behavior, scenarios, traceability, backlog; gate G0 | done: spec 0.1.0 approved at G0 (OM-0011, decision 0013) and tagged `spec-v0.1.0`; clarified as 0.1.1 (decision 0018, tag `spec-v0.1.1`) |
 | E2 Server | P2 | Reference server and protocol tests | planned |
 | E3 Generator v1 | P3 | Templates, conventions, generate command; first Android and web builds | planned |
-| E4 Messaging product | P4, P5 | D1 core messaging (F1+F2+F3) on both clients, then F4 interop: web with web, Android driver with web | planned |
+| E4 Messaging product | P4 (D1), P5 (F4) | D1 core messaging (F1+F2+F3) on both clients in P4; F4 interop (web with web, Android driver with web) is one delivery run entirely in P5 (decision 0016 Q3) | planned |
 | E5 Evolution demo | P6 | Feature F5: a new capability added by spec only; first cut if time is short, starts only after interop passes | planned |
 | E6 Regeneration proof | P7 | Delete-and-regenerate from a fresh clone, twice | planned |
 | E7 Packaging | P8 | README, DESIGN, FUTURE, archive, clean-sandbox check | planned |
@@ -26,9 +26,9 @@
 
 | Item | Owner | Covers | Status |
 |---|---|---|---|
-| Protocol, server behavior, schemas, platform rules, hooks, decisions 0004 to 0009 | TL | all `CORE-*` TL areas, `PLAT-*` | drafted (G0) |
-| Client behavior, scenarios, acceptance criteria | PM | `CORE-LOGIN` to `CORE-VISIBLE`, `SC-1..8`, `SX-1..6` | drafted (G0, cuts applied) |
-| Backlog and traceability | PM | BR-1..4, SC-1..7 | drafted |
+| Protocol, server behavior, schemas, platform rules, hooks, decisions 0004 to 0009 | TL | all `CORE-*` TL areas, `PLAT-*` | approved 0.1.0 (G0) |
+| Client behavior, scenarios, acceptance criteria | PM | `CORE-LOGIN` to `CORE-VISIBLE`, `SC-1..8`, `SX-1..6` | approved 0.1.0 (G0, cuts applied) |
+| Backlog and traceability | PM | BR-1..4, SC-1..7 | approved (G0) |
 | Operator answers to G0 questions (TL Q1 to Q7, PM questions in `docs/planning/g0-review-pm.md`) | OP | defaults accepted in decision 0013 | done (OM-0011) |
 
 ## E2 Server (P2), chain: light (server: DEV, one review, protocol tests; no TL plan, no QA agent)

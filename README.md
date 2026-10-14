@@ -2,7 +2,15 @@
 
 A reusable, reproducible agentic harness that turns a written specification into working client code. A small local messaging system (Python server + Android/Kotlin client + web client) is the example used to evaluate it.
 
-> Status: **Phase 0 harness built** (state machine, scripts, sub-agents, prompts, commands; pending operator review). Spec, generator conventions/templates, server and clients are still to be written. Items marked ☐ are open.
+> Status: **P0 to P2 done** (harness, spec 0.1.1, reference server and protocol tests); **P3 generator implementation is next**. Generator conventions/templates and both clients are not written yet. Items marked ☐ are open. Plan: [`docs/PLAN.md`](docs/PLAN.md).
+
+| Phase | Status |
+|---|---|
+| P0 Harness | done, approved (decision 0003) |
+| P1 Backlog and core spec | done, spec 0.1.0 approved and tagged (decision 0013) |
+| P2 Server | done, spec 0.1.1, 138 protocol tests green, closed with known gaps (decision 0019) |
+| P3 Generator v1 | next (design approved at G1, decision 0017) |
+| P4 Core delivery D1, P5 Interop F4, P6 Reactions, P7 Regeneration check, P8 Packaging | planned |
 
 ## How it works (two entry points)
 
@@ -20,17 +28,17 @@ Full workflow: [`generator/WORKFLOW.md`](generator/WORKFLOW.md).
 | Authoritative brief | [`docs/brief/aware-test-brief.md`](docs/brief/aware-test-brief.md) | ✔ |
 | Project context | [`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md) | ✔ |
 | Build environment (required tools) | [`docs/ENVIRONMENT.md`](docs/ENVIRONMENT.md) | ✔ |
-| **Spec (source of truth)** | [`spec/`](spec/) | ☐ skeleton |
-| **Agentic harness / generator** | [`generator/`](generator/), [`.claude/`](.claude/), workflow [`generator/WORKFLOW.md`](generator/WORKFLOW.md) | workflow ✔ v0.2, harness ✔ P0, generator conventions/templates ☐ P3 |
-| Harness (Phase 0) | state machine + scripts [`generator/scripts/`](generator/scripts/), sub-agents [`.claude/agents/`](.claude/agents/), prompts [`generator/prompts/`](generator/prompts/), commands [`.claude/commands/`](.claude/commands/), fallback [`generator/RUN.md`](generator/RUN.md), self-test `python3 -m unittest discover -s generator/tests` | ✔ (pending P0 gate) |
+| **Spec (source of truth)** | [`spec/`](spec/) | ✔ 0.1.1 approved (tags `spec-v0.1.0`, `spec-v0.1.1`) |
+| **Agentic harness / generator** | [`generator/`](generator/), [`.claude/`](.claude/), workflow [`generator/WORKFLOW.md`](generator/WORKFLOW.md) | workflow ✔ v0.3.0, harness ✔ P0, generator conventions/templates ☐ P3 |
+| Harness (Phase 0) | state machine + scripts [`generator/scripts/`](generator/scripts/), sub-agents [`.claude/agents/`](.claude/agents/), prompts [`generator/prompts/`](generator/prompts/), commands [`.claude/commands/`](.claude/commands/), fallback [`generator/RUN.md`](generator/RUN.md), self-test `python3 -m unittest discover -s generator/tests` | ✔ (P0 approved) |
 | Generated Android client | [`clients/android/`](clients/android/) | ☐ |
 | Generated web client | [`clients/web/`](clients/web/) | ☐ |
-| Server (maintained, not generated) | [`server/`](server/) | ☐ |
-| External AC checks (protocol, interop, e2e) | [`tests/`](tests/) | ☐ |
+| Server (maintained, not generated) | [`server/`](server/) | ✔ P2 |
+| External AC checks (protocol, interop, e2e) | [`tests/`](tests/) | protocol ✔ P2; web-e2e, android-conformance, interop ☐ |
 | Operator's own messages (human-written) | [`docs/human-input/OPERATOR_MESSAGES.md`](docs/human-input/OPERATOR_MESSAGES.md) | ✔ |
 | Workflow gap analysis | [`docs/planning/workflow-gap-analysis.md`](docs/planning/workflow-gap-analysis.md) | ✔ |
-| Traceability (BR/SC → spec → AC → test) | [`docs/product/TRACEABILITY.md`](docs/product/TRACEABILITY.md) | template ✔, rows ☐ P1 |
-| Per-feature run logs and retros | [`docs/runs/INDEX.md`](docs/runs/INDEX.md), [`docs/retros/`](docs/retros/) | index ✔, runs ☐ |
+| Traceability (BR/SC → spec → AC → test) | [`docs/product/TRACEABILITY.md`](docs/product/TRACEABILITY.md) | ✔ rows for F1 to F5 |
+| Per-feature run logs and retros | [`docs/runs/INDEX.md`](docs/runs/INDEX.md), [`docs/retros/`](docs/retros/) | index ✔, retros P0 to P2 ✔, D1 ☐ |
 | Design principles | [`DESIGN.md`](DESIGN.md) | ✔ draft |
 | Agent setup | [`AGENTS.md`](AGENTS.md), [`CLAUDE.md`](CLAUDE.md) | ✔ draft |
 | Decisions log | [`docs/decisions/`](docs/decisions/) | ✔ |

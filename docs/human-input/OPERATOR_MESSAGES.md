@@ -257,3 +257,13 @@ You can now start the next step in the plan
 ````text
 [attachment: send-back.zip, the output of `smoke_build.py --app all` after installing Gradle]
 ````
+
+---
+
+## OM-0021 · 2026-10-14 12:45 — Go for session B, web first
+
+**AI note:** _Triggered: session B starts with `/generate web` on the operator's machine (Claude Pro subscription, usage measured with `/status` before and after); Android follows after the web run is measured and checked._
+
+````text
+sounds good, we can move forward with web first, lets generate it
+````

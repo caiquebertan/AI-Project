@@ -247,3 +247,13 @@ lets pause, I'll need a new fresh session of tokens for this, I let you know whe
 ````text
 You can now start the next step in the plan
 ````
+
+---
+
+## OM-0020 · 2026-10-14 12:04 — Smoke session A results sent back
+
+**AI note:** _Triggered: the operator sent `send-back.zip` of the second smoke run (Android and web PASS). Verified wrapper, lockfile and pins committed to the templates; next step is session B, the first `/generate`._
+
+````text
+[attachment: send-back.zip, the output of `smoke_build.py --app all` after installing Gradle]
+````

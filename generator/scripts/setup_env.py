@@ -21,9 +21,9 @@ from pathlib import Path
 import awarelib as lib
 import preflight
 
-MIN = {"node": 22, "java": 17}                  # minimum major versions (python: 3.10, see status)
+MIN = {"node": 22, "java": 21}                  # minimum major versions (JDK 21: design §5, Robolectric SDK 35) (python: 3.10, see status)
 OPTIONAL = {"playwright"}                       # reported, never fails --check (best-effort probe)
-SDK_PKGS = '"platform-tools" "platforms;android-35" "build-tools;35.0.0"'  # exact pins arrive at P3
+SDK_PKGS = '"platform-tools" "platforms;android-35" "build-tools;35.0.0"'  # compileSdk 35 (templates); TBD-verify in smoke session A
 NPM = {"claude": "npm install -g @anthropic-ai/claude-code", "playwright": "npx playwright install"}
 
 # OS -> tool -> install commands. Commands starting with "sudo" are always confirmed by hand.
@@ -31,7 +31,7 @@ INSTALL = {
     "macos": {
         "python": ["brew install python@3.12"], "git": ["brew install git"],
         "node": ["brew install node@22", "brew link --overwrite --force node@22"],
-        "java": ["brew install --cask temurin@17"],
+        "java": ["brew install --cask temurin@21"],
         "android-sdk": ["brew install --cask android-commandlinetools",
                         f'yes | sdkmanager --sdk_root="$(brew --prefix)/share/android-commandlinetools" {SDK_PKGS}'],
     },
@@ -39,21 +39,21 @@ INSTALL = {
         "python": ["sudo apt-get install -y python3"], "git": ["sudo apt-get install -y git"],
         "node": ["curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -",
                  "sudo apt-get install -y nodejs"],
-        "java": ["sudo apt-get install -y openjdk-17-jdk"],
+        "java": ["sudo apt-get install -y openjdk-21-jdk"],
         "android-sdk": ["sudo apt-get install -y android-sdk sdkmanager",
                         f'sudo sdkmanager --sdk_root=/usr/lib/android-sdk {SDK_PKGS}'],
     },
     "windows": {
         "python": ["winget install -e --id Python.Python.3.12"], "git": ["winget install -e --id Git.Git"],
         "node": ["winget install -e --id OpenJS.NodeJS.LTS"],
-        "java": ["winget install -e --id EclipseAdoptium.Temurin.17.JDK"],
+        "java": ["winget install -e --id EclipseAdoptium.Temurin.21.JDK"],
         "android-sdk": ["winget install -e --id Google.AndroidStudio  (then SDK Manager: install an Android platform)"],
     },
 }
 HINTS = {  # unknown OS: text only, nothing is run
     "python": "https://www.python.org/downloads/", "git": "https://git-scm.com/downloads",
     "node": "https://nodejs.org/ (22 LTS, includes npm)", "npm": "installed with Node.js",
-    "java": "https://adoptium.net/ (JDK 17+)",
+    "java": "https://adoptium.net/ (JDK 21+)",
     "android-sdk": "https://developer.android.com/studio (command-line tools, then sdkmanager)",
     "claude": NPM["claude"], "playwright": NPM["playwright"],
 }

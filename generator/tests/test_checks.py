@@ -206,14 +206,26 @@ class RegenCheck(unittest.TestCase):
                    {"app": "web", "ok": False, "steps": [{"step": "generate"}]}]
         self.assertEqual(regen_check.summary(reports), "android PASS, web FAIL (generate)")
 
-    def test_real_run_fails_loudly_while_unconfigured(self):
-        if not CONFIG["generate_model"].startswith("TBD"):
-            self.skipTest("model pinned; covered by P3 regen runs")
+    def test_placeholder_config_is_reported_as_unconfigured(self):
+        import copy
+        cfg = copy.deepcopy(CONFIG)
+        cfg["generate_model"] = "TBD-x"
+        cfg["apps"]["web"]["build"] = "TBD-y"
         with tempfile.TemporaryDirectory() as tmp:
-            res = run_script("regen_check.py", "--root", tmp, "--app", "web")
-            self.assertEqual(res.returncode, lib.EXIT_FAIL)
-            self.assertIn("not configured", res.stderr)
-            self.assertFalse((Path(tmp) / ".work").exists())
+            p = regen_check.plan("web", cfg, Path(tmp), "HEAD", False, "s", None)
+        issues = regen_check.unconfigured(p)
+        self.assertEqual(len(issues), 2, issues)
+
+    def test_pinned_config_has_no_placeholders_and_adds_post_checks(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            p = regen_check.plan("android", CONFIG, Path(tmp), "HEAD", False, "s", None)
+        self.assertEqual(regen_check.unconfigured(p), [])
+        names = [s[0] for s in p["steps"]]
+        self.assertEqual(names[-4:], ["build", "test", "templates", "headers"])
+        generate = dict((s[0], s[1]) for s in p["steps"])["generate"]
+        self.assertIn(f"--model {CONFIG['generate_model']}", generate)
+        self.assertIn("--max-turns", generate)
+        self.assertNotIn("{", generate)
 
 
 # Decision 0015: every commit is authored by the operator identity; the Agent trailer carries the role.

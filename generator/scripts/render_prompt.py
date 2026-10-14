@@ -12,7 +12,7 @@ Generator prompt (variables come from generator/config/generator.json):
 left unfilled is an error, so a prompt never reaches an agent half-rendered.
 --generate lists the shared platform inputs (generate.platform_shared) and warns on stderr
 when the spec version is a draft (it still renders). --generate fails with "generator not yet configured for <app>" until the
-app's conventions file exists (P3).
+app's conventions file exists.
 """
 from __future__ import annotations
 
@@ -61,13 +61,15 @@ def generate_vars(app: str, module: str, root: Path, cfg: dict) -> dict:
     a, gen = cfg["apps"][app], cfg["generate"]
     if not (root / a["conventions"]).exists():
         raise RenderError(f"generator not yet configured for {app}: {a['conventions']} is missing "
-                          "(conventions and templates arrive in P3)")
+                          "(conventions live in generator/conventions/)")
     version = spec_version(root, gen)
     return {
         "app": app, "app_dir": a["dir"], "module_scope": module, "spec_version": version,
         "spec_is_draft": "yes" if is_draft(version, gen) else "no",
         "generator_commit": lib.git_head(root), "model_id": cfg["generate_model"],
         "build_cmd": a["build"], "test_cmd": a["test"], "self_repair_max": cfg["self_repair_max"],
+        "self_repair_total_max": cfg["self_repair_total_max"],
+        "logs_dir": gen["logs_dir"].format(app=app), "result_out": gen["result_out"].format(app=app),
         "spec_index": gen["spec_index"], "spec_dirs": ", ".join(f"`{d}`" for d in gen["spec_dirs"]),
         "platform_shared": ", ".join(f"`{f}`" for f in gen["platform_shared"]),
         "platform_spec": a["platform_spec"], "conventions_path": a["conventions"],

@@ -9,14 +9,17 @@ result is one line per app plus the overall PASS/FAIL (exit 0 only if every app 
 Per app:
   1. fresh checkout of --ref (git worktree under .work/wt/, or --clone)
   2. delete clients/<app>
-  3. run the generate command from config (default: claude -p "/generate {app}" --model {model})
-  4. run the app's build and test commands from config inside clients/<app>
-  5. boundary check: `git status --porcelain` shows changes only under clients/<app>/
-  6. write a JSON report to .work/regen/ and remove the checkout (unless --keep)
+  3. run the generate command from config (default:
+     claude -p "/generate {app}" --model {model} {claude_flags}, flags from generate.claude_flags)
+  4. boundary check: `git status --porcelain` shows changes only under clients/<app>/
+  5. run the app's build and test commands from config inside clients/<app>
+  6. apply_templates.py --check (template-owned files unchanged) and check_headers.py --strict
+     (manifest == tree, headers); generator design §3.5
+  7. write a JSON report to .work/regen/ and remove the checkout (unless --keep)
 
---dry-run prints the steps without executing anything. Until P3 pins the
-model and build/test commands (values starting with "TBD"), a real run fails
-loudly before touching anything.
+--dry-run prints the steps without executing anything. If the model or a
+build/test command is still a placeholder (value starting with "TBD"), a real
+run fails loudly before touching anything.
 
 Example:
   regen_check.py --app all --dry-run
@@ -49,9 +52,12 @@ def plan(app: str, cfg: dict, root: Path, ref: str, clone: bool, stamp: str, gen
         "steps": [
             ("checkout", checkout, root),
             ("delete", f"rm -rf {shlex.quote(a['dir'])}", wt),
-            ("generate", (generate_cmd or cfg["regen"]["generate_cmd"]).format(app=app, model=model), wt),
+            ("generate", (generate_cmd or cfg["regen"]["generate_cmd"]).format(
+                app=app, model=model, claude_flags=cfg["generate"].get("claude_flags", "")).strip(), wt),
             ("build", a["build"], wt / a["dir"]),
             ("test", a["test"], wt / a["dir"]),
+            ("templates", f"python3 generator/scripts/apply_templates.py --app {app} --check", wt),
+            ("headers", f"python3 generator/scripts/check_headers.py --app {app} --strict", wt),
         ],
     }
 

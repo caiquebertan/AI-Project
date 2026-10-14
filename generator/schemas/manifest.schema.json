@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Generated client manifest (clients/<app>/.generated)",
-  "description": "Written by /generate as its last step (WORKFLOW §3). Proposed at P0 for check_headers.py; the tech lead confirms it with the generator design at P3. Paths are relative to clients/<app>/ and exclude the manifest itself.",
+  "description": "Written by /generate as its last step (WORKFLOW §3) with check_headers.py --write-manifest. Confirmed by the generator design (P3, §3.3), which adds the optional fields origin, claude_code_version, self_repair_attempts and checkpoints (backward-compatible). model_id is the model that actually ran. Paths are relative to clients/<app>/ and exclude the manifest itself.",
   "type": "object",
   "required": ["app", "spec_version", "generator_commit", "model_id", "generated_at", "files"],
   "properties": {
@@ -10,6 +10,19 @@
     "generator_commit": {"type": "string", "pattern": "^[0-9a-f]{7,40}$"},
     "model_id": {"type": "string"},
     "generated_at": {"type": "string"},
+    "claude_code_version": {"type": ["string", "null"]},
+    "self_repair_attempts": {"type": "integer", "minimum": 0},
+    "checkpoints": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["attempts", "result"],
+        "properties": {
+          "attempts": {"type": "integer", "minimum": 0},
+          "result": {"type": ["string", "null"]}
+        }
+      }
+    },
     "files": {
       "type": "array",
       "items": {
@@ -17,7 +30,8 @@
         "required": ["path", "sha256"],
         "properties": {
           "path": {"type": "string"},
-          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "origin": {"enum": ["template", "model"]}
         }
       }
     }

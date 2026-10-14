@@ -20,11 +20,11 @@ So agents can write and verify everything that is pure Python (the harness, the 
 | Python 3.10+ | harness scripts, server, protocol tests | standard library only |
 | Git | history, worktrees, regen-check | |
 | Claude Code CLI (`claude`) | `/generate`, `/pipeline` | logged in |
-| JDK 17 or newer | Android build | 21 is known to work as the Gradle host JDK (exact version pinned at P3) |
-| Android SDK | Android build and JVM tests | `ANDROID_HOME` set; platform and build-tools versions pinned at P3; command-line tools or Android Studio |
-| Node.js 22 LTS and npm | web build, Vitest, Playwright | exact version pinned at P3 |
+| JDK 21 (Temurin recommended) | Android build | Gradle host JDK; Robolectric tests for SDK 35 need a JDK 21 runtime; bytecode targets 17 (generator design §2.5, P3) |
+| Android SDK | Android build and JVM tests | `ANDROID_HOME` set; `platforms;android-35` and `build-tools;35.0.0` (compileSdk 35, P3; TBD-verify in smoke session A); command-line tools or Android Studio |
+| Node.js 22 or newer, and npm | web build, Vitest, Playwright | `engines >=22` (decision 0017 Q7); the actual version is recorded by smoke session A |
 | Network access to: npm registry, Maven Central, Google Maven, Gradle plugin portal | dependency download on first build | an offline cache is out of scope |
-| Gradle | optional | the generated Android project ships a Gradle wrapper |
+| Gradle | once, for smoke session A | produces the Gradle wrapper (`gradle wrapper`) the templates ship afterwards (`brew install gradle`); not needed after that |
 | Playwright browsers | web UI/e2e tests | installed with `npx playwright install` |
 
 Not required: an Android emulator (decision 0002 Q19). Emulator runs are an optional extra.
@@ -36,7 +36,7 @@ python3 generator/scripts/preflight.py            # report
 python3 generator/scripts/preflight.py --strict   # exit 1 if a required tool is missing
 ```
 
-`--strict` must pass on the operator's machine before Phase 3 (generator) starts. It checks tool presence and versions only: it does **not** check registry access (npm, Maven Central, Google Maven, Gradle plugin portal) and does **not** check that the Playwright browsers are installed. The first `/generate` is the real network check; dependency download errors there are `ENV_FAILURE`, not a generator bug. `setup_env.py` (below) adds a best-effort Playwright cache check.
+`--strict` must pass on the operator's machine before Phase 3 (generator) starts. It checks tool presence and versions only: it does **not** check registry access (npm, Maven Central, Google Maven, Gradle plugin portal) and does **not** check that the Playwright browsers are installed. The real network check is the token-free smoke session A (`python3 generator/scripts/smoke_build.py --app all`; steps in `docs/runs/P3/operator-checklist.md`), which builds the templates before the first `/generate`; dependency download errors there and in `/generate` are classified `ENV` (`ENV_FAILURE`), not a generator bug. `setup_env.py` (below) adds a best-effort Playwright cache check.
 
 ## Set it up
 

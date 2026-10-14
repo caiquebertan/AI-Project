@@ -11,6 +11,7 @@ Android: if the templates have no wrapper yet, `gradle wrapper --gradle-version 
 <smoke_dir>/wrapper-bootstrap (needs a local `gradle`, e.g. `brew install gradle`); the published
 sha256 sums of the distribution and of the wrapper jar are fetched from services.gradle.org.
 Web: if the templates have no lockfile yet, `npm install` creates it before the build.
+Once the templates carry these files (verified in session A, 2026-10-14) both steps are skipped.
 Neither step touches clients/ or the templates; DEV commits the returned files to generator/templates/.
 
 Examples:
@@ -57,9 +58,11 @@ def gradle_version(tdir: Path) -> str:
     return m.group(1)
 
 
-def plan_app(app: str, cfg: dict, root: Path, smoke_root: Path) -> dict:
-    """Ordered steps for one app; each step is (name, command, shell, cwd, env_extra)."""
-    tdir, spec = at.load_template(app, cfg)
+def plan_app(app: str, cfg: dict, root: Path, smoke_root: Path, harness: Path = lib.HARNESS_ROOT) -> dict:
+    """Ordered steps for one app; each step is (name, command, shell, cwd, env_extra).
+
+    The wrapper and npm-install steps appear only while the template files are missing (idempotent re-runs)."""
+    tdir, spec = at.load_template(app, cfg, harness)
     out = smoke_root / app
     a = cfg["apps"][app]
     pending = at.pending(tdir, spec)

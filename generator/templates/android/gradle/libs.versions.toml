@@ -1,6 +1,6 @@
 # {{header}}
 # All pins of the Android client (PLAT-ANDROID-001). The catalog is closed: the generator never adds an entry.
-# Every version below is TBD-verify-on-operator-machine until smoke session A passes (generator design §2.5, §5).
+# Versions verified by smoke session A on 2026-10-14 (operator's machine): Android build, Robolectric unit tests and Room all passed with these pins (generator design §2.5, §5).
 [versions]
 compileSdk = "35"
 targetSdk = "35"

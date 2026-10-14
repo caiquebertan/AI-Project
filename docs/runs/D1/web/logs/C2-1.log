@@ -1,0 +1,13 @@
+$ npx vitest run src/data
+(cwd /Users/caiquebertan/Documents/Aware project/clients/web)
+
+ RUN  v3.2.4 /Users/caiquebertan/Documents/Aware project/clients/web
+
+ ✓ src/data/adapters.test.ts (5 tests) 2ms
+ ✓ src/data/fetchTransport.test.ts (10 tests) 28ms
+
+ Test Files  2 passed (2)
+      Tests  15 passed (15)
+   Start at  13:21:07
+   Duration  273ms (transform 60ms, setup 0ms, collect 74ms, tests 30ms, environment 0ms, prepare 86ms)
+

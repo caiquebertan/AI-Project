@@ -1,0 +1,21 @@
+$ npx vitest run src/core
+(cwd /Users/caiquebertan/Documents/Aware project/clients/web)
+
+ RUN  v3.2.4 /Users/caiquebertan/Documents/Aware project/clients/web
+
+ ✓ src/core/ordering.test.ts (5 tests) 2ms
+ ✓ src/core/constants.test.ts (2 tests) 2ms
+ ✓ src/core/timeZoneDenylist.test.ts (2 tests) 4ms
+ ✓ src/core/validation.test.ts (9 tests) 3ms
+ ✓ src/core/outcome.test.ts (5 tests) 2ms
+ ✓ src/core/wire.test.ts (5 tests) 3ms
+ ✓ src/core/timeText.test.ts (9 tests) 12ms
+ ✓ src/core/appendixA.test.ts (4 tests) 166ms
+ ✓ src/core/engine.test.ts (28 tests) 299ms
+ ✓ src/core/connection.test.ts (11 tests) 342ms
+
+ Test Files  10 passed (10)
+      Tests  80 passed (80)
+   Start at  13:19:45
+   Duration  658ms (transform 212ms, setup 0ms, collect 484ms, tests 834ms, environment 1ms, prepare 378ms)
+

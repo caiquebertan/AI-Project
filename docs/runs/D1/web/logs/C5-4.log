@@ -1,0 +1,32 @@
+$ npm test
+(cwd /Users/caiquebertan/Documents/Aware project/clients/web)
+
+> aware-web@0.0.0 test
+> vitest run --reporter=default --reporter=junit --outputFile.junit=test-results/junit.xml
+
+
+ RUN  v3.2.4 /Users/caiquebertan/Documents/Aware project/clients/web
+
+ ✓ src/core/constants.test.ts (2 tests) 2ms
+ ✓ src/core/wire.test.ts (5 tests) 3ms
+ ✓ src/core/timeZoneDenylist.test.ts (2 tests) 5ms
+ ✓ src/core/ordering.test.ts (5 tests) 2ms
+ ✓ src/core/validation.test.ts (9 tests) 3ms
+ ✓ src/core/outcome.test.ts (5 tests) 2ms
+ ✓ src/core/timeText.test.ts (9 tests) 14ms
+ ✓ src/data/adapters.test.ts (5 tests) 3ms
+ ✓ src/data/fetchTransport.test.ts (10 tests) 29ms
+ ✓ src/testing/awareHook.test.ts (4 tests) 10ms
+ ✓ src/core/appendixA.test.ts (4 tests) 177ms
+ ✓ src/core/engine.test.ts (28 tests) 317ms
+ ✓ src/core/connection.test.ts (11 tests) 374ms
+ ✓ src/features/login/LoginScreen.test.tsx (4 tests) 32ms
+ ✓ src/app/App.test.tsx (5 tests) 57ms
+ ✓ src/features/chat/ChatScreen.test.tsx (18 tests) 255ms
+
+ Test Files  16 passed (16)
+      Tests  126 passed (126)
+   Start at  13:25:04
+   Duration  1.04s (transform 391ms, setup 0ms, collect 1.06s, tests 1.28s, environment 615ms, prepare 670ms)
+
+JUNIT report written to /Users/caiquebertan/Documents/Aware project/clients/web/test-results/junit.xml

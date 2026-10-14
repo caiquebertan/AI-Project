@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="126" failures="0" errors="0" time="1.284947791">
+    <testsuite name="src/app/App.test.tsx" timestamp="2026-10-14T16:25:05.878Z" hostname="MacBook-Pro-de-Caique.local" tests="5" failures="0" errors="0" skipped="0" time="0.057238667">
+        <testcase classname="src/app/App.test.tsx" name="app &gt; CORE-LOGIN-001 AC-F1-1 a fresh client shows only the login screen, no header" time="0.015637791">
+        </testcase>
+        <testcase classname="src/app/App.test.tsx" name="app &gt; CORE-LOGIN-004 CORE-VISIBLE-001 AC-F1-2 Alice logs in as alice and sees an empty list at once, without the server" time="0.016311041">
+        </testcase>
+        <testcase classname="src/app/App.test.tsx" name="app &gt; CORE-LOGIN-005 CORE-VISIBLE-004 AC-F1-5 AC-F3-3 after a relaunch the list screen shows with stored conversations and pending messages; the switch is off" time="0.0075925">
+        </testcase>
+        <testcase classname="src/app/App.test.tsx" name="app &gt; CORE-LOGIN-006 AC-F1-7 there is no control to log out or change the name" time="0.015333625">
+        </testcase>
+        <testcase classname="src/app/App.test.tsx" name="app &gt; PLAT-HOOK-009 PLAT-WEB-011 PLAT-WEB-024 the composition root wires fetch to the configured base URL and localStorage under aware.v1" time="0.00192">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/core/appendixA.test.ts" timestamp="2026-10-14T16:25:05.879Z" hostname="MacBook-Pro-de-Caique.local" tests="4" failures="0" errors="0" skipped="0" time="0.176632666">
+        <testcase classname="src/core/appendixA.test.ts" name="protocol Appendix A replay against the fake server &gt; PLAT-WEB-013 CORE-SEQ-001 CORE-SEQ-002 CORE-SEQ-004 CORE-ORDER-005 SC-1..SC-8 step by step" time="0.1048015">
+        </testcase>
+        <testcase classname="src/core/appendixA.test.ts" name="protocol Appendix A replay against the fake server &gt; CORE-CONN-004 Appendix A variant: going offline during a send still applies the ack" time="0.024852875">
+        </testcase>
+        <testcase classname="src/core/appendixA.test.ts" name="protocol Appendix A replay against the fake server &gt; CORE-MSG-001 CORE-DEDUPE-003 CORE-FLUSH-005 SX-2 AC-F3-14 a message the server already holds becomes sent once with its original seq" time="0.020304958">
+        </testcase>
+        <testcase classname="src/core/appendixA.test.ts" name="protocol Appendix A replay against the fake server &gt; SX-1 AC-F3-13 login with no server, queue, relaunch, the message is sent once when the server appears" time="0.026179541">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/core/connection.test.ts" timestamp="2026-10-14T16:25:05.879Z" hostname="MacBook-Pro-de-Caique.local" tests="11" failures="0" errors="0" skipped="0" time="0.373957791">
+        <testcase classname="src/core/connection.test.ts" name="PLAT-HOOK-014 connection cycle &gt; CORE-CONN-004 CORE-CONN-002 CORE-OFFLINE-002 (a) after setOffline(true) no call starts, even with a queued message" time="0.037008833">
+        </testcase>
+        <testcase classname="src/core/connection.test.ts" name="PLAT-HOOK-014 connection cycle &gt; CORE-CONN-004 CORE-CONN-001 (b) the same with setNetworkAvailable(false) and with the monitor reporting no network" time="0.088776417">
+        </testcase>
+        <testcase classname="src/core/connection.test.ts" name="PLAT-HOOK-014 connection cycle &gt; CORE-CONN-004 CORE-OFFLINE-007 (c) an E3 in flight is not cancelled, its ack is applied and nothing follows" time="0.038457791">
+        </testcase>
+        <testcase classname="src/core/connection.test.ts" name="PLAT-HOOK-014 connection cycle &gt; CORE-CONN-004 CORE-CURSOR-002 (c) an E4 in flight is not cancelled, its envelopes are stored, the cursor advances and nothing follows" time="0.028343292">
+        </testcase>
+        <testcase classname="src/core/connection.test.ts" name="PLAT-HOOK-014 connection cycle &gt; CORE-CONN-005 CORE-SESSION-003 CORE-OFFLINE-005 (d) after setOffline(false) the next call is E2 and starts at once" time="0.031547042">
+        </testcase>
+        <testcase classname="src/core/connection.test.ts" name="PLAT-HOOK-014 connection cycle &gt; CORE-CONN-005 a cycle requested while a request is in flight starts as soon as it completes, with a session" time="0.038635666">
+        </testcase>
+        <testcase classname="src/core/connection.test.ts" name="PLAT-HOOK-014 connection cycle &gt; CORE-CONN-007 CORE-CONN-008 (e) one call in flight; the next cycle starts exactly CYCLE_INTERVAL_MS after the last call ended, also after failures" time="0.040926166">
+        </testcase>
+        <testcase classname="src/core/connection.test.ts" name="PLAT-HOOK-014 connection cycle &gt; CORE-CONN-006 a cycle runs session, catch-up, then flush; an idle cycle is one E4" time="0.013144291">
+        </testcase>
+        <testcase classname="src/core/connection.test.ts" name="PLAT-HOOK-014 connection cycle &gt; CORE-CONN-003 CORE-OFFLINE-006 states: connecting until a session and then a poll succeed; connecting again after a failure" time="0.035159625">
+        </testcase>
+        <testcase classname="src/core/connection.test.ts" name="PLAT-HOOK-014 connection cycle &gt; CORE-CONN-005 CORE-OFFLINE-001 a launch with a stored identity starts a cycle at once with the switch off" time="0.016741084">
+        </testcase>
+        <testcase classname="src/core/connection.test.ts" name="PLAT-HOOK-014 connection cycle &gt; CORE-FLUSH-003 CORE-RECEIVE-002 waiting messages are stored before any pending message is sent" time="0.004132083">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/core/constants.test.ts" timestamp="2026-10-14T16:25:05.880Z" hostname="MacBook-Pro-de-Caique.local" tests="2" failures="0" errors="0" skipped="0" time="0.001740542">
+        <testcase classname="src/core/constants.test.ts" name="constants &gt; CORE-CONST-001 PLAT-WEB-014 constants equal spec/core/schema/constants.json" time="0.001229958">
+        </testcase>
+        <testcase classname="src/core/constants.test.ts" name="constants &gt; CORE-CAP-002 a core-only client declares no capabilities" time="0.000069042">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/core/engine.test.ts" timestamp="2026-10-14T16:25:05.880Z" hostname="MacBook-Pro-de-Caique.local" tests="28" failures="0" errors="0" skipped="0" time="0.31734925">
+        <testcase classname="src/core/engine.test.ts" name="login &gt; CORE-LOGIN-002 CORE-LOGIN-004 CORE-NAME-004 CORE-NAME-005 login is local, stores the canonical name, works with no server" time="0.020166541">
+        </testcase>
+        <testcase classname="src/core/engine.test.ts" name="login &gt; CORE-LOGIN-003 an invalid name stores nothing" time="0.000627791">
+        </testcase>
+        <testcase classname="src/core/engine.test.ts" name="login &gt; CORE-LOGIN-006 the identity cannot be changed once stored" time="0.004141834">
+        </testcase>
+        <testcase classname="src/core/engine.test.ts" name="login &gt; CORE-CAP-002 CORE-SESSION-001 the session declares an empty capability list" time="0.004196041">
+        </testcase>
+        <testcase classname="src/core/engine.test.ts" name="send and outbox &gt; CORE-OUTBOX-001 CORE-TEXT-004 CORE-ENV-002 CORE-ENV-003 CORE-ENV-006 a valid text joins the outbox as pending" time="0.001114542">
+        </testcase>
+        <testcase classname="src/core/engine.test.ts" name="send and outbox &gt; CORE-TEXT-004 CORE-SEND-004 invalid texts are never enqueued" time="0.000725792">
+        </testcase>
+        <testcase classname="src/core/engine.test.ts" name="send and outbox &gt; CORE-TEXT-005 CORE-SEND-006 text is kept exactly as composed" time="0.011432625">
+        </testcase>
+        <testcase classname="src/core/engine.test.ts" name="send and outbox &gt; CORE-OUTBOX-006 CORE-SEQ-002 enqueue order is strictly increasing and persisted" time="0.00065125">
+        </testcase>
+        <testcase classname="src/core/engine.test.ts" name="send and outbox &gt; CORE-CONN-007 queuing a message does not start a cycle" time="0.024344417">
+        </testcase>
+        <testcase classname="src/core/engine.test.ts" name="send and outbox &gt; CORE-OUTBOX-003 CORE-OUTBOX-004 CORE-FLUSH-002 entries are sent one at a time in insertion order across conversations" time="0.004090625">
+        </testcase>
+        <testcase classname="src/core/engine.test.ts" name="send and outbox &gt; CORE-MSG-004 CORE-SEND-008 CORE-OUTBOX-004 a timeout is not an ack: the message stays pending at the head" time="0.016164792">
+        </testcase>
+        <testcase classname="src/core/engine.test.ts" name="send and outbox &gt; CORE-MSG-005 CORE-DEDUPE-003 CORE-FLUSH-005 AC-F3-9 a lost ack is resent with identical fields and becomes sent once with the original seq" time="0.016008708">
+        </testcase>
+        <testcase classname="src/core/engine.test.ts" name="send and outbox &gt; CORE-OUTBOX-005 CORE-ERR-003 a class P outcome removes and logs the message and the flush continues" time="0.010802459">
+        </testcase>
+        <testcase classname="src/core/engine.test.ts" name="send and outbox &gt; CORE-OUTBOX-005 the HTTP status is logged when the body has no valid error code" time="0.010832958">
+        </testcase>
+        <testcase classname="src/core/engine.test.ts" name="send and outbox &gt; CORE-SEND-011 CORE-DEDUPE-004 CORE-ENV-003 a note to self is shown once and becomes sent, never received" time="0.013284167">
+        </testcase>
+        <testcase classname="src/core/engine.test.ts" name="receive, cursor and dedupe &gt; CORE-RECEIVE-001 CORE-MSG-006 CORE-CURSOR-002 a delivered message is stored as received, then the cursor advances" time="0.010654166">
+        </testcase>
+        <testcase classname="src/core/engine.test.ts" name="receive, cursor and dedupe &gt; CORE-EXT-002 CORE-EXT-004 CORE-RECEIVE-005 unknown types and invalid payloads are skipped and the cursor moves past them" time="0.018985125">
+        </testcase>
+        <testcase classname="src/core/engine.test.ts" name="receive, cursor and dedupe &gt; CORE-EXT-004 a text envelope with an unusable payload is skipped" time="0.010418875">
+        </testcase>
+        <testcase classname="src/core/engine.test.ts" name="receive, cursor and dedupe &gt; CORE-DEDUPE-001 CORE-DEDUPE-002 CORE-RECEIVE-004 a message delivered twice is stored once" time="0.0284705">
+        </testcase>
+        <testcase classname="src/core/engine.test.ts" name="receive, cursor and dedupe &gt; CORE-CURSOR-003 CORE-CONN-006 catch-up repeats polls while has_more and sends the cursor as after" time="0.005182917">
+        </testcase>
+        <testcase classname="src/core/engine.test.ts" name="receive, cursor and dedupe &gt; CORE-CURSOR-001 CORE-EPOCH-003 cursor and epoch are persisted together and reused after a relaunch" time="0.014283375">
+        </testcase>
+        <testcase classname="src/core/engine.test.ts" name="epoch &gt; CORE-EPOCH-004 CORE-EPOCH-005 CORE-VISIBLE-008 AC-F3-10 a server restart clears sent and received messages, keeps and delivers pending ones" time="0.023809">
+        </testcase>
+        <testcase classname="src/core/engine.test.ts" name="epoch &gt; CORE-EPOCH-005 on 409 epoch_mismatch nothing stored changes and the next cycle starts with a session" time="0.023893375">
+        </testcase>
+        <testcase classname="src/core/engine.test.ts" name="epoch &gt; CORE-SESSION-004 a session answering another name is a failed request" time="0.013960834">
+        </testcase>
+        <testcase classname="src/core/engine.test.ts" name="relaunch and snapshot &gt; CORE-LOGIN-005 CORE-OFFLINE-004 CORE-OUTBOX-002 PLAT-HOOK-011 relaunch keeps identity and pending order, the switch starts off" time="0.003738625">
+        </testcase>
+        <testcase classname="src/core/engine.test.ts" name="relaunch and snapshot &gt; PLAT-HOOK-007 PLAT-HOOK-008 PLAT-HOOK-013 the snapshot reflects persisted state in CORE-SEQ-002 order" time="0.010715916">
+        </testcase>
+        <testcase classname="src/core/engine.test.ts" name="relaunch and snapshot &gt; PLAT-WEB-005 getSnapshot returns the same object until state changes" time="0.002482208">
+        </testcase>
+        <testcase classname="src/core/engine.test.ts" name="relaunch and snapshot &gt; CORE-EXT-003 only the core type text is sent" time="0.010768041">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/core/ordering.test.ts" timestamp="2026-10-14T16:25:05.881Z" hostname="MacBook-Pro-de-Caique.local" tests="5" failures="0" errors="0" skipped="0" time="0.001513333">
+        <testcase classname="src/core/ordering.test.ts" name="ordering &gt; CORE-SEQ-002 CORE-ORDER-001 CORE-ORDER-002 seq ascending, then pending by enqueue order" time="0.000694583">
+        </testcase>
+        <testcase classname="src/core/ordering.test.ts" name="ordering &gt; CORE-SEQ-003 CORE-ORDER-004 CORE-VISIBLE-012 created_at and times never decide the order" time="0.000080791">
+        </testcase>
+        <testcase classname="src/core/ordering.test.ts" name="ordering &gt; CORE-SEQ-004 CORE-ORDER-003 an acknowledged message takes its place by seq" time="0.000074709">
+        </testcase>
+        <testcase classname="src/core/ordering.test.ts" name="ordering &gt; CORE-SEQ-005 CORE-ORDER-006 a conversation holds exactly the messages between the two users" time="0.000097541">
+        </testcase>
+        <testcase classname="src/core/ordering.test.ts" name="ordering &gt; CORE-VISIBLE-002 CORE-VISIBLE-003 one entry per peer, newest conversation first, pending above all" time="0.000097">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/core/outcome.test.ts" timestamp="2026-10-14T16:25:05.881Z" hostname="MacBook-Pro-de-Caique.local" tests="5" failures="0" errors="0" skipped="0" time="0.002219541">
+        <testcase classname="src/core/outcome.test.ts" name="CORE-ERR-003 classes &gt; CORE-ERR-003 CORE-CONN-009 network errors and timeouts are class R on every endpoint" time="0.000627417">
+        </testcase>
+        <testcase classname="src/core/outcome.test.ts" name="CORE-ERR-003 classes &gt; CORE-ERR-003 5xx, 403, 404, 405 and 409 epoch_mismatch are class R" time="0.000276417">
+        </testcase>
+        <testcase classname="src/core/outcome.test.ts" name="CORE-ERR-003 classes &gt; CORE-ERR-003 any other 4xx on E1, E2, E4 or E5 is class R" time="0.000133792">
+        </testcase>
+        <testcase classname="src/core/outcome.test.ts" name="CORE-ERR-003 classes &gt; CORE-ERR-003 CORE-OUTBOX-005 on E3, 400, 409 id_conflict, 413 and 415 are class P with the code" time="0.000275542">
+        </testcase>
+        <testcase classname="src/core/outcome.test.ts" name="CORE-ERR-003 classes &gt; CORE-MSG-004 CORE-DEDUPE-003 200 and 201 on E3 are both acks; an invalid body is not" time="0.000369083">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/core/timeText.test.ts" timestamp="2026-10-14T16:25:05.882Z" hostname="MacBook-Pro-de-Caique.local" tests="9" failures="0" errors="0" skipped="0" time="0.014475583">
+        <testcase classname="src/core/timeText.test.ts" name="time text &gt; PLAT-WEB-021 CORE-TIME-002 CORE-VISIBLE-010 Appendix A displayed-times table" time="0.001492833">
+        </testcase>
+        <testcase classname="src/core/timeText.test.ts" name="time text &gt; PLAT-WEB-021 CORE-VISIBLE-010 AC-F2-17 AC-F2-18 local-midnight boundary and later-date prefix" time="0.000112208">
+        </testcase>
+        <testcase classname="src/core/timeText.test.ts" name="time text &gt; PLAT-WEB-021 CORE-VISIBLE-010 AC-F2-19 seconds are truncated, not rounded, two-digit fields" time="0.000090875">
+        </testcase>
+        <testcase classname="src/core/timeText.test.ts" name="time text &gt; PLAT-WEB-021 CORE-TIME-002 offset differing between the message instant and now" time="0.000069625">
+        </testcase>
+        <testcase classname="src/core/timeText.test.ts" name="time text &gt; PLAT-WEB-021 CORE-VISIBLE-011 AC-F2-22 a zone change shows at the next render" time="0.000066625">
+        </testcase>
+        <testcase classname="src/core/timeText.test.ts" name="time text &gt; PLAT-WEB-021 CORE-VISIBLE-009 no time without seq" time="0.000071833">
+        </testcase>
+        <testcase classname="src/core/timeText.test.ts" name="time text &gt; CORE-TIME-001 CORE-ENV-006 instants are written as UTC strings with three fraction digits" time="0.000368208">
+        </testcase>
+        <testcase classname="src/core/timeText.test.ts" name="default providers &gt; PLAT-WEB-021 PLAT-WEB-019 default TimeZone offset equals -new Date(t).getTimezoneOffset()" time="0.010990875">
+        </testcase>
+        <testcase classname="src/core/timeText.test.ts" name="default providers &gt; PLAT-WEB-019 default Clock is Date.now()" time="0.00064175">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/core/timeZoneDenylist.test.ts" timestamp="2026-10-14T16:25:05.882Z" hostname="MacBook-Pro-de-Caique.local" tests="2" failures="0" errors="0" skipped="0" time="0.005098625">
+        <testcase classname="src/core/timeZoneDenylist.test.ts" name="no hardcoded time zone &gt; CORE-TIME-003 PLAT-HOOK-015 PLAT-WEB-023 production sources and build configuration hold no zone or offset" time="0.00442575">
+        </testcase>
+        <testcase classname="src/core/timeZoneDenylist.test.ts" name="no hardcoded time zone &gt; CORE-TIME-003 PLAT-HOOK-015 the denylist catches zone ids, offsets and abbreviations" time="0.00025125">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/core/validation.test.ts" timestamp="2026-10-14T16:25:05.882Z" hostname="MacBook-Pro-de-Caique.local" tests="9" failures="0" errors="0" skipped="0" time="0.002946875">
+        <testcase classname="src/core/validation.test.ts" name="names &gt; CORE-NAME-001 accepts 1..32 ASCII letters, digits, _ and - exactly as typed" time="0.000713875">
+        </testcase>
+        <testcase classname="src/core/validation.test.ts" name="names &gt; CORE-NAME-002 CORE-NAME-004 canonical form is ASCII lowercase only" time="0.000130292">
+        </testcase>
+        <testcase classname="src/core/validation.test.ts" name="names &gt; CORE-NAME-005 validation is local and synchronous" time="0.000044542">
+        </testcase>
+        <testcase classname="src/core/validation.test.ts" name="texts &gt; CORE-TEXT-002 CORE-TEXT-004 blank texts are refused" time="0.000116666">
+        </testcase>
+        <testcase classname="src/core/validation.test.ts" name="texts &gt; CORE-TEXT-003 CORE-TEXT-004 PLAT-WEB-007 limit is 4096 UTF-8 bytes, computed with TextEncoder" time="0.000255667">
+        </testcase>
+        <testcase classname="src/core/validation.test.ts" name="texts &gt; CORE-TEXT-003 PLAT-WEB-007 U+0000 and unpaired surrogates are refused by an explicit check" time="0.00009625">
+        </testcase>
+        <testcase classname="src/core/validation.test.ts" name="wire values &gt; CORE-ENV-002 ids are lowercase UUID v4" time="0.00009925">
+        </testcase>
+        <testcase classname="src/core/validation.test.ts" name="wire values &gt; CORE-ENV-004 type pattern" time="0.000067541">
+        </testcase>
+        <testcase classname="src/core/validation.test.ts" name="wire values &gt; CORE-HTTP-007 CORE-TIME-001 timestamp cases from spec/core/schema/cases/timestamp.json" time="0.000576167">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/core/wire.test.ts" timestamp="2026-10-14T16:25:05.883Z" hostname="MacBook-Pro-de-Caique.local" tests="5" failures="0" errors="0" skipped="0" time="0.003177709">
+        <testcase classname="src/core/wire.test.ts" name="wire types &gt; PLAT-WEB-014 every schema example parses into the wire types and re-serializes to an equal JSON value" time="0.002274292">
+        </testcase>
+        <testcase classname="src/core/wire.test.ts" name="wire types &gt; CORE-HTTP-005 unknown response fields are ignored" time="0.000091333">
+        </testcase>
+        <testcase classname="src/core/wire.test.ts" name="wire types &gt; CORE-ENV-001 CORE-HTTP-004 request bodies carry exactly their schema fields" time="0.000087584">
+        </testcase>
+        <testcase classname="src/core/wire.test.ts" name="wire types &gt; CORE-ENV-007 a delivered envelope needs seq and accepted_at" time="0.000070917">
+        </testcase>
+        <testcase classname="src/core/wire.test.ts" name="wire types &gt; CORE-SESSION-002 capability lists are validated" time="0.000062875">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/data/adapters.test.ts" timestamp="2026-10-14T16:25:05.883Z" hostname="MacBook-Pro-de-Caique.local" tests="5" failures="0" errors="0" skipped="0" time="0.002538209">
+        <testcase classname="src/data/adapters.test.ts" name="local store &gt; PLAT-WEB-009 CORE-OUTBOX-002 CORE-CURSOR-001 the whole state is one JSON document under aware.v1, written with one setItem" time="0.000902459">
+        </testcase>
+        <testcase classname="src/data/adapters.test.ts" name="local store &gt; PLAT-WEB-009 an unreadable document starts fresh" time="0.000069625">
+        </testcase>
+        <testcase classname="src/data/adapters.test.ts" name="connectivity monitor &gt; PLAT-WEB-008 CORE-CONN-001 network_available comes from navigator.onLine and the online/offline events" time="0.000137625">
+        </testcase>
+        <testcase classname="src/data/adapters.test.ts" name="diagnostic log &gt; PLAT-WEB-025 CORE-OUTBOX-005 each line is written with console.warn" time="0.000752709">
+        </testcase>
+        <testcase classname="src/data/adapters.test.ts" name="server address &gt; PLAT-WEB-011 CORE-HTTP-002 default, build-time variable and runtime server parameter; local hosts only" time="0.000193833">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/data/fetchTransport.test.ts" timestamp="2026-10-14T16:25:05.883Z" hostname="MacBook-Pro-de-Caique.local" tests="10" failures="0" errors="0" skipped="0" time="0.028558042">
+        <testcase classname="src/data/fetchTransport.test.ts" name="fetch Transport &gt; CORE-CAP-001 CORE-HTTP-002 E1 GET /v1/info under the configured base URL" time="0.00247175">
+        </testcase>
+        <testcase classname="src/data/fetchTransport.test.ts" name="fetch Transport &gt; CORE-HTTP-001 CORE-HTTP-003 CORE-SESSION-001 E2 POST /v1/session with a JSON body and Content-Type" time="0.000388875">
+        </testcase>
+        <testcase classname="src/data/fetchTransport.test.ts" name="fetch Transport &gt; CORE-EPOCH-002 CORE-MSG-001 CORE-DEDUPE-003 E3 POST /v1/messages?epoch= with the send form; 201 and 200 are acks" time="0.000592917">
+        </testcase>
+        <testcase classname="src/data/fetchTransport.test.ts" name="fetch Transport &gt; CORE-ERR-003 E3 class P: 400, 409 id_conflict, 413, 415" time="0.000469833">
+        </testcase>
+        <testcase classname="src/data/fetchTransport.test.ts" name="fetch Transport &gt; CORE-ERR-003 E3 class R: 403, 404, 409 epoch_mismatch, 5xx, invalid ack body" time="0.000454416">
+        </testcase>
+        <testcase classname="src/data/fetchTransport.test.ts" name="fetch Transport &gt; CORE-POLL-003 CORE-CURSOR-003 E4 GET /v1/mailboxes/&lt;name&gt;/messages with epoch and after" time="0.00032025">
+        </testcase>
+        <testcase classname="src/data/fetchTransport.test.ts" name="fetch Transport &gt; CORE-CAP-003 E5 GET /v1/users" time="0.000205417">
+        </testcase>
+        <testcase classname="src/data/fetchTransport.test.ts" name="fetch Transport &gt; CORE-ERR-003 a network error is class R" time="0.000082458">
+        </testcase>
+        <testcase classname="src/data/fetchTransport.test.ts" name="fetch Transport &gt; CORE-CONN-009 PLAT-WEB-006 a request times out after REQUEST_TIMEOUT_MS through its AbortController" time="0.02255025">
+        </testcase>
+        <testcase classname="src/data/fetchTransport.test.ts" name="fetch Transport &gt; PLAT-WEB-006 the controller is used only for the timeout: a completed request is never aborted" time="0.000440583">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/testing/awareHook.test.ts" timestamp="2026-10-14T16:25:05.884Z" hostname="MacBook-Pro-de-Caique.local" tests="4" failures="0" errors="0" skipped="0" time="0.010244583">
+        <testcase classname="src/testing/awareHook.test.ts" name="window.__AWARE__ &gt; PLAT-WEB-012 PLAT-HOOK-006 snapshot, setOffline and setNetworkAvailable drive the engine without UI" time="0.006844458">
+        </testcase>
+        <testcase classname="src/testing/awareHook.test.ts" name="window.__AWARE__ &gt; PLAT-HOOK-006 PLAT-HOOK-008 the snapshot has exactly the fields of client-snapshot.schema.json" time="0.001168833">
+        </testcase>
+        <testcase classname="src/testing/awareHook.test.ts" name="window.__AWARE__ &gt; PLAT-HOOK-006 a logged-out client reports null user and connection" time="0.000298792">
+        </testcase>
+        <testcase classname="src/testing/awareHook.test.ts" name="window.__AWARE__ &gt; PLAT-WEB-018 PLAT-HOOK-011 relaunch reloads the page" time="0.000965375">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/login/LoginScreen.test.tsx" timestamp="2026-10-14T16:25:05.884Z" hostname="MacBook-Pro-de-Caique.local" tests="4" failures="0" errors="0" skipped="0" time="0.031796667">
+        <testcase classname="src/features/login/LoginScreen.test.tsx" name="login screen &gt; CORE-LOGIN-001 PLAT-HOOK-001 shows a name field and a Continue control" time="0.015332292">
+        </testcase>
+        <testcase classname="src/features/login/LoginScreen.test.tsx" name="login screen &gt; CORE-LOGIN-003 AC-F1-3 invalid names show the fixed text, keep the typed text and log nothing in" time="0.012060334">
+        </testcase>
+        <testcase classname="src/features/login/LoginScreen.test.tsx" name="login screen &gt; CORE-LOGIN-003 the message disappears when the field is edited" time="0.001614083">
+        </testcase>
+        <testcase classname="src/features/login/LoginScreen.test.tsx" name="login screen &gt; CORE-LOGIN-002 CORE-LOGIN-004 a valid name is passed on exactly as typed; a 32-character name is valid" time="0.002359125">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/chat/ChatScreen.test.tsx" timestamp="2026-10-14T16:25:05.884Z" hostname="MacBook-Pro-de-Caique.local" tests="18" failures="0" errors="0" skipped="0" time="0.255459708">
+        <testcase classname="src/features/chat/ChatScreen.test.tsx" name="header &gt; CORE-VISIBLE-001 PLAT-HOOK-010 AC-F1-6 the header shows the name, the indicator and the Offline mode switch, off" time="0.030459333">
+        </testcase>
+        <testcase classname="src/features/chat/ChatScreen.test.tsx" name="header &gt; CORE-OFFLINE-001 CORE-OFFLINE-002 PLAT-HOOK-005 AC-F3-1 the switch sets offline_toggle and the indicator shows Offline" time="0.008273">
+        </testcase>
+        <testcase classname="src/features/chat/ChatScreen.test.tsx" name="header &gt; CORE-OFFLINE-005 CORE-OFFLINE-006 AC-F3-4 AC-F1-4 Connecting while the server cannot be reached, Online once it can" time="0.036262042">
+        </testcase>
+        <testcase classname="src/features/chat/ChatScreen.test.tsx" name="header &gt; CORE-OFFLINE-002 with the switch off and no network the indicator shows Offline while the switch reads off" time="0.005646833">
+        </testcase>
+        <testcase classname="src/features/chat/ChatScreen.test.tsx" name="conversation list &gt; CORE-VISIBLE-002 AC-F1-2 an empty list shows No conversations yet." time="0.00544825">
+        </testcase>
+        <testcase classname="src/features/chat/ChatScreen.test.tsx" name="conversation list &gt; CORE-SEND-001 CORE-SEND-003 AC-F2-1 Open with Bob opens the conversation with bob; Back returns to a list without bob" time="0.007775083">
+        </testcase>
+        <testcase classname="src/features/chat/ChatScreen.test.tsx" name="conversation list &gt; CORE-SEND-002 AC-F2-2 an invalid recipient shows the fixed text and keeps the typed text" time="0.0062895">
+        </testcase>
+        <testcase classname="src/features/chat/ChatScreen.test.tsx" name="conversation list &gt; CORE-VISIBLE-003 CORE-VISIBLE-004 PLAT-HOOK-002 AC-F2-8 newest conversation first; an arriving message moves its conversation up" time="0.032775459">
+        </testcase>
+        <testcase classname="src/features/chat/ChatScreen.test.tsx" name="conversation &gt; CORE-SEND-004 AC-F2-4 blank and too-long texts show the fixed texts, add nothing and keep the text" time="0.004687958">
+        </testcase>
+        <testcase classname="src/features/chat/ChatScreen.test.tsx" name="conversation &gt; CORE-SEND-005 CORE-SEND-007 CORE-SEND-008 PLAT-WEB-012 AC-F2-3 a sent message appears Pending at the bottom, then Sent in place" time="0.015863541">
+        </testcase>
+        <testcase classname="src/features/chat/ChatScreen.test.tsx" name="conversation &gt; PLAT-WEB-021 PLAT-HOOK-013 CORE-VISIBLE-009 AC-F2-20 message-time exists for sent and received, not for pending, and equals time_text" time="0.008842333">
+        </testcase>
+        <testcase classname="src/features/chat/ChatScreen.test.tsx" name="conversation &gt; CORE-VISIBLE-011 AC-F2-22 a zone change shows in the times without relaunch or user action" time="0.02917875">
+        </testcase>
+        <testcase classname="src/features/chat/ChatScreen.test.tsx" name="conversation &gt; CORE-SEND-006 CORE-RECEIVE-006 AC-F2-5 text is shown exactly as typed" time="0.002484">
+        </testcase>
+        <testcase classname="src/features/chat/ChatScreen.test.tsx" name="conversation &gt; CORE-RECEIVE-001 CORE-RECEIVE-003 CORE-VISIBLE-007 AC-F2-6 a received message appears by itself with Received and the sender" time="0.016535167">
+        </testcase>
+        <testcase classname="src/features/chat/ChatScreen.test.tsx" name="conversation &gt; CORE-ORDER-001 CORE-ORDER-002 CORE-ORDER-003 PLAT-HOOK-002 AC-F2-7 pending below all others, a message that becomes Sent moves to its server order" time="0.013130167">
+        </testcase>
+        <testcase classname="src/features/chat/ChatScreen.test.tsx" name="conversation &gt; CORE-SEND-010 CORE-OFFLINE-003 AC-F3-2 sending works offline and shows Pending in sending order" time="0.007141042">
+        </testcase>
+        <testcase classname="src/features/chat/ChatScreen.test.tsx" name="conversation &gt; CORE-SEND-011 AC-F2-11 a note to self appears once, written by the user, listed under the own name" time="0.018015125">
+        </testcase>
+        <testcase classname="src/features/chat/ChatScreen.test.tsx" name="conversation &gt; PLAT-HOOK-003 hook ids are unique on screen" time="0.005918417">
+        </testcase>
+    </testsuite>
+</testsuites>

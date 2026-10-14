@@ -1,0 +1,55 @@
+$ npm test
+(cwd /Users/caiquebertan/Documents/Aware project/clients/web)
+
+> aware-web@0.0.0 test
+> vitest run --reporter=default --reporter=junit --outputFile.junit=test-results/junit.xml
+
+
+ RUN  v3.2.4 /Users/caiquebertan/Documents/Aware project/clients/web
+
+ ✓ src/core/ordering.test.ts (5 tests) 2ms
+ ✓ src/core/constants.test.ts (2 tests) 2ms
+ ✓ src/core/outcome.test.ts (5 tests) 2ms
+ ✓ src/core/timeZoneDenylist.test.ts (2 tests) 5ms
+ ✓ src/core/validation.test.ts (9 tests) 3ms
+ ✓ src/core/wire.test.ts (5 tests) 3ms
+ ✓ src/core/timeText.test.ts (9 tests) 17ms
+ ✓ src/data/adapters.test.ts (5 tests) 3ms
+ ✓ src/data/fetchTransport.test.ts (10 tests) 32ms
+ ✓ src/testing/awareHook.test.ts (4 tests) 9ms
+ ✓ src/core/appendixA.test.ts (4 tests) 180ms
+ ✓ src/core/engine.test.ts (28 tests) 332ms
+ ✓ src/core/connection.test.ts (11 tests) 358ms
+ ✓ src/features/login/LoginScreen.test.tsx (4 tests) 32ms
+(node:60144) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/app/App.test.tsx (5 tests | 1 failed) 56ms
+   ✓ app > CORE-LOGIN-001 AC-F1-1 a fresh client shows only the login screen, no header 16ms
+   ✓ app > CORE-LOGIN-004 CORE-VISIBLE-001 AC-F1-2 Alice logs in as alice and sees an empty list at once, without the server 16ms
+   ✓ app > CORE-LOGIN-005 CORE-VISIBLE-004 AC-F1-5 AC-F3-3 after a relaunch the list screen shows with stored conversations and pending messages; the switch is off 7ms
+   ✓ app > CORE-LOGIN-006 AC-F1-7 there is no control to log out or change the name 15ms
+   × app > PLAT-HOOK-009 PLAT-WEB-011 PLAT-WEB-024 the composition root wires fetch to the configured base URL and localStorage under aware.v1 2ms
+     → Cannot read properties of undefined (reading 'clear')
+ ✓ src/features/chat/ChatScreen.test.tsx (18 tests) 256ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/app/App.test.tsx > app > PLAT-HOOK-009 PLAT-WEB-011 PLAT-WEB-024 the composition root wires fetch to the configured base URL and localStorage under aware.v1
+TypeError: Cannot read properties of undefined (reading 'clear')
+ ❯ src/app/App.test.tsx:80:25
+     78|   it('PLAT-HOOK-009 PLAT-WEB-011 PLAT-WEB-024 the composition root wir…
+     79|     const fetchFn = vi.fn(async () => new Response(JSON.stringify({ na…
+     80|     window.localStorage.clear();
+       |                         ^
+     81|     const runtime = createRuntime({
+     82|       search: '?server=http://127.0.0.1:9123',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 15 passed (16)
+      Tests  1 failed | 125 passed (126)
+   Start at  13:24:47
+   Duration  1.05s (transform 577ms, setup 0ms, collect 1.25s, tests 1.29s, environment 589ms, prepare 815ms)
+
+JUNIT report written to /Users/caiquebertan/Documents/Aware project/clients/web/test-results/junit.xml

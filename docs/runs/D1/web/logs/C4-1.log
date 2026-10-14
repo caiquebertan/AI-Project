@@ -1,0 +1,13 @@
+$ npx vitest run src/features
+(cwd /Users/caiquebertan/Documents/Aware project/clients/web)
+
+ RUN  v3.2.4 /Users/caiquebertan/Documents/Aware project/clients/web
+
+ ✓ src/features/login/LoginScreen.test.tsx (4 tests) 31ms
+ ✓ src/features/chat/ChatScreen.test.tsx (18 tests) 250ms
+
+ Test Files  2 passed (2)
+      Tests  22 passed (22)
+   Start at  13:23:47
+   Duration  797ms (transform 72ms, setup 0ms, collect 216ms, tests 281ms, environment 442ms, prepare 68ms)
+

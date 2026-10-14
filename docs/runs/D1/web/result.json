@@ -1,0 +1,151 @@
+{
+  "app": "web",
+  "model_id": "claude-opus-5-5",
+  "claude_code_version": "2.1.296 (Claude Code)",
+  "started_at": "2026-10-14T15:50:36Z",
+  "budget": {
+    "per_checkpoint": 3,
+    "per_run": 12
+  },
+  "self_repair_attempts": 2,
+  "checkpoints": {
+    "C0": {
+      "attempts": 0,
+      "runs": [
+        {
+          "n": 1,
+          "cmd": "npm ci",
+          "exit": 0,
+          "seconds": 1.9,
+          "log": ".work/generate/web/logs/C0-1.log",
+          "attempt": false,
+          "class": null
+        }
+      ],
+      "result": "pass"
+    },
+    "C1": {
+      "attempts": 1,
+      "runs": [
+        {
+          "n": 1,
+          "cmd": "npx tsc --noEmit",
+          "exit": 0,
+          "seconds": 1.1,
+          "log": ".work/generate/web/logs/C1-1.log",
+          "attempt": false,
+          "class": null
+        },
+        {
+          "n": 2,
+          "cmd": "npx vitest run src/core",
+          "exit": 1,
+          "seconds": 1.8,
+          "log": ".work/generate/web/logs/C1-2.log",
+          "attempt": false,
+          "class": "CODE",
+          "first_error": "Duration  673ms (transform 205ms, setup 0ms, collect 476ms, tests 882ms, environment 1ms, prepare 423ms)"
+        },
+        {
+          "n": 3,
+          "cmd": "npx vitest run src/core",
+          "exit": 0,
+          "seconds": 1.1,
+          "log": ".work/generate/web/logs/C1-3.log",
+          "attempt": true,
+          "class": null
+        }
+      ],
+      "result": "pass"
+    },
+    "C2": {
+      "attempts": 0,
+      "runs": [
+        {
+          "n": 1,
+          "cmd": "npx vitest run src/data",
+          "exit": 0,
+          "seconds": 0.7,
+          "log": ".work/generate/web/logs/C2-1.log",
+          "attempt": false,
+          "class": null
+        }
+      ],
+      "result": "pass"
+    },
+    "C3": {
+      "attempts": 0,
+      "runs": [
+        {
+          "n": 1,
+          "cmd": "npx vitest run src/testing",
+          "exit": 0,
+          "seconds": 0.7,
+          "log": ".work/generate/web/logs/C3-1.log",
+          "attempt": false,
+          "class": null
+        }
+      ],
+      "result": "pass"
+    },
+    "C4": {
+      "attempts": 0,
+      "runs": [
+        {
+          "n": 1,
+          "cmd": "npx vitest run src/features",
+          "exit": 0,
+          "seconds": 1.2,
+          "log": ".work/generate/web/logs/C4-1.log",
+          "attempt": false,
+          "class": null
+        }
+      ],
+      "result": "pass"
+    },
+    "C5": {
+      "attempts": 1,
+      "runs": [
+        {
+          "n": 1,
+          "cmd": "npm ci && npm run build",
+          "exit": 0,
+          "seconds": 3.3,
+          "log": ".work/generate/web/logs/C5-1.log",
+          "attempt": false,
+          "class": null
+        },
+        {
+          "n": 2,
+          "cmd": "npm test",
+          "exit": 1,
+          "seconds": 1.6,
+          "log": ".work/generate/web/logs/C5-2.log",
+          "attempt": false,
+          "class": "CODE",
+          "first_error": "src/app/App.test.tsx app > PLAT-HOOK-009 PLAT-WEB-011 PLAT-WEB-024 the composition root wires fetch to the configured base URL and localStorage under aware.v1: Cannot read properties of undefined (reading 'clear')"
+        },
+        {
+          "n": 3,
+          "cmd": "npm ci && npm run build",
+          "exit": 0,
+          "seconds": 3.3,
+          "log": ".work/generate/web/logs/C5-3.log",
+          "attempt": true,
+          "class": null
+        },
+        {
+          "n": 4,
+          "cmd": "npm test",
+          "exit": 0,
+          "seconds": 1.7,
+          "log": ".work/generate/web/logs/C5-4.log",
+          "attempt": false,
+          "class": null
+        }
+      ],
+      "result": "pass"
+    }
+  },
+  "updated_at": "2026-10-14T16:25:05Z"
+}

@@ -1,0 +1,140 @@
+$ npx vitest run src/core
+(cwd /Users/caiquebertan/Documents/Aware project/clients/web)
+
+ RUN  v3.2.4 /Users/caiquebertan/Documents/Aware project/clients/web
+
+ ✓ src/core/ordering.test.ts (5 tests) 1ms
+ ✓ src/core/timeZoneDenylist.test.ts (2 tests) 5ms
+ ✓ src/core/constants.test.ts (2 tests) 2ms
+ ✓ src/core/outcome.test.ts (5 tests) 2ms
+ ✓ src/core/validation.test.ts (9 tests) 4ms
+ ✓ src/core/wire.test.ts (5 tests) 4ms
+ ✓ src/core/timeText.test.ts (9 tests) 26ms
+ ❯ src/core/appendixA.test.ts (4 tests | 1 failed) 176ms
+   ✓ protocol Appendix A replay against the fake server > PLAT-WEB-013 CORE-SEQ-001 CORE-SEQ-002 CORE-SEQ-004 CORE-ORDER-005 SC-1..SC-8 step by step 101ms
+   × protocol Appendix A replay against the fake server > CORE-CONN-004 Appendix A variant: going offline during a send still applies the ack 28ms
+     → expected [ 'A1(sent,1)' ] to deeply equal [ 'A2(sent,1)' ]
+   ✓ protocol Appendix A replay against the fake server > CORE-MSG-001 CORE-DEDUPE-003 CORE-FLUSH-005 SX-2 AC-F3-14 a message the server already holds becomes sent once with its original seq 22ms
+   ✓ protocol Appendix A replay against the fake server > SX-1 AC-F3-13 login with no server, queue, relaunch, the message is sent once when the server appears 25ms
+ ❯ src/core/engine.test.ts (28 tests | 1 failed) 311ms
+   ✓ login > CORE-LOGIN-002 CORE-LOGIN-004 CORE-NAME-004 CORE-NAME-005 login is local, stores the canonical name, works with no server 19ms
+   ✓ login > CORE-LOGIN-003 an invalid name stores nothing 0ms
+   ✓ login > CORE-LOGIN-006 the identity cannot be changed once stored 4ms
+   ✓ login > CORE-CAP-002 CORE-SESSION-001 the session declares an empty capability list 4ms
+   ✓ send and outbox > CORE-OUTBOX-001 CORE-TEXT-004 CORE-ENV-002 CORE-ENV-003 CORE-ENV-006 a valid text joins the outbox as pending 1ms
+   ✓ send and outbox > CORE-TEXT-004 CORE-SEND-004 invalid texts are never enqueued 0ms
+   ✓ send and outbox > CORE-TEXT-005 CORE-SEND-006 text is kept exactly as composed 11ms
+   ✓ send and outbox > CORE-OUTBOX-006 CORE-SEQ-002 enqueue order is strictly increasing and persisted 0ms
+   ✓ send and outbox > CORE-CONN-007 queuing a message does not start a cycle 22ms
+   × send and outbox > CORE-OUTBOX-003 CORE-OUTBOX-004 CORE-FLUSH-002 entries are sent one at a time in insertion order across conversations 8ms
+     → expected [ 'E2', 'E2', 'E4', 'E3', 'E3', 'E3' ] to deeply equal [ 'E2', 'E4', 'E3', 'E3', 'E3' ]
+   ✓ send and outbox > CORE-MSG-004 CORE-SEND-008 CORE-OUTBOX-004 a timeout is not an ack: the message stays pending at the head 15ms
+   ✓ send and outbox > CORE-MSG-005 CORE-DEDUPE-003 CORE-FLUSH-005 AC-F3-9 a lost ack is resent with identical fields and becomes sent once with the original seq 18ms
+   ✓ send and outbox > CORE-OUTBOX-005 CORE-ERR-003 a class P outcome removes and logs the message and the flush continues 11ms
+   ✓ send and outbox > CORE-OUTBOX-005 the HTTP status is logged when the body has no valid error code 11ms
+   ✓ send and outbox > CORE-SEND-011 CORE-DEDUPE-004 CORE-ENV-003 a note to self is shown once and becomes sent, never received 14ms
+   ✓ receive, cursor and dedupe > CORE-RECEIVE-001 CORE-MSG-006 CORE-CURSOR-002 a delivered message is stored as received, then the cursor advances 11ms
+   ✓ receive, cursor and dedupe > CORE-EXT-002 CORE-EXT-004 CORE-RECEIVE-005 unknown types and invalid payloads are skipped and the cursor moves past them 17ms
+   ✓ receive, cursor and dedupe > CORE-EXT-004 a text envelope with an unusable payload is skipped 11ms
+   ✓ receive, cursor and dedupe > CORE-DEDUPE-001 CORE-DEDUPE-002 CORE-RECEIVE-004 a message delivered twice is stored once 28ms
+   ✓ receive, cursor and dedupe > CORE-CURSOR-003 CORE-CONN-006 catch-up repeats polls while has_more and sends the cursor as after 4ms
+   ✓ receive, cursor and dedupe > CORE-CURSOR-001 CORE-EPOCH-003 cursor and epoch are persisted together and reused after a relaunch 14ms
+   ✓ epoch > CORE-EPOCH-004 CORE-EPOCH-005 CORE-VISIBLE-008 AC-F3-10 a server restart clears sent and received messages, keeps and delivers pending ones 24ms
+   ✓ epoch > CORE-EPOCH-005 on 409 epoch_mismatch nothing stored changes and the next cycle starts with a session 25ms
+   ✓ epoch > CORE-SESSION-004 a session answering another name is a failed request 14ms
+   ✓ relaunch and snapshot > CORE-LOGIN-005 CORE-OFFLINE-004 CORE-OUTBOX-002 PLAT-HOOK-011 relaunch keeps identity and pending order, the switch starts off 4ms
+   ✓ relaunch and snapshot > PLAT-HOOK-007 PLAT-HOOK-008 PLAT-HOOK-013 the snapshot reflects persisted state in CORE-SEQ-002 order 11ms
+   ✓ relaunch and snapshot > PLAT-WEB-005 getSnapshot returns the same object until state changes 4ms
+   ✓ relaunch and snapshot > CORE-EXT-003 only the core type text is sent 8ms
+ ❯ src/core/connection.test.ts (11 tests | 1 failed) 351ms
+   ✓ PLAT-HOOK-014 connection cycle > CORE-CONN-004 CORE-CONN-002 CORE-OFFLINE-002 (a) after setOffline(true) no call starts, even with a queued message 34ms
+   ✓ PLAT-HOOK-014 connection cycle > CORE-CONN-004 CORE-CONN-001 (b) the same with setNetworkAvailable(false) and with the monitor reporting no network 65ms
+   ✓ PLAT-HOOK-014 connection cycle > CORE-CONN-004 CORE-OFFLINE-007 (c) an E3 in flight is not cancelled, its ack is applied and nothing follows 40ms
+   ✓ PLAT-HOOK-014 connection cycle > CORE-CONN-004 CORE-CURSOR-002 (c) an E4 in flight is not cancelled, its envelopes are stored, the cursor advances and nothing follows 32ms
+   ✓ PLAT-HOOK-014 connection cycle > CORE-CONN-005 CORE-SESSION-003 CORE-OFFLINE-005 (d) after setOffline(false) the next call is E2 and starts at once 31ms
+   ✓ PLAT-HOOK-014 connection cycle > CORE-CONN-005 a cycle requested while a request is in flight starts as soon as it completes, with a session 38ms
+   ✓ PLAT-HOOK-014 connection cycle > CORE-CONN-007 CORE-CONN-008 (e) one call in flight; the next cycle starts exactly CYCLE_INTERVAL_MS after the last call ended, also after failures 40ms
+   × PLAT-HOOK-014 connection cycle > CORE-CONN-006 a cycle runs session, catch-up, then flush; an idle cycle is one E4 16ms
+     → expected [ 'E2', 'E2', 'E4', 'E3', 'E4' ] to deeply equal [ 'E2', 'E4', 'E3', 'E4' ]
+   ✓ PLAT-HOOK-014 connection cycle > CORE-CONN-003 CORE-OFFLINE-006 states: connecting until a session and then a poll succeed; connecting again after a failure 33ms
+   ✓ PLAT-HOOK-014 connection cycle > CORE-CONN-005 CORE-OFFLINE-001 a launch with a stored identity starts a cycle at once with the switch off 18ms
+   ✓ PLAT-HOOK-014 connection cycle > CORE-FLUSH-003 CORE-RECEIVE-002 waiting messages are stored before any pending message is sent 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/core/appendixA.test.ts > protocol Appendix A replay against the fake server > CORE-CONN-004 Appendix A variant: going offline during a send still applies the ack
+AssertionError: expected [ 'A1(sent,1)' ] to deeply equal [ 'A2(sent,1)' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "A2(sent,1)",[39m
+[31m+   "A1(sent,1)",[39m
+[2m  ][22m
+
+ ❯ src/core/appendixA.test.ts:151:27
+    149|     alice.transport.release();
+    150|     await world.time.advance(3 * CYCLE_INTERVAL_MS);
+    151|     expect(labels(alice)).toEqual(['A2(sent,1)']);
+       |                           ^
+    152|     expect(snap(alice).connection).toBe('offline');
+    153|     expect(alice.transport.calls.length).toBe(n);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/core/connection.test.ts > PLAT-HOOK-014 connection cycle > CORE-CONN-006 a cycle runs session, catch-up, then flush; an idle cycle is one E4
+AssertionError: expected [ 'E2', 'E2', 'E4', 'E3', 'E4' ] to deeply equal [ 'E2', 'E4', 'E3', 'E4' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "E2",[22m
+[31m+   "E2",[39m
+[2m    "E4",[22m
+[2m    "E3",[22m
+[2m    "E4",[22m
+[2m  ][22m
+
+ ❯ src/core/connection.test.ts:141:37
+    139|     await world.time.runUntil(() => snap(c).outbox.length === 0);
+    140|     await world.time.advance(CYCLE_INTERVAL_MS);
+    141|     expect(c.transport.endpoints()).toEqual(['E2', 'E4', 'E3', 'E4']);
+       |                                     ^
+    142|     expect(view(c)).toEqual(['y(received,1)', 'x(sent,2)']);
+    143|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/core/engine.test.ts > send and outbox > CORE-OUTBOX-003 CORE-OUTBOX-004 CORE-FLUSH-002 entries are sent one at a time in insertion order across conversations
+AssertionError: expected [ 'E2', 'E2', 'E4', 'E3', 'E3', 'E3' ] to deeply equal [ 'E2', 'E4', 'E3', 'E3', 'E3' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "E2",[22m
+[31m+   "E2",[39m
+[2m    "E4",[22m
+[2m    "E3",[22m
+[2m    "E3",[22m
+[2m    "E3",[22m
+[2m  ][22m
+
+ ❯ src/core/engine.test.ts:138:37
+    136|     expect(violations).toEqual([]);
+    137|     expect(view(c)).toEqual(['m1(sent,1)', 'm2(sent,2)', 'm3(sent,3)']…
+    138|     expect(c.transport.endpoints()).toEqual(['E2', 'E4', 'E3', 'E3', '…
+       |                                     ^
+    139|     expect(c.transport.maxInFlight).toBe(1);
+    140|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  3 failed | 7 passed (10)
+      Tests  3 failed | 77 passed (80)
+   Start at  13:19:32
+   Duration  673ms (transform 205ms, setup 0ms, collect 476ms, tests 882ms, environment 1ms, prepare 423ms)
+

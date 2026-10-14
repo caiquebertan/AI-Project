@@ -1,0 +1,71 @@
+{
+  "$comment": "Read by generator/scripts/apply_templates.py (design §1.3, §2.3). copy: template-owned files, rendered ({{header}}, {{spec_version}} only) unless raw. operator: produced on the operator's machine in smoke session A and committed here afterwards (cannot be created in the cloud). kinds: module build-file skeletons the generator instantiates with --kind; the model edits only the deps region. smoke: token-free modules for session A, never copied into clients/.",
+  "copy": [
+    {"src": "settings.gradle.kts", "dest": "settings.gradle.kts"},
+    {"src": "build.gradle.kts", "dest": "build.gradle.kts"},
+    {"src": "gradle.properties", "dest": "gradle.properties"},
+    {"src": "gradle/libs.versions.toml", "dest": "gradle/libs.versions.toml"},
+    {"src": "gradle/wrapper/gradle-wrapper.properties", "dest": "gradle/wrapper/gradle-wrapper.properties"},
+    {"src": "gradle/wrapper/gradle-wrapper.jar", "dest": "gradle/wrapper/gradle-wrapper.jar", "raw": true, "operator": true},
+    {"src": "gradlew", "dest": "gradlew", "raw": true, "operator": true, "executable": true},
+    {"src": "gradlew.bat", "dest": "gradlew.bat", "raw": true, "operator": true},
+    {"src": "dot-gitignore", "dest": ".gitignore"},
+    {"src": "README.md", "dest": "README.md"},
+    {"src": "kinds/android-app/AndroidManifest.xml", "dest": "app/src/main/AndroidManifest.xml"},
+    {"src": "kinds/android-app/res/xml/network_security_config.xml", "dest": "app/src/main/res/xml/network_security_config.xml"}
+  ],
+  "kinds": {
+    "dir": "kinds",
+    "build_file": "build.gradle.kts",
+    "namespace_prefix": "app.aware",
+    "deps_begin": "// BEGIN deps",
+    "deps_end": "// END deps",
+    "names": ["jvm-lib", "jvm-app", "android-lib", "android-compose-lib", "android-app"]
+  },
+  "smoke": {
+    "dir": "_smoke",
+    "modules": [
+      {"module": "core/protocol", "kind": "jvm-lib", "deps": [
+        "implementation(libs.kotlinx.coroutines.core)",
+        "implementation(libs.kotlinx.serialization.json)"
+      ]},
+      {"module": "core/network", "kind": "jvm-lib", "deps": [
+        "implementation(project(\":core:protocol\"))",
+        "implementation(libs.kotlinx.coroutines.core)",
+        "implementation(libs.kotlinx.serialization.json)",
+        "implementation(libs.retrofit)",
+        "implementation(libs.retrofit.kotlinx.serialization)",
+        "implementation(libs.okhttp)",
+        "testImplementation(libs.okhttp.mockwebserver)"
+      ]},
+      {"module": "tools/driver", "kind": "jvm-app", "main_class": "app.aware.driver.MainKt", "deps": [
+        "implementation(project(\":core:protocol\"))",
+        "implementation(project(\":core:network\"))",
+        "implementation(libs.kotlinx.coroutines.core)",
+        "implementation(libs.kotlinx.serialization.json)"
+      ]},
+      {"module": "core/data", "kind": "android-lib", "deps": [
+        "implementation(project(\":core:protocol\"))",
+        "implementation(project(\":core:network\"))",
+        "implementation(libs.kotlinx.coroutines.android)",
+        "implementation(libs.room.runtime)",
+        "implementation(libs.room.ktx)",
+        "ksp(libs.room.compiler)"
+      ]},
+      {"module": "feature/probe", "kind": "android-compose-lib", "deps": [
+        "implementation(project(\":core:protocol\"))",
+        "implementation(libs.kotlinx.coroutines.core)",
+        "implementation(libs.androidx.lifecycle.viewmodel.compose)",
+        "testImplementation(testFixtures(project(\":core:protocol\")))"
+      ]},
+      {"module": "app", "kind": "android-app", "deps": [
+        "implementation(project(\":core:protocol\"))",
+        "implementation(project(\":core:network\"))",
+        "implementation(project(\":core:data\"))",
+        "implementation(project(\":feature:probe\"))",
+        "implementation(libs.androidx.lifecycle.runtime.compose)",
+        "implementation(libs.hilt.navigation.compose)"
+      ]}
+    ]
+  }
+}

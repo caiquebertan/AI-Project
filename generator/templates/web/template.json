@@ -1,0 +1,17 @@
+{
+  "$comment": "Read by generator/scripts/apply_templates.py (design §1.3, §2.4). copy: template-owned files, rendered ({{header}}, {{spec_version}} only) unless raw. operator: produced on the operator's machine in smoke session A (npm install creates the lockfile) and committed here afterwards. smoke: the token-free app for session A, never copied into clients/.",
+  "copy": [
+    {"src": "package.json", "dest": "package.json", "raw": true},
+    {"src": "package-lock.json", "dest": "package-lock.json", "raw": true, "operator": true},
+    {"src": "tsconfig.json", "dest": "tsconfig.json", "raw": true},
+    {"src": "vite.config.ts", "dest": "vite.config.ts"},
+    {"src": "index.html", "dest": "index.html"},
+    {"src": "src/vite-env.d.ts", "dest": "src/vite-env.d.ts"},
+    {"src": "dot-gitignore", "dest": ".gitignore"},
+    {"src": "README.md", "dest": "README.md"}
+  ],
+  "smoke": {
+    "dir": "_smoke",
+    "modules": []
+  }
+}

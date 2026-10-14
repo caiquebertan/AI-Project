@@ -1,23 +1,33 @@
 {
   "$comment": "Single source for harness limits and thresholds. WORKFLOW.md §2, §5.2 and §6 cite this file. Read by generator/scripts/awarelib.py.",
   "base_branch": "main",
-  "generate_model": "TBD-at-P3",
-  "generate_model_fallback": "TBD-at-P3",
+  "generate_model": "claude-opus-5-5",
+  "generate_model_fallback": "claude-sonnet-5-5",
+  "$comment_model": "Decision 0017 Q4: the fallback is manual only (no --fallback-model flag), so one run never mixes models; a fallback run passes --model <generate_model_fallback> and is recorded in the manifest and the run log.",
   "self_repair_max": 3,
+  "self_repair_total_max": 12,
+  "$comment_self_repair": "Decision 0017 Q3: at most self_repair_max attempts per checkpoint and self_repair_total_max per /generate run; enforced by generator/scripts/checkpoint.py.",
   "apps": {
     "android": {
       "dir": "clients/android",
       "platform_spec": "spec/platform/android.md",
       "conventions": "generator/conventions/android.md",
-      "build": "TBD-at-P3 (expected: ./gradlew assembleDebug)",
-      "test": "TBD-at-P3 (expected: ./gradlew testDebugUnitTest)"
+      "build": "./gradlew --console=plain assembleDebug :tools:driver:installDist",
+      "test": "./gradlew --console=plain --continue testDebugUnitTest :core:protocol:test :core:network:test :tools:driver:test",
+      "reports": [
+        "**/build/test-results/test/TEST-*.xml",
+        "**/build/test-results/testDebugUnitTest/TEST-*.xml"
+      ]
     },
     "web": {
       "dir": "clients/web",
       "platform_spec": "spec/platform/web.md",
       "conventions": "generator/conventions/web.md",
-      "build": "TBD-at-P3 (expected: npm ci && npm run build)",
-      "test": "TBD-at-P3 (expected: npm test)"
+      "build": "npm ci && npm run build",
+      "test": "npm test",
+      "reports": [
+        "test-results/junit.xml"
+      ]
     }
   },
   "limits": {
@@ -115,7 +125,7 @@
   "regen": {
     "$comment": "regen_check.py (E-PIPE-1). {app} and {model} are substituted. per_feature=false (default, OM-0011): the per-app stage after S6 `met` goes straight to done and regen_check.py runs once at P7 (--app all); true: S6b runs per delivery as before.",
     "per_feature": false,
-    "generate_cmd": "claude -p \"/generate {app}\" --model {model}",
+    "generate_cmd": "claude -p \"/generate {app}\" --model {model} {claude_flags}",
     "worktree_dir": ".work/wt",
     "report_dir": ".work/regen"
   },
@@ -182,12 +192,47 @@
     ],
     "templates_dir": "generator/templates/{app}/",
     "plan_out": ".work/generate/{app}/plan.md",
-    "manifest_schema": "generator/schemas/manifest.schema.json"
+    "logs_dir": ".work/generate/{app}/logs/",
+    "result_out": ".work/generate/{app}/result.json",
+    "smoke_dir": ".work/smoke",
+    "manifest_schema": "generator/schemas/manifest.schema.json",
+    "claude_flags": "--max-turns 400 --max-budget-usd 75 --output-format json --effort high --permission-mode acceptEdits --permission-prompts none --allowedTools \"Read\" \"Write\" \"Edit\" \"Glob\" \"Grep\" \"Bash(./gradlew *)\" \"Bash(npm *)\" \"Bash(npx *)\" \"Bash(python3 generator/scripts/*)\" \"Bash(git status *)\" \"Bash(git rev-parse *)\" \"Bash(rm -rf clients/*)\" \"Bash(mkdir *)\" \"Bash(ls *)\" \"Bash(cd *)\"",
+    "$comment_claude_flags": "Design §3.1, §3.6; decision 0017 Q5, Q6. Limits 400 turns / 75 USD per app run, recalibrated after the first real run. Flags exist in the Claude Code CLI reference (checked 2026-10-14); --permission-prompts needs v2.1.259+. TBD-verify-on-operator-machine: --effort high for this model, allowlist matching of the commands the run needs. --allowedTools stays last because it takes a list.",
+    "env_patterns": [
+      "UnknownHostException",
+      "Could not GET",
+      "Connection timed out",
+      "Connection refused",
+      "ENOTFOUND",
+      "EAI_AGAIN",
+      "ECONNRESET",
+      "ETIMEDOUT",
+      "403 Forbidden",
+      "407 Proxy Authentication Required",
+      "SDK location not found",
+      "ANDROID_HOME",
+      "Unsupported class file major version",
+      "EBADENGINE",
+      "daemon disappeared",
+      "Could not create the Java Virtual Machine",
+      "command not found",
+      "No such file or directory: './gradlew'",
+      "spawn npm ENOENT"
+    ],
+    "pin_patterns": [
+      "Could not find [A-Za-z0-9_.-]+:[A-Za-z0-9_.-]+:[A-Za-z0-9_.+-]+",
+      "Plugin \\[id: '[^']+', version: '[^']+'\\] was not found",
+      "ETARGET",
+      "No matching version found for",
+      "notarget"
+    ],
+    "$comment_patterns": "build_digest.py: env_patterns are literal substrings, pin_patterns are regular expressions. A log with compiler errors or failing tests is CODE whatever else it contains; otherwise ENV, then PIN, then CODE (design §3.2)."
   },
   "prompt_lint": {
     "$comment": "lint_prompts.py (E-EVOL-1): feature nouns must not appear in generator prompts outside fenced blocks whose info string contains example_fence_word.",
     "paths": [
       "generator/prompts",
+      "generator/conventions",
       ".claude/commands/generate.md"
     ],
     "example_fence_word": "example",

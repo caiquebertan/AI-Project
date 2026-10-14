@@ -1,7 +1,8 @@
-# Agent pipeline workflow (AI-readable) — v0.3.0
+# Agent pipeline workflow (AI-readable) — v0.3.1
 
 > **Sources:** operator instructions in [`docs/human-input/OPERATOR_MESSAGES.md`](../docs/human-input/OPERATOR_MESSAGES.md) (12:51 workflow; 13:24 and 13:29 decisions; OM-0011 accepted MVP cuts), decisions in [`docs/decisions/0002-workflow-gap-answers.md`](../docs/decisions/0002-workflow-gap-answers.md), gap analysis in [`docs/planning/workflow-gap-analysis.md`](../docs/planning/workflow-gap-analysis.md).
 > **Precedence:** brief > operator's words > this file. If they conflict, stop and ask the operator (or log `BLOCKED` in autonomous mode).
+> **v0.3.1:** P3 generator implemented per the G1-approved design (decision 0017, `docs/planning/p3-generator-design.md`): self-repair budget is ≤ 3 attempts per checkpoint and ≤ 12 per `/generate` run (was ≤ 3 per run); failures are classified `CODE` / `ENV` / `PIN` by a script, and only `CODE` spends attempts; the generate model is pinned (Opus) with a manual-only Sonnet fallback; a token-free smoke session A on the operator's machine precedes the first `/generate`.
 > **v0.3.0:** MVP cuts accepted (OM-0011): acceptance gated by ACs only (spec-rule coverage reported, not gated); one core delivery D1 (F1+F2+F3) instead of three feature loops; regeneration check once at P7 (`regen.per_feature` default false); light server chain; interop requires web↔web and Android driver↔web UI; reactions demo (P6) is the cut line; retros per milestone.
 > **v0.2.2:** §5.4 environment rule (decision 0011); P3 requires `preflight --strict` on the operator's machine.
 > **v0.2.1:** §8 requires all commit trailers in one final block.
@@ -19,7 +20,7 @@ Deliver the Aware project through a gated multi-agent pipeline whose **developme
 | Run by | Operator → ORC (interactive) or ORC (autonomous) | Graders, CI, pipeline stage S3, and the regeneration check (P7; per delivery only if `regen.per_feature`) |
 | Human gates | G0, G1, G2 | **None** (operator decision, Q9): reads specs → builds plan → executes |
 | Writes | `spec/`, `generator/`, `server/`, `tests/`, `docs/` | **Only** `clients/<app>/` (incl. its unit + UI tests and `.generated` manifest) |
-| Quality gate | REV, QA, AC trace check; regen-check once at P7 | Automated: build → in-project unit/UI tests → bounded self-repair (≤3) → fail loudly |
+| Quality gate | REV, QA, AC trace check; regen-check once at P7 | Automated: module checkpoints (build + in-project unit/UI tests) → bounded self-repair (≤3 per checkpoint, ≤12 per run; decision 0017) → fail loudly |
 
 Hard rule: **no agent ever hand-edits `clients/*`.** A defect in generated code is fixed in `spec/` or `generator/` (prompts, conventions, templates), then regenerated.
 
@@ -67,7 +68,7 @@ Every launch is logged with `model`, `model_id`, `reason` (§8).
 | **P0 Harness** | Agent role files `.claude/agents/{pm,tech-lead,developer,reviewer,qa}.md`; prompt templates `generator/prompts/`; scripts `generator/scripts/` (`snapshot-diff`, `count-lines`, `run-log`, `check-headers`, `check-trace`, `regen-check`, `lint-commits`, `preflight`); `/pipeline` + `/generate` commands, `generator/RUN.md` fallback; `STATE.json` + run-log schemas; README/AGENTS updates | OP reviews harness | Dry run of `/pipeline` on a stub feature passes E-WF-1 |
 | **P1 Backlog + core spec** | PM backlog (F1 identity, F2 send/receive, F3 offline queue/flush, F4 interop, F5 reactions extension) + TRACEABILITY skeleton; decision records (transport = HTTP + polling/long-poll with per-recipient cursor; message identity; ordering; delivery/dedupe; generic-relay `type`+payload; app-controlled offline); `spec/core/*` with `CORE-xxx` ids, `schema/`, Alice/Bob expected states, test hooks (test tags / `data-testid`, JVM-testable Android core module) | OP approves backlog once; **G0** spec v0.1.0 | `check-trace`: every BR/SC has a spec id |
 | **P2 Server** (light server chain, §5.5) | DEV (Sonnet; Opus if it needs interpretation) writes `server/` and its protocol tests in `tests/protocol` → ONE Sonnet REV round. No TL plan, no QA agent, no PM acceptance | none: no G1 (G0 already covers the spec) | E-PROTO-1 green |
-| **P3 Generator v1** | TL generator design (templates for build infra and module skeletons, conventions per platform, generation order, self-repair bound, manifest) → DEV implements → `preflight --strict` passes on the operator's machine → first `/generate android` + `/generate web` (parallel worktrees, run by the operator locally, §5.4) | **G1** | Both clients build + in-project tests pass (run on the operator's machine, §5.4) |
+| **P3 Generator v1** | TL generator design (templates for build infra and module skeletons, conventions per platform, generation order, self-repair bound, manifest) → DEV implements → `preflight --strict` passes on the operator's machine → token-free smoke session A (`smoke_build.py`; templates only, `docs/runs/P3/operator-checklist.md`) → first `/generate android` + `/generate web` (parallel worktrees, run by the operator locally, §5.4) | **G1** | Both clients build + in-project tests pass (run on the operator's machine, §5.4) |
 | **P4 Core delivery, then interop feature** | **D1 "Core messaging" = F1 + F2 + F3**, generated, reviewed and QA'd as one unit per app (full chain, first generation, §5), then **F4 interop** (feature-level work; the P5 tests exercise it) | per §5 | per §5 |
 | **P5 Interop** | QA `tests/interop/` runs Alice/Bob against the real server. Required pairings: web↔web (through the UI) and Android driver (Alice) ↔ web UI (Bob), the Android side being the generated Android JVM driver (`spec/platform/android.md`). Other pairings are optional | — | E-INTEROP-1 green ×3 |
 | **P6 Evolution demo** | **First thing cut if time is short; only after P5 passes** (§4.1). F5 reactions as `spec/extensions/reactions.md` → `/generate` with no prompt changes | G0 | E-EVOL-1 |
@@ -120,14 +121,15 @@ ORC routes non-`OK` codes per the table above and never lets an agent continue p
 | `accept_reopen` | 1 | G2 |
 | `g1_rejections` | 2 | ORC asks operator for a discussion instead of another round |
 | `spec_reopen` | 2 | G2 |
-| `gen_self_repair` (per `/generate` run) | 3 | `/generate` fails → G2 |
+| `gen_self_repair` (per checkpoint; decision 0017) | 3 (`self_repair_max`) | `/generate` fails → G2 |
+| `gen_self_repair_total` (per `/generate` run; decision 0017) | 12 (`self_repair_total_max`) | `/generate` fails → G2 |
 | `regen_check` (only used when `regen.per_feature` is true; unused by default) | 2 | G2 |
 | Budget: wall time, tokens (soft / hard) | set per delivery at S1 | soft → note in retro; hard → G2 |
 
-Caps, the §2 reviewer threshold (400 changed lines) and the §6 split threshold (2000) live only in `generator/config/generator.json` (`limits`); `generator/scripts/state.py` enforces the caps (exceeding one routes to G2).
+Caps, the §2 reviewer threshold (400 changed lines) and the §6 split threshold (2000) live only in `generator/config/generator.json` (`limits`); `generator/scripts/state.py` enforces the caps (exceeding one routes to G2). The two self-repair budgets live at the top level of the config and are enforced inside the `/generate` run by `generator/scripts/checkpoint.py`: only failures classified `CODE` spend an attempt; `ENV` ends the run with `ENV_FAILURE` (retried once by the operator, `env_retry`), `PIN` (a template version that does not resolve) ends it with `BLOCKED` because templates are read-only to the generator; both go to G2 as a generator or environment defect.
 
 ### 5.3 Abort and failure
-`BLOCKED` = feature parked with reason; ORC continues independent features. `ABORTED` = branch kept, STATE + partial retro written. Rollback = reset feature branch to the last green stage commit. `ENV_FAILURE` is retried at most once, then G2. `preflight` checks JDK, Android SDK, Node, Python versions before P3.
+`BLOCKED` = feature parked with reason; ORC continues independent features. From `/generate`, `BLOCKED` also means self-repair exhausted, a template pin that does not resolve, or a template file still pending smoke session A. `ABORTED` = branch kept, STATE + partial retro written. Rollback = reset feature branch to the last green stage commit. `ENV_FAILURE` is retried at most once, then G2. `preflight` checks JDK, Android SDK, Node, Python versions before P3.
 
 ### 5.4 Environment (decision 0011, `docs/ENVIRONMENT.md`)
 Agents in the cloud workspace cannot build or test clients (no Android SDK; npm, Maven, Google Maven and Gradle registries unreachable). Steps that need a client build (`/generate` with build and test, in-project tests, Playwright, Android core driver, the regeneration check (P7), interop) run on the **operator's machine** with Claude Code locally. ORC then stops, gives the operator the exact command and what to send back or commit, and logs it as an operator step (`decided_by: operator`). An agent never reports a client build or test as passing without a log from that machine. Python-only work (harness, server, protocol tests) runs in the sandbox.
@@ -194,5 +196,5 @@ One retro per milestone: D1, F4, F5 and each phase (P0..P8), not per feature sta
 
 ## 12. Remaining open items
 - Exact budgets per delivery (set at P1).
-- Pinned model IDs and fallback for `/generate` (`generator/config`, set at P3).
+- ~~Pinned model IDs and fallback for `/generate`~~: set at P3 (decision 0017): `generate_model` `claude-opus-5-5`, `generate_model_fallback` `claude-sonnet-5-5`, manual only (never `--fallback-model`, so one run never mixes models). Exact template version pins stay TBD-verify-on-operator-machine until smoke session A passes.
 - Messaging-SDK denylist contents (review at P0).

@@ -39,7 +39,8 @@ Templates with `{{var}}` placeholders only. Feature knowledge lives in `spec/`, 
 | `{{spec_index}}`, `{{spec_dirs}}`, `{{spec_version}}` | `generate.spec_index`, `generate.spec_dirs`, version line of the spec index (full string, e.g. `0.1.0-draft`) |
 | `{{spec_is_draft}}`, `{{platform_shared}}` | `yes`/`no` from `generate.draft_suffix_regex`; `generate.platform_shared` (files shared by all apps) |
 | `{{platform_spec}}`, `{{conventions_path}}`, `{{templates_dir}}` | `apps.<app>.platform_spec`, `apps.<app>.conventions`, `generate.templates_dir` |
-| `{{build_cmd}}`, `{{test_cmd}}`, `{{self_repair_max}}` | `apps.<app>.build`, `apps.<app>.test`, `self_repair_max` |
+| `{{build_cmd}}`, `{{test_cmd}}`, `{{self_repair_max}}`, `{{self_repair_total_max}}` | `apps.<app>.build`, `apps.<app>.test`, `self_repair_max` (per checkpoint), `self_repair_total_max` (per run; decision 0017) |
+| `{{logs_dir}}`, `{{result_out}}` | `generate.logs_dir`, `generate.result_out` (checkpoint logs and run record written by `checkpoint.py`) |
 | `{{model_id}}`, `{{generator_commit}}` | `generate_model`, `git rev-parse HEAD` |
 | `{{plan_out}}`, `{{manifest_schema}}`, `{{header_text}}` | `generate.plan_out`, `generate.manifest_schema`, `headers.header_text` |
 | `{{return_codes}}` | default |

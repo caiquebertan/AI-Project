@@ -267,3 +267,13 @@ You can now start the next step in the plan
 ````text
 sounds good, we can move forward with web first, lets generate it
 ````
+
+---
+
+## OM-0022 · 2026-10-14 14:33 — Go for the Android generation
+
+**AI note:** _Triggered: session B, second run: `/generate android` on the operator's machine after the web run succeeded (126 tests, 150 turns, 22 min, 7.51 USD list price). Session usage to be noted before and after._
+
+````text
+you can now generate the android
+````

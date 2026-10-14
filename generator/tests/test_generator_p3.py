@@ -5,6 +5,7 @@ import json
 import os
 import re
 import shlex
+import shutil
 import stat
 import tempfile
 import unittest
@@ -167,21 +168,24 @@ class ApplyTemplatesSmokeAndRealTemplates(unittest.TestCase):
         tdir, spec = android_template()
         out = tmpdir(self)
         res = at.apply_smoke(tdir, spec, out, VARS)
-        self.assertEqual(sorted(res["pending"]), sorted(["gradle/wrapper/gradle-wrapper.jar", "gradlew", "gradlew.bat"]))
+        self.assertEqual(res["pending"], [])
+        for rel in ("gradlew", "gradlew.bat", "gradle/wrapper/gradle-wrapper.jar"):
+            self.assertTrue((out / rel).is_file(), rel)
+        self.assertTrue(os.access(out / "gradlew", os.X_OK))
         for m in spec["smoke"]["modules"]:
             self.assertTrue((out / m["module"] / "build.gradle.kts").is_file(), m["module"])
         self.assertFalse((out / "README.md").read_text().startswith("# Smoke"))
-        problems = [p for p in at.check(tdir, spec, out, VARS) if "pending" not in p]
-        self.assertEqual(problems, [])
+        self.assertEqual(at.check(tdir, spec, out, VARS), [])
         for f in out.rglob("*"):
-            if f.is_file():
+            if f.is_file() and f.suffix != ".jar":
                 self.assertNotIn("{{", f.read_text(errors="replace"), f)
 
     def test_web_smoke_project(self):
         tdir, spec = at.load_template("web", CONFIG)
         out = tmpdir(self)
         res = at.apply_smoke(tdir, spec, out, VARS)
-        self.assertEqual(res["pending"], ["package-lock.json"])
+        self.assertEqual(res["pending"], [])
+        self.assertTrue((out / "package-lock.json").is_file())
         self.assertTrue((out / "src/app/main.tsx").is_file())
         lines = (out / "src/features/probe/Probe.test.tsx").read_text().splitlines()
         self.assertIn(CONFIG["headers"]["marker"], lines[0])
@@ -222,12 +226,15 @@ class ApplyTemplatesSmokeAndRealTemplates(unittest.TestCase):
         self.assertIn("test-results/junit.xml", pkg["scripts"]["test"])
         self.assertEqual(pkg["engines"]["node"], ">=22")
 
-    def test_android_pins_are_marked_unverified_and_catalog_has_no_dynamic_versions(self):
+    def test_android_pins_are_verified_and_catalog_has_no_dynamic_versions(self):
         toml = (TEMPLATES / "android" / "gradle" / "libs.versions.toml").read_text()
-        self.assertIn("TBD-verify-on-operator-machine", toml)
+        self.assertIn("verified by smoke session A", toml)
+        self.assertNotIn("TBD", toml)
         self.assertNotRegex(toml, r'version = "[^"]*[+]|latest')
-        self.assertIn("TBD-verify-on-operator-machine",
-                      (TEMPLATES / "android" / "gradle" / "wrapper" / "gradle-wrapper.properties").read_text())
+        props = (TEMPLATES / "android" / "gradle" / "wrapper" / "gradle-wrapper.properties").read_text()
+        self.assertIn("verified in smoke session A", props)
+        self.assertNotIn("TBD", props)
+        self.assertRegex(props, r"distributionSha256Sum=[0-9a-f]{64}")
 
     def test_cli_kind_and_check(self):
         tmp, repo = make_repo()
@@ -237,8 +244,9 @@ class ApplyTemplatesSmokeAndRealTemplates(unittest.TestCase):
         self.assertEqual(res.returncode, 0, res.stderr)
         self.assertTrue((repo / "clients/android/core/protocol/build.gradle.kts").is_file())
         res = run_script("apply_templates.py", "--root", repo, "--app", "android")
-        self.assertEqual(res.returncode, lib.EXIT_FAIL)           # wrapper still pending in the cloud
-        self.assertIn("smoke session A", res.stderr)
+        self.assertEqual(res.returncode, 0, res.stderr)           # templates are complete: nothing pending
+        self.assertTrue((repo / "clients/android/gradlew").is_file())
+        self.assertTrue((repo / "clients/android/gradle/wrapper/gradle-wrapper.jar").is_file())
         res = run_script("apply_templates.py", "--root", repo, "--app", "web", "--check")
         self.assertEqual(res.returncode, lib.EXIT_FAIL)
 
@@ -507,13 +515,43 @@ class SmokeBuild(unittest.TestCase):
     def test_dry_run_lists_steps_without_touching_disk(self):
         res = run_script("smoke_build.py", "--root", self.root, "--app", "all", "--dry-run")
         self.assertEqual(res.returncode, 0, res.stderr)
-        for word in ("gradle wrapper --gradle-version", "assembleDebug", "-Paware.repoRoot=", "npm install",
-                     "AWARE_REPO_ROOT=", "npm test", "send-back.zip"):
+        for word in ("assembleDebug", "-Paware.repoRoot=", "npm ci", "AWARE_REPO_ROOT=", "npm test", "send-back.zip"):
             self.assertIn(word, res.stdout)
+        for word in ("gradle wrapper", "npm install", "produces "):     # templates complete: no bootstrap steps
+            self.assertNotIn(word, res.stdout)
         self.assertFalse(self.smoke.exists())
 
+    def bare_harness(self, remove):
+        """A temp copy of the templates without the operator-produced files, to keep the bootstrap path tested."""
+        harness = self.root / "harness"
+        for app in CONFIG["apps"]:
+            dest = harness / CONFIG["generate"]["templates_dir"].format(app=app)
+            shutil.copytree(TEMPLATES / app, dest)
+        for rel in remove:
+            for app in CONFIG["apps"]:
+                f = harness / CONFIG["generate"]["templates_dir"].format(app=app) / rel
+                if f.exists():
+                    f.unlink()
+        return harness
+
+    def test_complete_templates_skip_bootstrap_steps(self):
+        for app, steps in (("android", ["build", "test"]), ("web", ["build", "test"])):
+            p = smoke_build.plan_app(app, CONFIG, self.root, self.smoke)
+            self.assertEqual([s[0] for s in p["steps"]], steps)
+            self.assertEqual(p["produced"], [])
+            self.assertEqual(p["pending"], [])
+
+    def test_missing_template_files_plan_bootstrap_steps(self):
+        h = self.bare_harness(list(smoke_build.WRAPPER_FILES) + ["package-lock.json"])
+        pa = smoke_build.plan_app("android", CONFIG, self.root, self.smoke, harness=h)
+        self.assertEqual([s[0] for s in pa["steps"]], ["wrapper", "build", "test"])
+        self.assertIn("--gradle-version", pa["steps"][0][1])
+        pw = smoke_build.plan_app("web", CONFIG, self.root, self.smoke, harness=h)
+        self.assertEqual([s[0] for s in pw["steps"]], ["install", "build", "test"])
+
     def test_android_run_bootstraps_wrapper_checks_ids_and_bundles(self):
-        p = smoke_build.plan_app("android", CONFIG, self.root, self.smoke)
+        h = self.bare_harness(smoke_build.WRAPPER_FILES)
+        p = smoke_build.plan_app("android", CONFIG, self.root, self.smoke, harness=h)
         runner = self.fake_runner({"core/protocol/build/test-results/test/TEST-a.xml":
                                    [("app.aware.core.protocol.ProbeTest", "PLAT-ANDROID-023 smoke id", None)]})
         jar_sha = lib.sha256_bytes(b"wrapper gradle/wrapper/gradle-wrapper.jar")
@@ -532,7 +570,8 @@ class SmokeBuild(unittest.TestCase):
         self.assertIn("logs/android/test.log", names)
 
     def test_web_run_creates_lockfile_and_fails_without_ids(self):
-        p = smoke_build.plan_app("web", CONFIG, self.root, self.smoke)
+        h = self.bare_harness(["package-lock.json"])
+        p = smoke_build.plan_app("web", CONFIG, self.root, self.smoke, harness=h)
         runner = self.fake_runner({"test-results/junit.xml": [("src/core/probe.test.ts", "core probe > no id here", None)]})
         s = smoke_build.run_app(p, CONFIG, self.root, self.smoke, runner=runner, fetch=lambda url: None)
         self.assertEqual([c[0] for c in runner.calls], ["install", "build", "test"])

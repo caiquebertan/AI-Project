@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.aware.feature.chat.HeaderTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-14T18:17:55.151Z" hostname="MacBook-Pro-de-Caique.local" time="0.118">
+  <properties/>
+  <testcase name="CORE-OFFLINE-002 without network the indicator shows Offline while the switch reads off" classname="app.aware.feature.chat.HeaderTest" time="0.022"/>
+  <testcase name="CORE-OFFLINE-006 CORE-VISIBLE-005 CORE-VISIBLE-007 PLAT-HOOK-004 the indicator shows exactly the fixed label of each state and follows changes" classname="app.aware.feature.chat.HeaderTest" time="0.026"/>
+  <testcase name="CORE-OFFLINE-001 CORE-OFFLINE-002 PLAT-HOOK-005 PLAT-ANDROID-016 AC-F3-1 the switch sets offline_toggle and the indicator shows Offline" classname="app.aware.feature.chat.HeaderTest" time="0.028"/>
+  <testcase name="CORE-VISIBLE-001 PLAT-HOOK-010 PLAT-HOOK-003 AC-F1-6 the header shows the user, the indicator and the Offline mode switch, off" classname="app.aware.feature.chat.HeaderTest" time="0.021"/>
+  <testcase name="CORE-LOGIN-006 AC-F1-7 there is no way to log out or change the name" classname="app.aware.feature.chat.HeaderTest" time="0.021"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

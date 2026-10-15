@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.aware.feature.chat.ConversationScreenTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-14T18:17:54.854Z" hostname="MacBook-Pro-de-Caique.local" time="0.292">
+  <properties/>
+  <testcase name="PLAT-ANDROID-016 PLAT-HOOK-002 PLAT-HOOK-004 CORE-ORDER-001 CORE-ORDER-006 CORE-SEND-007 messages carry state, seq and author in rendered order" classname="app.aware.feature.chat.ConversationScreenTest" time="0.035"/>
+  <testcase name="PLAT-ANDROID-028 PLAT-HOOK-013 CORE-VISIBLE-009 AC-F2-20 the time is shown for sent and received messages and not for pending ones" classname="app.aware.feature.chat.ConversationScreenTest" time="0.027"/>
+  <testcase name="CORE-SEND-011 AC-F2-11 SX-4 a note to self appears once, as written by the user" classname="app.aware.feature.chat.ConversationScreenTest" time="0.026"/>
+  <testcase name="CORE-SEND-006 CORE-RECEIVE-006 AC-F2-5 SX-4 text is shown exactly as written" classname="app.aware.feature.chat.ConversationScreenTest" time="0.026"/>
+  <testcase name="CORE-SEND-003 PLAT-HOOK-001 AC-F2-1 the conversation shows the peer, Back, No messages yet and the composer" classname="app.aware.feature.chat.ConversationScreenTest" time="0.024"/>
+  <testcase name="CORE-SEND-004 AC-F2-4 SX-4 a blank or too long text shows its fixed text, keeps the text and adds nothing" classname="app.aware.feature.chat.ConversationScreenTest" time="0.084"/>
+  <testcase name="CORE-VISIBLE-007 CORE-SEND-008 CORE-FLUSH-004 CORE-ORDER-003 a pending message turns Sent in place by itself and gains its time" classname="app.aware.feature.chat.ConversationScreenTest" time="0.026"/>
+  <testcase name="CORE-SEND-005 CORE-SEND-010 CORE-OFFLINE-003 AC-F2-3 AC-F3-2 a valid text is added at the bottom as Pending and the composer is cleared, also offline" classname="app.aware.feature.chat.ConversationScreenTest" time="0.043"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.aware.core.data.RoomLocalStoreTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-14T18:12:32.480Z" hostname="MacBook-Pro-de-Caique.local" time="0.167">
+  <properties/>
+  <testcase name="CORE-OUTBOX-002 CORE-OUTBOX-006 PLAT-ANDROID-012 the enqueue order is an explicit column kept across deletions" classname="app.aware.core.data.RoomLocalStoreTest" time="0.114"/>
+  <testcase name="PLAT-ANDROID-012 an empty database reads as the empty state" classname="app.aware.core.data.RoomLocalStoreTest" time="0.01"/>
+  <testcase name="CORE-EPOCH-004 CORE-EPOCH-003 an epoch reset deletes messages with a seq, keeps pending ones and sets the cursor to 0" classname="app.aware.core.data.RoomLocalStoreTest" time="0.013"/>
+  <testcase name="PLAT-ANDROID-012 CORE-CURSOR-002 CORE-CURSOR-001 a poll stores its envelopes and the cursor together" classname="app.aware.core.data.RoomLocalStoreTest" time="0.011"/>
+  <testcase name="PLAT-ANDROID-012 PLAT-HOOK-009 every Room write equals the stored-state reducer" classname="app.aware.core.data.RoomLocalStoreTest" time="0.018"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

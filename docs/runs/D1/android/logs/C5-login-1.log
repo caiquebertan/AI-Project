@@ -1,0 +1,62 @@
+$ ./gradlew --console=plain :feature:login:testDebugUnitTest
+(cwd /Users/caiquebertan/Documents/Aware project/clients/android)
+> Task :core:protocol:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :core:protocol:compileKotlin UP-TO-DATE
+> Task :core:protocol:compileJava NO-SOURCE
+> Task :core:protocol:processResources NO-SOURCE
+> Task :core:protocol:classes UP-TO-DATE
+> Task :core:protocol:jar UP-TO-DATE
+> Task :core:protocol:compileTestFixturesKotlin UP-TO-DATE
+> Task :core:protocol:compileTestFixturesJava NO-SOURCE
+> Task :core:protocol:processTestFixturesResources NO-SOURCE
+> Task :core:protocol:testFixturesClasses UP-TO-DATE
+> Task :core:protocol:testFixturesJar UP-TO-DATE
+> Task :feature:login:preBuild UP-TO-DATE
+> Task :feature:login:preDebugBuild UP-TO-DATE
+> Task :feature:login:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :feature:login:generateDebugResValues
+> Task :feature:login:generateDebugResources
+> Task :feature:login:packageDebugResources
+> Task :feature:login:processDebugNavigationResources
+> Task :feature:login:parseDebugLocalResources
+> Task :feature:login:generateDebugUnitTestAssets UP-TO-DATE
+> Task :feature:login:mergeDebugShaders
+> Task :feature:login:compileDebugShaders NO-SOURCE
+> Task :feature:login:generateDebugRFile
+> Task :feature:login:javaPreCompileDebug
+> Task :feature:login:generateDebugAssets UP-TO-DATE
+> Task :feature:login:mergeDebugAssets
+> Task :feature:login:preDebugUnitTestBuild UP-TO-DATE
+> Task :feature:login:mergeDebugUnitTestAssets
+> Task :feature:login:writeDebugAarMetadata
+> Task :feature:login:compileDebugLibraryResources
+> Task :feature:login:generateDebugUnitTestResValues
+> Task :feature:login:mapDebugUnitTestSourceSetPaths
+> Task :feature:login:generateDebugUnitTestResources
+> Task :feature:login:checkDebugUnitTestAarMetadata
+> Task :feature:login:extractDeepLinksDebug
+> Task :feature:login:javaPreCompileDebugUnitTest
+> Task :feature:login:processDebugManifest
+> Task :feature:login:processDebugUnitTestManifest
+> Task :feature:login:mergeDebugUnitTestResources
+> Task :feature:login:processDebugUnitTestResources
+> Task :feature:login:packageDebugUnitTestForUnitTest
+> Task :feature:login:generateDebugUnitTestConfig
+> Task :feature:login:kspDebugKotlin
+> Task :feature:login:compileDebugKotlin
+> Task :feature:login:compileDebugJavaWithJavac
+> Task :feature:login:processDebugJavaRes
+> Task :feature:login:transformDebugClassesWithAsm
+> Task :feature:login:bundleLibRuntimeToJarDebug
+> Task :feature:login:bundleLibCompileToJarDebug
+> Task :feature:login:kspDebugUnitTestKotlin
+> Task :feature:login:compileDebugUnitTestKotlin
+> Task :feature:login:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :feature:login:hiltAggregateDepsDebugUnitTest
+> Task :feature:login:hiltJavaCompileDebugUnitTest NO-SOURCE
+> Task :feature:login:processDebugUnitTestJavaRes
+> Task :feature:login:transformDebugUnitTestClassesWithAsm
+> Task :feature:login:testDebugUnitTest
+
+BUILD SUCCESSFUL in 6s
+41 actionable tasks: 37 executed, 4 up-to-date

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.aware.core.protocol.port.ClassifierTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-14T18:19:11.545Z" hostname="MacBook-Pro-de-Caique.local" time="0.001">
+  <properties/>
+  <testcase name="CORE-ERR-003 CORE-OUTBOX-005 class P only on E3 for 400 any code, 409 id_conflict, 413 and 415" classname="app.aware.core.protocol.port.ClassifierTest" time="0.0"/>
+  <testcase name="CORE-ERR-003 CORE-EPOCH-005 CORE-CONN-008 every other outcome is a failed request" classname="app.aware.core.protocol.port.ClassifierTest" time="0.001"/>
+  <testcase name="CORE-ERR-003 CORE-MSG-001 CORE-DEDUPE-003 E3 succeeds with 200 or 201 and the other endpoints with 200" classname="app.aware.core.protocol.port.ClassifierTest" time="0.0"/>
+  <testcase name="CORE-ERR-001 the error code is read only from a valid error body" classname="app.aware.core.protocol.port.ClassifierTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

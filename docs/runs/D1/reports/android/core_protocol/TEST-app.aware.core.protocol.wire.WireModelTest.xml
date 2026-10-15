@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.aware.core.protocol.wire.WireModelTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-14T18:19:11.593Z" hostname="MacBook-Pro-de-Caique.local" time="0.014">
+  <properties/>
+  <testcase name="CORE-CONST-001 PLAT-ANDROID-021 the constants equal constants json" classname="app.aware.core.protocol.wire.WireModelTest" time="0.001"/>
+  <testcase name="PLAT-ANDROID-021 every schema example decodes into the wire models and re-encodes to an equal value" classname="app.aware.core.protocol.wire.WireModelTest" time="0.01"/>
+  <testcase name="CORE-HTTP-007 CORE-TIME-001 instants are UTC with exactly three fraction digits and Z" classname="app.aware.core.protocol.wire.WireModelTest" time="0.0"/>
+  <testcase name="CORE-ENV-001 PLAT-ANDROID-008 CORE-HTTP-004 the send form has exactly its six fields, all encoded" classname="app.aware.core.protocol.wire.WireModelTest" time="0.0"/>
+  <testcase name="PLAT-ANDROID-008 CORE-HTTP-005 unknown response fields are ignored" classname="app.aware.core.protocol.wire.WireModelTest" time="0.001"/>
+  <testcase name="CORE-ENV-002 PLAT-ANDROID-010 ids are random lowercase UUID version 4" classname="app.aware.core.protocol.wire.WireModelTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

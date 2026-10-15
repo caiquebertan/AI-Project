@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.aware.core.protocol.validation.ValidationTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-14T18:19:11.591Z" hostname="MacBook-Pro-de-Caique.local" time="0.001">
+  <properties/>
+  <testcase name="CORE-NAME-002 CORE-NAME-004 CORE-LOGIN-004 the canonical form is the ASCII lowercase" classname="app.aware.core.protocol.validation.ValidationTest" time="0.0"/>
+  <testcase name="CORE-TEXT-003 PLAT-ANDROID-010 NUL and unpaired surrogates are refused" classname="app.aware.core.protocol.validation.ValidationTest" time="0.0"/>
+  <testcase name="CORE-TEXT-002 CORE-TEXT-004 CORE-SEND-004 empty and blank texts are refused" classname="app.aware.core.protocol.validation.ValidationTest" time="0.0"/>
+  <testcase name="CORE-NAME-001 CORE-NAME-005 CORE-LOGIN-002 a name is 1 to 32 ASCII letters digits underscores or hyphens" classname="app.aware.core.protocol.validation.ValidationTest" time="0.0"/>
+  <testcase name="CORE-TEXT-003 PLAT-ANDROID-010 the limit is 4096 bytes of UTF-8" classname="app.aware.core.protocol.validation.ValidationTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

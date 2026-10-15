@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.aware.core.protocol.engine.ReceiveTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-14T18:19:11.497Z" hostname="MacBook-Pro-de-Caique.local" time="0.017">
+  <properties/>
+  <testcase name="CORE-RECEIVE-001 CORE-RECEIVE-006 CORE-TEXT-005 a received text is stored exactly as sent" classname="app.aware.core.protocol.engine.ReceiveTest" time="0.002"/>
+  <testcase name="CORE-EXT-002 CORE-EXT-004 CORE-RECEIVE-005 AC-F2-9 unknown types and unusable payloads are skipped and the cursor moves past them" classname="app.aware.core.protocol.engine.ReceiveTest" time="0.001"/>
+  <testcase name="CORE-FLUSH-003 CORE-RECEIVE-002 AC-F3-7 waiting messages are received before pending ones are sent" classname="app.aware.core.protocol.engine.ReceiveTest" time="0.001"/>
+  <testcase name="CORE-CURSOR-001 CORE-CURSOR-002 CORE-POLL-003 catch-up repeats while has_more and stores envelopes with the cursor" classname="app.aware.core.protocol.engine.ReceiveTest" time="0.008"/>
+  <testcase name="CORE-DEDUPE-001 CORE-DEDUPE-002 CORE-RECEIVE-004 AC-F2-10 an envelope delivered more than once is stored once" classname="app.aware.core.protocol.engine.ReceiveTest" time="0.002"/>
+  <testcase name="CORE-CURSOR-003 the cursor is sent as after and never moves backwards" classname="app.aware.core.protocol.engine.ReceiveTest" time="0.001"/>
+  <testcase name="CORE-DEDUPE-004 CORE-SEND-011 AC-F2-11 a note to self delivered before its ack becomes sent once and never received" classname="app.aware.core.protocol.engine.ReceiveTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

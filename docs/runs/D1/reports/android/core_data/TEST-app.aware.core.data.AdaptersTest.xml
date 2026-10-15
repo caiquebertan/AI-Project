@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.aware.core.data.AdaptersTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-14T18:12:30.103Z" hostname="MacBook-Pro-de-Caique.local" time="2.371">
+  <properties/>
+  <testcase name="PLAT-ANDROID-035 CORE-OUTBOX-005 the diagnostic log writes one warning line with tag Aware" classname="app.aware.core.data.AdaptersTest" time="2.343"/>
+  <testcase name="PLAT-ANDROID-011 CORE-CONN-001 the connectivity monitor reports network_available as an observable value" classname="app.aware.core.data.AdaptersTest" time="0.021"/>
+  <testcase name="PLAT-ANDROID-013 the server base URL comes from BuildConfig and defaults to the emulator host alias" classname="app.aware.core.data.AdaptersTest" time="0.007"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

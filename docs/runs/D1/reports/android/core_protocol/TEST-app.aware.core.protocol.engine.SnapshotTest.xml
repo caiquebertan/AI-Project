@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.aware.core.protocol.engine.SnapshotTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-14T18:19:11.532Z" hostname="MacBook-Pro-de-Caique.local" time="0.012">
+  <properties/>
+  <testcase name="PLAT-HOOK-006 PLAT-HOOK-008 PLAT-HOOK-013 PLAT-ANDROID-018 the snapshot has exactly the schema fields and order" classname="app.aware.core.protocol.engine.SnapshotTest" time="0.011"/>
+  <testcase name="PLAT-HOOK-006 PLAT-HOOK-013 CORE-VISIBLE-011 the snapshot time text follows the zone without user action" classname="app.aware.core.protocol.engine.SnapshotTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

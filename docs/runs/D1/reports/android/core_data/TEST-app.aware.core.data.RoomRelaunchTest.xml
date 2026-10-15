@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.aware.core.data.RoomRelaunchTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-14T18:12:32.650Z" hostname="MacBook-Pro-de-Caique.local" time="0.034">
+  <properties/>
+  <testcase name="PLAT-ANDROID-025 PLAT-HOOK-011 CORE-LOGIN-005 CORE-OFFLINE-004 a relaunch over the same Room database keeps identity, messages and outbox" classname="app.aware.core.data.RoomRelaunchTest" time="0.034"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

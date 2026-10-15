@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.aware.driver.CommandLoopTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-10-14T18:09:44.919Z" hostname="MacBook-Pro-de-Caique.local" time="0.105">
+  <properties/>
+  <testcase name="PLAT-ANDROID-032 PLAT-ANDROID-034 wait times out, bad commands are reported and the loop continues" classname="app.aware.driver.CommandLoopTest" time="0.067"/>
+  <testcase name="PLAT-ANDROID-032 PLAT-ANDROID-034 a bad name or option exits with code 2 and one line on standard error" classname="app.aware.driver.CommandLoopTest" time="0.001"/>
+  <testcase name="PLAT-ANDROID-032 PLAT-ANDROID-034 PLAT-HOOK-006 snapshot, offline and online each print one snapshot line" classname="app.aware.driver.CommandLoopTest" time="0.003"/>
+  <testcase name="PLAT-ANDROID-032 PLAT-ANDROID-025 PLAT-HOOK-011 relaunch keeps identity, cursor, messages and outbox" classname="app.aware.driver.CommandLoopTest" time="0.017"/>
+  <testcase name="PLAT-ANDROID-033 every call on any endpoint counts, whatever its outcome" classname="app.aware.driver.CommandLoopTest" time="0.0"/>
+  <testcase name="PLAT-ANDROID-032 CORE-NAME-005 CORE-TEXT-004 CORE-OUTBOX-001 send enqueues with the UI checks and wait sees it sent" classname="app.aware.driver.CommandLoopTest" time="0.004"/>
+  <testcase name="PLAT-ANDROID-031 CORE-OUTBOX-005 the driver's diagnostic log writes to standard error" classname="app.aware.driver.CommandLoopTest" time="0.003"/>
+  <testcase name="PLAT-ANDROID-032 PLAT-ANDROID-034 end of input exits 0 and every output line is one JSON value of the schema" classname="app.aware.driver.CommandLoopTest" time="0.005"/>
+  <testcase name="PLAT-ANDROID-033 PLAT-ANDROID-034 CORE-CONN-004 requests counts every call and stays still while offline" classname="app.aware.driver.CommandLoopTest" time="0.004"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

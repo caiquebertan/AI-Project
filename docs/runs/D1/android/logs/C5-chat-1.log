@@ -1,0 +1,62 @@
+$ ./gradlew --console=plain :feature:chat:testDebugUnitTest
+(cwd /Users/caiquebertan/Documents/Aware project/clients/android)
+> Task :core:protocol:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :core:protocol:compileKotlin UP-TO-DATE
+> Task :core:protocol:compileJava NO-SOURCE
+> Task :core:protocol:processResources NO-SOURCE
+> Task :core:protocol:classes UP-TO-DATE
+> Task :core:protocol:jar UP-TO-DATE
+> Task :core:protocol:compileTestFixturesKotlin UP-TO-DATE
+> Task :core:protocol:compileTestFixturesJava NO-SOURCE
+> Task :core:protocol:processTestFixturesResources NO-SOURCE
+> Task :core:protocol:testFixturesClasses UP-TO-DATE
+> Task :core:protocol:testFixturesJar UP-TO-DATE
+> Task :feature:chat:preBuild UP-TO-DATE
+> Task :feature:chat:preDebugBuild UP-TO-DATE
+> Task :feature:chat:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :feature:chat:generateDebugResValues
+> Task :feature:chat:generateDebugResources
+> Task :feature:chat:packageDebugResources
+> Task :feature:chat:processDebugNavigationResources
+> Task :feature:chat:parseDebugLocalResources
+> Task :feature:chat:generateDebugUnitTestAssets UP-TO-DATE
+> Task :feature:chat:mergeDebugShaders
+> Task :feature:chat:generateDebugRFile
+> Task :feature:chat:compileDebugShaders NO-SOURCE
+> Task :feature:chat:javaPreCompileDebug
+> Task :feature:chat:generateDebugAssets UP-TO-DATE
+> Task :feature:chat:mergeDebugAssets
+> Task :feature:chat:preDebugUnitTestBuild UP-TO-DATE
+> Task :feature:chat:mergeDebugUnitTestAssets
+> Task :feature:chat:writeDebugAarMetadata
+> Task :feature:chat:compileDebugLibraryResources
+> Task :feature:chat:generateDebugUnitTestResValues
+> Task :feature:chat:mapDebugUnitTestSourceSetPaths
+> Task :feature:chat:generateDebugUnitTestResources
+> Task :feature:chat:checkDebugUnitTestAarMetadata
+> Task :feature:chat:extractDeepLinksDebug
+> Task :feature:chat:javaPreCompileDebugUnitTest
+> Task :feature:chat:processDebugManifest
+> Task :feature:chat:processDebugUnitTestManifest
+> Task :feature:chat:mergeDebugUnitTestResources
+> Task :feature:chat:processDebugUnitTestResources
+> Task :feature:chat:packageDebugUnitTestForUnitTest
+> Task :feature:chat:generateDebugUnitTestConfig
+> Task :feature:chat:kspDebugKotlin
+> Task :feature:chat:compileDebugKotlin
+> Task :feature:chat:compileDebugJavaWithJavac
+> Task :feature:chat:processDebugJavaRes
+> Task :feature:chat:transformDebugClassesWithAsm
+> Task :feature:chat:bundleLibRuntimeToJarDebug
+> Task :feature:chat:bundleLibCompileToJarDebug
+> Task :feature:chat:kspDebugUnitTestKotlin
+> Task :feature:chat:compileDebugUnitTestKotlin
+> Task :feature:chat:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :feature:chat:hiltAggregateDepsDebugUnitTest
+> Task :feature:chat:hiltJavaCompileDebugUnitTest NO-SOURCE
+> Task :feature:chat:processDebugUnitTestJavaRes
+> Task :feature:chat:transformDebugUnitTestClassesWithAsm
+> Task :feature:chat:testDebugUnitTest
+
+BUILD SUCCESSFUL in 7s
+41 actionable tasks: 37 executed, 4 up-to-date

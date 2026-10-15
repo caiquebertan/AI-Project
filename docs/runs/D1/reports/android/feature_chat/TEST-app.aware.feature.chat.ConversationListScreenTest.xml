@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.aware.feature.chat.ConversationListScreenTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-14T18:17:51.010Z" hostname="MacBook-Pro-de-Caique.local" time="3.839">
+  <properties/>
+  <testcase name="CORE-SEND-002 AC-F2-2 SX-4 an invalid recipient shows the fixed text, keeps the text and opens nothing" classname="app.aware.feature.chat.ConversationListScreenTest" time="3.59"/>
+  <testcase name="CORE-VISIBLE-002 PLAT-HOOK-001 AC-F1-2 an empty list shows No conversations yet and the Open control" classname="app.aware.feature.chat.ConversationListScreenTest" time="0.035"/>
+  <testcase name="CORE-VISIBLE-002 a conversation that was only opened is not listed" classname="app.aware.feature.chat.ConversationListScreenTest" time="0.063"/>
+  <testcase name="CORE-SEND-011 a note to self is listed under the user's own name" classname="app.aware.feature.chat.ConversationListScreenTest" time="0.029"/>
+  <testcase name="CORE-SEND-001 AC-F2-1 SX-4 Open with a valid name opens the lowercase conversation and clears the field" classname="app.aware.feature.chat.ConversationListScreenTest" time="0.057"/>
+  <testcase name="CORE-VISIBLE-004 activating an entry opens that conversation" classname="app.aware.feature.chat.ConversationListScreenTest" time="0.035"/>
+  <testcase name="CORE-VISIBLE-002 CORE-VISIBLE-003 CORE-VISIBLE-007 PLAT-HOOK-002 AC-F2-6 AC-F2-8 entries are one per peer, newest first, and follow changes" classname="app.aware.feature.chat.ConversationListScreenTest" time="0.03"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

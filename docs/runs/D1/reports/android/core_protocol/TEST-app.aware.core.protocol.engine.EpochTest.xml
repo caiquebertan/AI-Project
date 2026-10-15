@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.aware.core.protocol.engine.EpochTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-14T18:19:11.463Z" hostname="MacBook-Pro-de-Caique.local" time="0.01">
+  <properties/>
+  <testcase name="CORE-SESSION-004 CORE-SESSION-003 a session answering another name is a failed request and nothing is polled" classname="app.aware.core.protocol.engine.EpochTest" time="0.002"/>
+  <testcase name="CORE-EPOCH-003 CORE-EPOCH-004 CORE-VISIBLE-008 AC-F3-10 a new epoch removes sent and received messages, resets the cursor and keeps the outbox" classname="app.aware.core.protocol.engine.EpochTest" time="0.002"/>
+  <testcase name="CORE-EPOCH-005 CORE-ERR-003 a 409 epoch_mismatch changes nothing and the next cycle starts with a session" classname="app.aware.core.protocol.engine.EpochTest" time="0.004"/>
+  <testcase name="CORE-SESSION-001 CORE-CAP-002 CORE-EXT-003 a core-only client declares no capabilities and sends only text" classname="app.aware.core.protocol.engine.EpochTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

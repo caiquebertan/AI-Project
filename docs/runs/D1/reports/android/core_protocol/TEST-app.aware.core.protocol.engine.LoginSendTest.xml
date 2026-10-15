@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.aware.core.protocol.engine.LoginSendTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-14T18:19:11.473Z" hostname="MacBook-Pro-de-Caique.local" time="0.008">
+  <properties/>
+  <testcase name="CORE-ENV-002 CORE-ENV-003 CORE-ENV-006 CORE-MSG-006 the send form carries the id, canonical names and the compose-time clock" classname="app.aware.core.protocol.engine.LoginSendTest" time="0.002"/>
+  <testcase name="CORE-TEXT-005 CORE-SEND-006 AC-F2-5 text is stored and transmitted exactly as typed" classname="app.aware.core.protocol.engine.LoginSendTest" time="0.001"/>
+  <testcase name="CORE-LOGIN-002 CORE-NAME-005 AC-F1-4 login works without a server and needs no request" classname="app.aware.core.protocol.engine.LoginSendTest" time="0.001"/>
+  <testcase name="CORE-LOGIN-003 an invalid name stores nothing" classname="app.aware.core.protocol.engine.LoginSendTest" time="0.001"/>
+  <testcase name="CORE-LOGIN-004 CORE-NAME-004 the identity is stored in lowercase" classname="app.aware.core.protocol.engine.LoginSendTest" time="0.001"/>
+  <testcase name="CORE-SEND-004 CORE-TEXT-004 CORE-SEND-002 invalid recipients and texts are refused and nothing is enqueued" classname="app.aware.core.protocol.engine.LoginSendTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

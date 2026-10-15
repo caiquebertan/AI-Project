@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.aware.core.protocol.engine.OutboxFlushTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-10-14T18:19:11.483Z" hostname="MacBook-Pro-de-Caique.local" time="0.014">
+  <properties/>
+  <testcase name="CORE-OUTBOX-004 CORE-FLUSH-005 a failed send keeps the entry at the head and ends the cycle" classname="app.aware.core.protocol.engine.OutboxFlushTest" time="0.002"/>
+  <testcase name="CORE-SEQ-004 CORE-ORDER-003 CORE-FLUSH-004 a message acknowledged late moves above messages received meanwhile" classname="app.aware.core.protocol.engine.OutboxFlushTest" time="0.002"/>
+  <testcase name="CORE-MSG-005 CORE-DEDUPE-003 CORE-FLUSH-005 AC-F3-9 a lost ack is resent with identical fields and acknowledged once" classname="app.aware.core.protocol.engine.OutboxFlushTest" time="0.001"/>
+  <testcase name="CORE-FLUSH-006 CORE-CONN-007 a message queued while online is sent by the next cycle" classname="app.aware.core.protocol.engine.OutboxFlushTest" time="0.002"/>
+  <testcase name="CORE-OUTBOX-001 CORE-SEND-005 CORE-OFFLINE-003 CORE-SEND-010 a send while offline joins the persistent outbox as pending" classname="app.aware.core.protocol.engine.OutboxFlushTest" time="0.0"/>
+  <testcase name="CORE-MSG-004 CORE-SEND-008 only a response carrying the sent id acknowledges a message" classname="app.aware.core.protocol.engine.OutboxFlushTest" time="0.002"/>
+  <testcase name="CORE-OUTBOX-005 CORE-ERR-003 a permanent rejection removes and logs the message and the flush continues" classname="app.aware.core.protocol.engine.OutboxFlushTest" time="0.001"/>
+  <testcase name="CORE-OUTBOX-003 CORE-FLUSH-001 CORE-FLUSH-002 entries are sent one at a time in the order the user sent them, across conversations" classname="app.aware.core.protocol.engine.OutboxFlushTest" time="0.002"/>
+  <testcase name="CORE-OUTBOX-002 CORE-OUTBOX-006 the enqueue order is strictly increasing, persisted and never reused" classname="app.aware.core.protocol.engine.OutboxFlushTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

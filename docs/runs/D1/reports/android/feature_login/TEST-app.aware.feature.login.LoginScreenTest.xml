@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.aware.feature.login.LoginScreenTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-14T18:14:27.760Z" hostname="MacBook-Pro-de-Caique.local" time="3.703">
+  <properties/>
+  <testcase name="CORE-LOGIN-002 CORE-LOGIN-003 AC-F1-3 SX-4 an invalid name shows the fixed text, keeps the typed text and stores nothing" classname="app.aware.feature.login.LoginScreenTest" time="3.506"/>
+  <testcase name="CORE-LOGIN-004 CORE-NAME-004 AC-F1-2 SX-4 a valid name logs in with its lowercase form, checked locally" classname="app.aware.feature.login.LoginScreenTest" time="0.058"/>
+  <testcase name="CORE-LOGIN-003 the validation message disappears when the field is edited" classname="app.aware.feature.login.LoginScreenTest" time="0.059"/>
+  <testcase name="CORE-LOGIN-004 SX-4 a 32-character name is accepted" classname="app.aware.feature.login.LoginScreenTest" time="0.055"/>
+  <testcase name="CORE-LOGIN-001 PLAT-HOOK-001 PLAT-HOOK-010 AC-F1-1 the login screen has a name field and Continue and no header" classname="app.aware.feature.login.LoginScreenTest" time="0.025"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

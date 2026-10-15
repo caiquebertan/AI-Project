@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.aware.core.protocol.engine.RelaunchTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-14T18:19:11.515Z" hostname="MacBook-Pro-de-Caique.local" time="0.003">
+  <properties/>
+  <testcase name="PLAT-HOOK-007 CORE-CURSOR-001 CORE-EPOCH-003 the snapshot reflects exactly what a relaunch reloads" classname="app.aware.core.protocol.engine.RelaunchTest" time="0.001"/>
+  <testcase name="PLAT-HOOK-011 PLAT-ANDROID-025 CORE-LOGIN-005 CORE-OFFLINE-004 AC-F3-3 relaunch keeps the stored state and resets the in-memory state" classname="app.aware.core.protocol.engine.RelaunchTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

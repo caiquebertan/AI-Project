@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.aware.core.protocol.engine.ConnectionCycleTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-10-14T18:19:11.433Z" hostname="MacBook-Pro-de-Caique.local" time="0.03">
+  <properties/>
+  <testcase name="CORE-CONN-003 CORE-OFFLINE-006 online only after a session and then a poll have succeeded" classname="app.aware.core.protocol.engine.ConnectionCycleTest" time="0.002"/>
+  <testcase name="CORE-CONN-001 CORE-CONN-002 CORE-OFFLINE-002 the connectivity monitor decides network_available" classname="app.aware.core.protocol.engine.ConnectionCycleTest" time="0.002"/>
+  <testcase name="CORE-CONN-006 CORE-SESSION-003 a cycle is session, catch-up, then flush, and an idle cycle is one E4" classname="app.aware.core.protocol.engine.ConnectionCycleTest" time="0.002"/>
+  <testcase name="CORE-CONN-009 a request times out after REQUEST_TIMEOUT_MS as a failed request" classname="app.aware.core.protocol.engine.ConnectionCycleTest" time="0.003"/>
+  <testcase name="CORE-CONN-007 CORE-CONN-008 PLAT-HOOK-014 e one call in flight and a fixed interval between cycles, also after failures" classname="app.aware.core.protocol.engine.ConnectionCycleTest" time="0.008"/>
+  <testcase name="CORE-CONN-005 CORE-OFFLINE-005 PLAT-HOOK-014 d after setOffline false the next call is E2 and starts at once" classname="app.aware.core.protocol.engine.ConnectionCycleTest" time="0.002"/>
+  <testcase name="CORE-CONN-004 CORE-CURSOR-002 PLAT-HOOK-014 c an E4 in flight is not cancelled by going offline and its envelopes are stored" classname="app.aware.core.protocol.engine.ConnectionCycleTest" time="0.003"/>
+  <testcase name="CORE-CONN-004 CORE-CONN-002 PLAT-HOOK-014 b no call starts after setNetworkAvailable false" classname="app.aware.core.protocol.engine.ConnectionCycleTest" time="0.002"/>
+  <testcase name="CORE-CONN-004 CORE-CONN-007 PLAT-HOOK-014 a no call starts after setOffline while idle, even when a message is queued" classname="app.aware.core.protocol.engine.ConnectionCycleTest" time="0.002"/>
+  <testcase name="CORE-CONN-004 CORE-OFFLINE-007 PLAT-HOOK-014 c an E3 in flight is not cancelled by going offline and its ack is applied" classname="app.aware.core.protocol.engine.ConnectionCycleTest" time="0.002"/>
+  <testcase name="CORE-CONN-008 CORE-SESSION-003 after a failed request the next cycle starts with a session" classname="app.aware.core.protocol.engine.ConnectionCycleTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

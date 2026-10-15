@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.aware.core.protocol.engine.OrderingTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-14T18:19:11.482Z" hostname="MacBook-Pro-de-Caique.local" time="0.001">
+  <properties/>
+  <testcase name="CORE-SEQ-003 CORE-ORDER-004 CORE-VISIBLE-012 no clock value decides the order" classname="app.aware.core.protocol.engine.OrderingTest" time="0.0"/>
+  <testcase name="CORE-SEND-011 CORE-ENV-003 a note to self is listed under the user's own name" classname="app.aware.core.protocol.engine.OrderingTest" time="0.0"/>
+  <testcase name="CORE-VISIBLE-002 CORE-VISIBLE-003 CORE-SEQ-005 CORE-ORDER-006 conversations are newest first and hold only their messages" classname="app.aware.core.protocol.engine.OrderingTest" time="0.0"/>
+  <testcase name="CORE-SEQ-004 CORE-ORDER-003 CORE-FLUSH-004 an acknowledged message takes the place of its seq" classname="app.aware.core.protocol.engine.OrderingTest" time="0.0"/>
+  <testcase name="CORE-SEQ-002 CORE-ORDER-001 CORE-ORDER-002 messages with a seq come first by seq, then pending ones by enqueue order" classname="app.aware.core.protocol.engine.OrderingTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

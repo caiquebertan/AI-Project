@@ -1,0 +1,21 @@
+$ ./gradlew --console=plain :core:protocol:test
+(cwd /Users/caiquebertan/Documents/Aware project/clients/android)
+> Task :core:protocol:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :core:protocol:processResources NO-SOURCE
+> Task :core:protocol:processTestFixturesResources NO-SOURCE
+> Task :core:protocol:processTestResources NO-SOURCE
+> Task :core:protocol:compileKotlin
+> Task :core:protocol:compileJava NO-SOURCE
+> Task :core:protocol:classes UP-TO-DATE
+> Task :core:protocol:jar
+> Task :core:protocol:compileTestFixturesKotlin UP-TO-DATE
+> Task :core:protocol:compileTestFixturesJava NO-SOURCE
+> Task :core:protocol:testFixturesClasses UP-TO-DATE
+> Task :core:protocol:testFixturesJar UP-TO-DATE
+> Task :core:protocol:compileTestKotlin
+> Task :core:protocol:compileTestJava NO-SOURCE
+> Task :core:protocol:testClasses UP-TO-DATE
+> Task :core:protocol:test
+
+BUILD SUCCESSFUL in 1s
+6 actionable tasks: 4 executed, 2 up-to-date

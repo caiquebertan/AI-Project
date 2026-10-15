@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.aware.core.protocol.engine.ScenarioTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-14T18:19:11.518Z" hostname="MacBook-Pro-de-Caique.local" time="0.013">
+  <properties/>
+  <testcase name="SX-1 AC-F3-13 CORE-LOGIN-002 CORE-OFFLINE-004 CORE-FLUSH-005 login with no server, queue, relaunch, then connect" classname="app.aware.core.protocol.engine.ScenarioTest" time="0.002"/>
+  <testcase name="SX-6 AC-F2-21 AC-F2-22 AC-F2-23 CORE-VISIBLE-009 CORE-VISIBLE-010 CORE-VISIBLE-011 message times in each viewer's local time" classname="app.aware.core.protocol.engine.ScenarioTest" time="0.003"/>
+  <testcase name="SX-3 AC-F3-15 CORE-VISIBLE-008 CORE-EPOCH-004 a server restart clears history and delivers what was queued" classname="app.aware.core.protocol.engine.ScenarioTest" time="0.004"/>
+  <testcase name="SX-5 AC-F2-16 CORE-RECEIVE-005 CORE-EXT-002 a message of an unknown kind is invisible" classname="app.aware.core.protocol.engine.ScenarioTest" time="0.002"/>
+  <testcase name="SX-2 AC-F3-14 CORE-FLUSH-005 CORE-RECEIVE-004 CORE-MSG-001 a message the server already has is acknowledged once with its original order" classname="app.aware.core.protocol.engine.ScenarioTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

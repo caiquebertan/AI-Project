@@ -1,0 +1,35 @@
+$ ./gradlew --console=plain :tools:driver:test :tools:driver:installDist
+(cwd /Users/caiquebertan/Documents/Aware project/clients/android)
+> Task :core:network:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :core:protocol:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :core:protocol:compileKotlin UP-TO-DATE
+> Task :core:protocol:compileJava NO-SOURCE
+> Task :core:protocol:processResources NO-SOURCE
+> Task :core:protocol:classes UP-TO-DATE
+> Task :core:protocol:jar UP-TO-DATE
+> Task :core:network:compileKotlin UP-TO-DATE
+> Task :core:network:compileJava NO-SOURCE
+> Task :core:network:processResources NO-SOURCE
+> Task :core:network:classes UP-TO-DATE
+> Task :core:network:jar UP-TO-DATE
+> Task :tools:driver:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :tools:driver:processResources NO-SOURCE
+> Task :core:protocol:compileTestFixturesKotlin UP-TO-DATE
+> Task :core:protocol:compileTestFixturesJava NO-SOURCE
+> Task :core:protocol:processTestFixturesResources NO-SOURCE
+> Task :core:protocol:testFixturesClasses UP-TO-DATE
+> Task :core:protocol:testFixturesJar UP-TO-DATE
+> Task :tools:driver:processTestResources NO-SOURCE
+> Task :tools:driver:compileKotlin
+> Task :tools:driver:compileJava NO-SOURCE
+> Task :tools:driver:classes UP-TO-DATE
+> Task :tools:driver:jar
+> Task :tools:driver:startScripts
+> Task :tools:driver:installDist
+> Task :tools:driver:compileTestKotlin
+> Task :tools:driver:compileTestJava NO-SOURCE
+> Task :tools:driver:testClasses UP-TO-DATE
+> Task :tools:driver:test
+
+BUILD SUCCESSFUL in 1s
+12 actionable tasks: 6 executed, 6 up-to-date

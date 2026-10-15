@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.aware.core.protocol.time.TimeTextTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-14T18:19:11.547Z" hostname="MacBook-Pro-de-Caique.local" time="0.001">
+  <properties/>
+  <testcase name="PLAT-ANDROID-028 CORE-TIME-002 CORE-VISIBLE-010 Appendix A displayed times for both zones at N1 and N2" classname="app.aware.core.protocol.time.TimeTextTest" time="0.0"/>
+  <testcase name="PLAT-ANDROID-028 CORE-VISIBLE-010 the text uses ASCII digits whatever the default locale" classname="app.aware.core.protocol.time.TimeTextTest" time="0.0"/>
+  <testcase name="PLAT-ANDROID-028 CORE-VISIBLE-009 AC-F2-17 AC-F2-18 a pending message has no time and a sent one has its accepted time" classname="app.aware.core.protocol.time.TimeTextTest" time="0.0"/>
+  <testcase name="PLAT-ANDROID-028 CORE-VISIBLE-010 the local midnight boundary" classname="app.aware.core.protocol.time.TimeTextTest" time="0.0"/>
+  <testcase name="PLAT-ANDROID-028 CORE-TIME-002 the offset is taken at the message instant and at now separately" classname="app.aware.core.protocol.time.TimeTextTest" time="0.0"/>
+  <testcase name="PLAT-ANDROID-028 CORE-VISIBLE-011 a zone change between two renders takes effect on the second" classname="app.aware.core.protocol.time.TimeTextTest" time="0.0"/>
+  <testcase name="PLAT-ANDROID-028 CORE-VISIBLE-010 a message date later than today also gets the date" classname="app.aware.core.protocol.time.TimeTextTest" time="0.0"/>
+  <testcase name="PLAT-ANDROID-028 CORE-VISIBLE-010 seconds and milliseconds are truncated" classname="app.aware.core.protocol.time.TimeTextTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

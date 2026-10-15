@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.aware.core.protocol.engine.AppendixAReplayTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-14T18:19:11.336Z" hostname="MacBook-Pro-de-Caique.local" time="0.096">
+  <properties/>
+  <testcase name="PLAT-ANDROID-019 SC-1 SC-2 SC-3 SC-4 SC-5 SC-6 SC-7 SC-8 AC-F4-1 AC-F4-2 AC-F4-3 AC-F4-4 AC-F4-5 AC-F4-6 AC-F4-7 AC-F4-8 Appendix A replays step by step" classname="app.aware.core.protocol.engine.AppendixAReplayTest" time="0.096"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="app.aware.core.network.HttpTransportTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-10-14T18:06:23.002Z" hostname="MacBook-Pro-de-Caique.local" time="0.207">
+  <properties/>
+  <testcase name="PLAT-ANDROID-020 CORE-HTTP-005 unknown response fields are ignored" classname="app.aware.core.network.HttpTransportTest" time="0.146"/>
+  <testcase name="PLAT-ANDROID-020 CORE-ERR-003 CORE-OUTBOX-005 E3 permanent outcomes are class P" classname="app.aware.core.network.HttpTransportTest" time="0.019"/>
+  <testcase name="PLAT-ANDROID-020 CORE-HTTP-001 CORE-HTTP-003 CORE-SESSION-001 E2 is POST v1 session with a JSON body" classname="app.aware.core.network.HttpTransportTest" time="0.004"/>
+  <testcase name="PLAT-ANDROID-020 CORE-CAP-001 CORE-HTTP-002 E1 is GET v1 info" classname="app.aware.core.network.HttpTransportTest" time="0.004"/>
+  <testcase name="PLAT-ANDROID-020 CORE-ERR-003 CORE-EPOCH-005 other outcomes on every endpoint are class R" classname="app.aware.core.network.HttpTransportTest" time="0.016"/>
+  <testcase name="PLAT-ANDROID-020 CORE-CURSOR-003 CORE-POLL-001 E4 is GET with epoch, after and an optional limit" classname="app.aware.core.network.HttpTransportTest" time="0.004"/>
+  <testcase name="PLAT-ANDROID-020 CORE-CONN-009 CORE-ERR-003 a network error is class R and never thrown" classname="app.aware.core.network.HttpTransportTest" time="0.007"/>
+  <testcase name="PLAT-ANDROID-020 CORE-EPOCH-002 CORE-ENV-001 E3 is POST v1 messages with the epoch and the send form" classname="app.aware.core.network.HttpTransportTest" time="0.004"/>
+  <testcase name="PLAT-ANDROID-020 CORE-CAP-003 E5 is GET v1 users" classname="app.aware.core.network.HttpTransportTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

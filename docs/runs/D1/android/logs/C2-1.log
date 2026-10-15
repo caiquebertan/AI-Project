@@ -1,0 +1,32 @@
+$ ./gradlew --console=plain :core:network:test
+(cwd /Users/caiquebertan/Documents/Aware project/clients/android)
+> Task :core:network:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :core:protocol:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :core:protocol:compileKotlin UP-TO-DATE
+> Task :core:protocol:compileJava NO-SOURCE
+> Task :core:protocol:processResources NO-SOURCE
+> Task :core:protocol:classes UP-TO-DATE
+> Task :core:protocol:jar UP-TO-DATE
+> Task :core:network:processResources NO-SOURCE
+> Task :core:network:processTestFixturesResources NO-SOURCE
+> Task :core:protocol:compileTestFixturesKotlin UP-TO-DATE
+> Task :core:protocol:compileTestFixturesJava NO-SOURCE
+> Task :core:network:processTestResources NO-SOURCE
+> Task :core:protocol:processTestFixturesResources NO-SOURCE
+> Task :core:protocol:testFixturesClasses UP-TO-DATE
+> Task :core:protocol:testFixturesJar UP-TO-DATE
+> Task :core:network:compileKotlin
+> Task :core:network:compileJava NO-SOURCE
+> Task :core:network:classes UP-TO-DATE
+> Task :core:network:jar
+> Task :core:network:compileTestFixturesKotlin NO-SOURCE
+> Task :core:network:compileTestFixturesJava NO-SOURCE
+> Task :core:network:testFixturesClasses UP-TO-DATE
+> Task :core:network:testFixturesJar
+> Task :core:network:compileTestKotlin
+> Task :core:network:compileTestJava NO-SOURCE
+> Task :core:network:testClasses UP-TO-DATE
+> Task :core:network:test
+
+BUILD SUCCESSFUL in 1s
+9 actionable tasks: 5 executed, 4 up-to-date

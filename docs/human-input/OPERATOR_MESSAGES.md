@@ -277,3 +277,13 @@ sounds good, we can move forward with web first, lets generate it
 ````text
 you can now generate the android
 ````
+
+---
+
+## OM-0023 · 2026-10-14 21:50 — Accept wrap-up cuts; run the regeneration check
+
+**AI note:** _Triggered: operator accepts the wrap-up plan (cut P8 signing rebase, P6 reactions, P4/P5 acceptance suites and the traceability gate; move them to FUTURE.md) and asks for the regeneration check now. Operator runs `regen_check.py` on his machine; ORC writes README, DESIGN, FUTURE and the D1 retro in parallel._
+
+````text
+I accept the cuts and the plan, lets do the regeneration now
+````

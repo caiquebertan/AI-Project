@@ -2,7 +2,7 @@
 
 A reusable, reproducible agentic harness that turns a written specification into working client code. A small local messaging system (Python server + Android/Kotlin client + web client) is the example used to evaluate it.
 
-> Status: **spec 0.1.1, reference server, generator and both generated clients are done.** The web client was deleted and regenerated successfully; Android, acceptance suites and interop were cut for budget (decision 0020). What is verified and what is not is listed below. Next steps: [`FUTURE.md`](FUTURE.md). Plan: [`docs/PLAN.md`](docs/PLAN.md).
+> Status: **spec 0.1.1, reference server, generator and both generated clients are done.** The web client was deleted and regenerated successfully. Both clients were run together by the operator (web in Chrome, Android in the emulator, real server) and the scenario was validated by hand, with a recording in [`docs/demo/`](docs/demo/). Android regeneration, the automated acceptance suites and automated interop were cut for budget (decision 0020). What is verified and what is not is listed below. Next steps: [`FUTURE.md`](FUTURE.md). Plan: [`docs/PLAN.md`](docs/PLAN.md).
 
 | Phase | Status |
 |---|---|
@@ -10,7 +10,8 @@ A reusable, reproducible agentic harness that turns a written specification into
 | P2 Server | done, 138 protocol tests green, known gaps in decision 0019 |
 | P3 Generator v1 | done (decision 0017), smoke-verified on the operator's machine |
 | P4 D1 first generation | web 126 tests, Android 129 tests, all passing on the operator's machine; acceptance suites cut |
-| P5 Interop, P6 Reactions | not done (FUTURE.md) |
+| P5 Interop | manual run done and recorded (web Bob and Android emulator Alice, human-validated, `docs/demo/`); automated `tests/interop/` cut |
+| P6 Reactions | not done (FUTURE.md) |
 | P7 Regeneration check | web **PASS**; Android not run (`docs/runs/P7/`) |
 | P8 Packaging | README, DESIGN, AGENTS, FUTURE done; signing rebase cut |
 
@@ -18,8 +19,9 @@ A reusable, reproducible agentic harness that turns a written specification into
 | Verified (logs in `docs/runs/`) | Not verified |
 |---|---|
 | Web: delete `clients/web`, `/generate web`, build, 126 tests, header and manifest checks: PASS | Android delete-and-regenerate (first generation only) |
-| Android first generation: 8 checkpoints, 129 JUnit tests, 0 failures | Any client against the real server through the UI; emulator or browser runs |
-| Both clients replay the Alice/Bob scenario in tests (fake server and clock) | Interop pairs, determinism of two regenerations, README-only run by someone else |
+| Android first generation: 8 checkpoints, 129 JUnit tests, 0 failures | Scripted (repeatable) runs against the real server |
+| Both clients replay the Alice/Bob scenario in tests (fake server and clock) | Automated interop runs (3 in a row), determinism of two regenerations, README-only run by someone else |
+| **Manual run, human-validated:** web client (Chrome) and Android client (emulator) talking through the real server, including Offline mode and Pending delivery: [`docs/demo/`](docs/demo/) | Automated browser tests (Playwright) and automated Android UI tests on the emulator |
 | Server: 138 protocol tests; harness: 142 tests | Acceptance traceability (`check_trace` 0/172, see FUTURE.md) |
 
 ## How it works (two entry points)

@@ -22,4 +22,4 @@ Design principles behind the Aware harness. Decisions and reasons are in [`docs/
 Two entry points, one workflow ([`generator/WORKFLOW.md`](generator/WORKFLOW.md)): `/generate <android|web|all>` is the headless generator; `/pipeline` is the gated delivery pipeline (PM, Tech Lead, Developer, Reviewer, QA agents with human gates on spec, plan and escalation) used to evolve the spec and the generator. The orchestrator is the operator's single point of contact.
 
 ## Known limits
-See [`FUTURE.md`](FUTURE.md): Android regeneration, acceptance suites and interop are not done.
+See [`FUTURE.md`](FUTURE.md): Android regeneration and the automated acceptance and interop suites are not done. Cross-client behavior was validated by hand on the real server ([`docs/demo/`](docs/demo/)).

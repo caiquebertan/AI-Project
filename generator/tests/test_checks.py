@@ -172,6 +172,14 @@ class CheckHeaders(unittest.TestCase):
         (self.app / "node_modules" / "x.js").write_text("ignored")
         self.assertEqual(check_headers.check_app(self.app, CONFIG), ("checked", []))
 
+    def test_machine_local_files_are_ignored(self):
+        marker = CONFIG["headers"]["marker"]
+        self.write_generated({"src/a.ts": f"// {marker} from spec 0.1.0\nexport {{}}\n"})
+        (self.app / "local.properties").write_text("sdk.dir=/somewhere\n")
+        (self.app / "sub").mkdir()
+        (self.app / "sub" / ".DS_Store").write_text("x")
+        self.assertEqual(check_headers.check_app(self.app, CONFIG), ("checked", []))
+
     def test_mismatches_reported(self):
         self.write_generated({"src/a.ts": "export {}\n", "src/b.ts": f"// {CONFIG['headers']['marker']}\n"})
         (self.app / "src" / "b.ts").write_text("edited by hand\n")

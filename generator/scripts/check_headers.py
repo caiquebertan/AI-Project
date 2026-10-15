@@ -30,11 +30,12 @@ from pathlib import Path
 import awarelib as lib
 
 
-def disk_files(app_dir: Path, manifest_name: str, ignore_dirs: list[str]) -> set[str]:
+def disk_files(app_dir: Path, manifest_name: str, ignore_dirs: list[str], ignore_files: list[str] | None = None) -> set[str]:
     out = set()
     for p in app_dir.rglob("*"):
         rel = p.relative_to(app_dir)
-        if p.is_file() and rel.as_posix() != manifest_name and not set(rel.parts[:-1]) & set(ignore_dirs):
+        if (p.is_file() and rel.as_posix() != manifest_name and rel.name not in (ignore_files or [])
+                and not set(rel.parts[:-1]) & set(ignore_dirs)):
             out.add(rel.as_posix())
     return out
 
@@ -55,7 +56,7 @@ def write_manifest(app_dir: Path, app: str, spec_version: str, model_id: str, ge
     owned = template_owned(app, cfg)
     files = [{"path": rel, "sha256": lib.sha256_file(app_dir / rel),
               "origin": "template" if rel in owned else "model"}
-             for rel in sorted(disk_files(app_dir, h["manifest"], h["ignore_dirs"]))]
+             for rel in sorted(disk_files(app_dir, h["manifest"], h["ignore_dirs"], h.get("ignore_files")))]
     manifest = {"app": app, "spec_version": spec_version, "generator_commit": generator_commit,
                 "model_id": model_id, "generated_at": lib.now_iso()}
     if result is not None:
@@ -87,7 +88,7 @@ def check_app(app_dir: Path, cfg: dict) -> tuple[str, list[str]]:
     if problems:
         return "checked", problems
     listed = {f["path"]: f["sha256"] for f in manifest["files"]}
-    on_disk = disk_files(app_dir, h["manifest"], h["ignore_dirs"])
+    on_disk = disk_files(app_dir, h["manifest"], h["ignore_dirs"], h.get("ignore_files"))
     problems += [f"in manifest, missing on disk: {p}" for p in sorted(set(listed) - on_disk)]
     problems += [f"on disk, not in manifest: {p}" for p in sorted(on_disk - set(listed))]
     for rel, digest in sorted(listed.items()):

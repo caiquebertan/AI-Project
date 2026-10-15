@@ -1,23 +1,25 @@
 # DESIGN
 
-Draft design principles. Refine as the spec and generator take shape.
+Design principles behind the Aware harness. Decisions and reasons are in [`docs/decisions/`](docs/decisions/).
 
 ## Principles
-1. **Generator over output.** The generator is the deliverable; the clients are reproducible artifacts.
-2. **Spec is authoritative and platform-neutral.** Core protocol and behavior are separated from platform-specific extensions (`spec/core/` vs `spec/platform/`).
-3. **Testable contracts.** Every behavior in the spec is backed by a scenario that can be executed against any client (`spec/scenarios/`, `tests/`).
-4. **Explicit regeneration boundary.** Generated vs hand-written is visible in the file tree, in file headers, and in the README.
-5. **Evolvable.** New capabilities (attachments, reactions, groups) are added as spec extensions (`spec/extensions/`) without changing the harness.
-6. **Proportionate engineering.** SOLID and clean architecture scaled to component size; the server stays trivially small.
+1. **The generator is the deliverable.** The clients are reproducible artifacts. Delete `clients/<app>/`, run `/generate <app>`, get a working client. A web run did exactly that and passed (`docs/runs/P7/`).
+2. **The spec is the only source of behavior.** Rules have stable ids (`CORE-AREA-NNN`, `PLAT-*`, `EXT-*`) and acceptance criteria (`AC-Fn-m`). Withdrawn rules stay as one-line tombstones. Disagreements are resolved by reading the spec, never the code.
+3. **Core is platform-neutral; platforms and extensions are layered.** `spec/core/` defines the protocol and behavior; `spec/platform/` holds Android and web details; `spec/extensions/` is where new features (reactions, attachments, groups) go without touching the harness.
+4. **The generator has no knowledge of this app.** Prompts name no feature (`lint_prompts.py` checks this). What differs per platform lives in `generator/conventions/` and `generator/templates/`.
+5. **Reproducibility over cleverness.** Pinned model, pinned wrapper and lockfile templates, explicit permission allowlist, checkpoints (web C0 to C5, Android C0 to C6) with a bounded self-repair budget, and a `.generated` manifest (file hashes, spec version, generator commit, model).
+6. **Explicit boundary.** Generated means exactly `clients/android/` and `clients/web/`. Each file carries a `GENERATED` header and `check_headers.py --strict` enforces manifest equals tree.
+7. **Proportionate engineering.** The server is a small in-memory Python process. Effort went to the protocol and the generation loop.
+8. **Honest verification.** Agents cannot build clients in their sandbox, so every "builds and passes" claim comes from a log on the operator's machine, kept in `docs/runs/`.
 
-## Components
-- **Spec** → input to the generator.
-- **Generator/harness** → prompts, commands and sub-agents that drive Claude Code to produce clients and verify them against scenarios.
-- **Server** → in-memory Python, hand-written.
-- **Clients** → Android (Kotlin, Compose, Hilt, Retrofit, multi-module) and web (stack TBD, see decision log), both generated.
+## Protocol decisions (spec 0.1.1)
+- JSON over HTTP under `/v1`; plain polling every second. Simple to specify, identical on both clients, easy to test.
+- Messages have client-generated ids; the server assigns a sequence number. Clients deduplicate by id (created_at is part of duplicate equality).
+- Offline queue: send in order, retry until accepted; a permanently rejected message is discarded and written to a diagnostic log (there is no `failed` state, cut for scope).
+- Time: strict UTC on the wire (`YYYY-MM-DDTHH:mm:ss.sssZ`); the displayed time is the server's `accepted_at` converted to the device's local zone. No hardcoded zones.
 
-## Open design questions
-- Transport: HTTP polling, long-poll, or WebSocket? (decide in `spec/core/protocol.md`)
-- Message identity and ordering (client-generated IDs, server sequence numbers?).
-- Delivery semantics on reconnect (at-least-once + dedupe by ID?).
-- How scenarios are encoded so both clients can be driven by the same test script.
+## Workflow
+Two entry points, one workflow ([`generator/WORKFLOW.md`](generator/WORKFLOW.md)): `/generate <android|web|all>` is the headless generator; `/pipeline` is the gated delivery pipeline (PM, Tech Lead, Developer, Reviewer, QA agents with human gates on spec, plan and escalation) used to evolve the spec and the generator. The orchestrator is the operator's single point of contact.
+
+## Known limits
+See [`FUTURE.md`](FUTURE.md): Android regeneration, acceptance suites and interop are not done.

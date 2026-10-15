@@ -2,15 +2,25 @@
 
 A reusable, reproducible agentic harness that turns a written specification into working client code. A small local messaging system (Python server + Android/Kotlin client + web client) is the example used to evaluate it.
 
-> Status: **P0 to P2 done** (harness, spec 0.1.1, reference server and protocol tests); **P3 generator implementation is next**. Generator conventions/templates and both clients are not written yet. Items marked ☐ are open. Plan: [`docs/PLAN.md`](docs/PLAN.md).
+> Status: **spec 0.1.1, reference server, generator and both generated clients are done.** The web client was deleted and regenerated successfully; Android, acceptance suites and interop were cut for budget (decision 0020). What is verified and what is not is listed below. Next steps: [`FUTURE.md`](FUTURE.md). Plan: [`docs/PLAN.md`](docs/PLAN.md).
 
 | Phase | Status |
 |---|---|
-| P0 Harness | done, approved (decision 0003) |
-| P1 Backlog and core spec | done, spec 0.1.0 approved and tagged (decision 0013) |
-| P2 Server | done, spec 0.1.1, 138 protocol tests green, closed with known gaps (decision 0019) |
-| P3 Generator v1 | next (design approved at G1, decision 0017) |
-| P4 Core delivery D1, P5 Interop F4, P6 Reactions, P7 Regeneration check, P8 Packaging | planned |
+| P0 Harness, P1 Spec 0.1.1 | done (decisions 0003, 0013) |
+| P2 Server | done, 138 protocol tests green, known gaps in decision 0019 |
+| P3 Generator v1 | done (decision 0017), smoke-verified on the operator's machine |
+| P4 D1 first generation | web 126 tests, Android 129 tests, all passing on the operator's machine; acceptance suites cut |
+| P5 Interop, P6 Reactions | not done (FUTURE.md) |
+| P7 Regeneration check | web **PASS**; Android not run (`docs/runs/P7/`) |
+| P8 Packaging | README, DESIGN, AGENTS, FUTURE done; signing rebase cut |
+
+### Verified and not verified
+| Verified (logs in `docs/runs/`) | Not verified |
+|---|---|
+| Web: delete `clients/web`, `/generate web`, build, 126 tests, header and manifest checks: PASS | Android delete-and-regenerate (first generation only) |
+| Android first generation: 8 checkpoints, 129 JUnit tests, 0 failures | Any client against the real server through the UI; emulator or browser runs |
+| Both clients replay the Alice/Bob scenario in tests (fake server and clock) | Interop pairs, determinism of two regenerations, README-only run by someone else |
+| Server: 138 protocol tests; harness: 142 tests | Acceptance traceability (`check_trace` 0/172, see FUTURE.md) |
 
 ## How it works (two entry points)
 
@@ -29,18 +39,18 @@ Full workflow: [`generator/WORKFLOW.md`](generator/WORKFLOW.md).
 | Project context | [`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md) | ✔ |
 | Build environment (required tools) | [`docs/ENVIRONMENT.md`](docs/ENVIRONMENT.md) | ✔ |
 | **Spec (source of truth)** | [`spec/`](spec/) | ✔ 0.1.1 approved (tags `spec-v0.1.0`, `spec-v0.1.1`) |
-| **Agentic harness / generator** | [`generator/`](generator/), [`.claude/`](.claude/), workflow [`generator/WORKFLOW.md`](generator/WORKFLOW.md) | workflow ✔ v0.3.0, harness ✔ P0, generator conventions/templates ☐ P3 |
+| **Agentic harness / generator** | [`generator/`](generator/), [`.claude/`](.claude/), workflow [`generator/WORKFLOW.md`](generator/WORKFLOW.md) | ✔ |
 | Harness (Phase 0) | state machine + scripts [`generator/scripts/`](generator/scripts/), sub-agents [`.claude/agents/`](.claude/agents/), prompts [`generator/prompts/`](generator/prompts/), commands [`.claude/commands/`](.claude/commands/), fallback [`generator/RUN.md`](generator/RUN.md), self-test `python3 -m unittest discover -s generator/tests` | ✔ (P0 approved) |
-| Generated Android client | [`clients/android/`](clients/android/) | ☐ |
-| Generated web client | [`clients/web/`](clients/web/) | ☐ |
+| Generated Android client | [`clients/android/`](clients/android/) | ✔ generated, 129 tests |
+| Generated web client | [`clients/web/`](clients/web/) | ✔ generated, 126 tests, regeneration PASS |
 | Server (maintained, not generated) | [`server/`](server/) | ✔ P2 |
-| External AC checks (protocol, interop, e2e) | [`tests/`](tests/) | protocol ✔ P2; web-e2e, android-conformance, interop ☐ |
+| External AC checks (protocol, interop, e2e) | [`tests/`](tests/) | protocol ✔ P2; web-e2e, android-conformance, interop not done (FUTURE.md) |
 | Operator's own messages (human-written) | [`docs/human-input/OPERATOR_MESSAGES.md`](docs/human-input/OPERATOR_MESSAGES.md) | ✔ |
 | Workflow gap analysis | [`docs/planning/workflow-gap-analysis.md`](docs/planning/workflow-gap-analysis.md) | ✔ |
 | Traceability (BR/SC → spec → AC → test) | [`docs/product/TRACEABILITY.md`](docs/product/TRACEABILITY.md) | ✔ rows for F1 to F5 |
-| Per-feature run logs and retros | [`docs/runs/INDEX.md`](docs/runs/INDEX.md), [`docs/retros/`](docs/retros/) | index ✔, retros P0 to P2 ✔, D1 ☐ |
-| Design principles | [`DESIGN.md`](DESIGN.md) | ✔ draft |
-| Agent setup | [`AGENTS.md`](AGENTS.md), [`CLAUDE.md`](CLAUDE.md) | ✔ draft |
+| Per-feature run logs and retros | [`docs/runs/INDEX.md`](docs/runs/INDEX.md), [`docs/retros/`](docs/retros/) | index ✔, retros P0 to P2 and D1 ✔ |
+| Design principles | [`DESIGN.md`](DESIGN.md) | ✔ |
+| Agent setup | [`AGENTS.md`](AGENTS.md), [`CLAUDE.md`](CLAUDE.md) | ✔ |
 | Decisions log | [`docs/decisions/`](docs/decisions/) | ✔ |
 | Next steps | [`FUTURE.md`](FUTURE.md) | ✔ |
 
@@ -52,7 +62,13 @@ Building the clients needs the toolchain and network access that agent sandboxes
 
 Generated code is **exactly** `clients/android/` and `clients/web/`: whole directories, including their unit and UI tests. Each has a `.generated` manifest (file list, hashes, spec version, generator commit, model id). Everything outside `clients/` is maintained, not regenerated.
 
-To regenerate: delete `clients/<app>/` and run `/generate <app>` in Claude Code (☐ model id, build/test commands and permission flags are pinned at P3 in `generator/config/generator.json`; until then `/generate` stops with "generator not yet configured"). Without slash commands: [`generator/RUN.md`](generator/RUN.md). See [`generator/README.md`](generator/README.md).
+To regenerate: delete `clients/<app>/` and run `/generate <app>` in Claude Code (model id, build/test commands and permission flags are pinned in `generator/config/generator.json`). Quick start (the grader's path), from the repo root:
+```
+python3 generator/scripts/setup_env.py --check      # Python 3.10+, JDK 17+, Android SDK, Node 22+, Claude Code
+rm -rf clients/web && claude -p "/generate web"     # or: python3 generator/scripts/regen_check.py --app web --clone
+rm -rf clients/android && claude -p "/generate android"
+```
+`generator.json` holds the exact flags (model `claude-opus-5-5`, turn and budget limits, allowlist). Budget: web about 22 minutes and $7.5, Android about 41 minutes and $15 (list prices); a Claude Pro window covers roughly one Android run. Without slash commands: [`generator/RUN.md`](generator/RUN.md). See [`generator/README.md`](generator/README.md).
 
 Every generated file that supports comments carries: `GENERATED by the Aware harness from spec <version> — do not edit; change the spec and regenerate.`
 
